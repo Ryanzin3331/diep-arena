@@ -98,7 +98,8 @@ button,select,input{font:inherit}button,select,input{border:1px solid var(--line
   .bot-summary strong{font-size:12px;overflow-wrap:anywhere}.bot-summary-meta{color:var(--muted)}
   .bot-summary-stats{display:flex;flex-wrap:wrap;gap:3px 10px;font-variant-numeric:tabular-nums}
   .bot-summary-health{color:#b8e2ad}
-  .arena:has(.bot-summary:not([hidden])) #playerHud,
+  .arena:has(.bot-summary:not([hidden])) #playerTankHud,
+  .arena:has(.bot-summary:not([hidden])) #playerHud:has(#roomScore[hidden]),
   .top-left:has(.bot-summary:not([hidden])) #viewTag{display:none}
   .arena.mothership .top-left:has(.bot-summary:not([hidden])){top:60px}
   .arena:has(.boss-hud:not([hidden])) .top-left:has(.bot-summary:not([hidden])){top:64px}
@@ -171,7 +172,7 @@ button{-webkit-tap-highlight-color:transparent}
 .arena.phone-play .feed>div:not(:first-child){display:none}
 .arena.phone-play>.fullscreen{top:var(--phone-top);right:var(--phone-right)}
 .arena.phone-play>.fullscreen button{width:48px;height:48px}
-.arena.phone-play>.minimap{
+.arena.phone-play .minimap{
   top:calc(var(--phone-top) + 53px);right:var(--phone-right);bottom:auto;
   width:64px;height:64px
 }
@@ -277,7 +278,7 @@ button{-webkit-tap-highlight-color:transparent}
   }
   .arena.phone-play:not(:fullscreen){height:max(210px,calc(100dvh - 95px))}
   .arena.phone-play.phone-build-ready #viewTag{display:none}
-  .arena.phone-play>.minimap{width:72px;height:72px}
+  .arena.phone-play .minimap{width:72px;height:72px}
   .arena.phone-play>.touch-tools{top:var(--phone-top);right:calc(var(--phone-right) + 54px)}
   .arena.phone-play #phoneBuildPanel{
     width:min(420px,65%,calc(100% - var(--phone-left) - var(--phone-right)));
@@ -309,53 +310,86 @@ button{-webkit-tap-highlight-color:transparent}
 .room-row input,.room-row select,.room-row button,.room-head button{min-height:38px}
 .room-row button,.room-head button{padding:0 8px;font-size:12px;font-weight:750}
 .room-row .primary{align-self:end}
+#roomHostForm{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:end}
+#roomHostForm .primary{grid-column:1/-1}
+#roomScore{gap:5px;font-variant-numeric:tabular-nums}
+#roomScore span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#roomScorePoints{flex-shrink:0}
+#roomScoreHost{color:#9adcf6}
+#roomScoreGuest{color:#ffb0a9;text-align:right}
+#roomScore:not([hidden])+#playerTankHud:not([hidden]){border-top:1px solid #ffffff29;margin-top:4px;padding-top:4px}
 #roomCodeOut,#roomCode{font-family:monospace;text-transform:uppercase;letter-spacing:.08em}
 #roomStatus{margin:8px 0 0;color:#ceddc7;font-size:12px;line-height:1.35}
 #roomStatus:empty{display:none}
 #roomExit{width:100%;min-height:38px;margin-top:8px;color:#ffcfc4}
-.arena>.fullscreen-leaders{
-  --leader-top:max(8px,env(safe-area-inset-top));
-  --leader-right:max(8px,env(safe-area-inset-right));
-  top:calc(var(--leader-top) + 49px);right:var(--leader-right);
-  width:min(174px,44%);color:#f4f7ef;pointer-events:none;
+.fullscreen-side-hud{display:contents}
+.arena.fullscreen-hud{
+  --hud-top:max(8px,env(safe-area-inset-top));
+  --hud-right:max(8px,env(safe-area-inset-right));
+  --hud-gap:6px;
+  --hud-button-size:36px;
+  --hud-room-width:0px;
+  --rank-button-width:74px;
+  --rank-button-height:34px;
+  --rank-list-width:184px;
+  --hud-map-size:100px;
 }
+.arena.fullscreen-hud.hud-mobile{
+  --hud-button-size:48px;
+  --rank-button-height:44px;
+  --rank-list-width:clamp(132px,44vw,178px);
+  --hud-map-size:64px;
+}
+.arena.fullscreen-hud.room-running{--hud-room-width:calc(var(--hud-button-size) + 4px)}
+.arena.fullscreen-hud>.fullscreen{top:var(--hud-top);right:var(--hud-right)}
+.arena.fullscreen-hud>.fullscreen button,
+.arena.fullscreen-hud #roomMenu{
+  width:var(--hud-button-size);height:var(--hud-button-size);min-width:0;padding:0;
+}
+.arena.fullscreen-hud .fullscreen-side-hud{
+  position:absolute;z-index:2;
+  top:calc(var(--hud-top) + var(--hud-button-size) + var(--hud-gap));right:var(--hud-right);
+  display:grid;gap:var(--hud-gap);align-items:start;justify-items:end;pointer-events:none;
+}
+.arena.fullscreen-hud .fullscreen-side-hud>.minimap{
+  position:static;width:var(--hud-map-size);height:var(--hud-map-size);
+}
+.arena.fullscreen-hud.free:not(.replaying) .camera-zoom{
+  top:var(--hud-top);right:calc(var(--hud-right) + var(--hud-button-size) + var(--hud-room-width) + var(--hud-gap));
+  flex-direction:row;
+}
+.fullscreen-leaders{color:#f4f7ef}
 #fullscreenLeadersToggle{
-  display:block;width:fit-content;max-width:100%;margin-left:auto;
-  min-height:34px;padding:3px 9px;font-size:12px;font-weight:800;
+  display:block;width:var(--rank-button-width);margin-left:auto;
+  min-height:var(--rank-button-height);padding:3px 6px;font-size:12px;font-weight:800;
   color:#f4f7ef;background:#19251bf5;border-color:#8b9e83;touch-action:manipulation;
+  pointer-events:auto;
 }
 #fullscreenLeaderRows{
-  margin:3px 0 0;padding:3px;list-style:none;
-  border:1px solid #789071;border-radius:7px;background:#19251be0;
+  width:var(--rank-list-width);margin:4px 0 0;padding:4px;list-style:none;
+  border:1px solid #91a48a;border-radius:7px;background:#19251bef;
   font-size:11px;font-variant-numeric:tabular-nums;
 }
 #fullscreenLeaderRows li{
   display:grid;grid-template-columns:2ch minmax(0,1fr) auto;align-items:center;
-  gap:4px;padding:1px 3px;line-height:1.15;
+  gap:4px;padding:2px 4px;line-height:1.15;border-radius:3px;
+  background:linear-gradient(to right,#a9c69426 var(--leader-fill),transparent var(--leader-fill));
 }
-#fullscreenLeaderRows li:nth-child(even){background:#ffffff0c}
-#fullscreenLeaderRows .fullscreen-self{background:#d6f18b2a;color:#ebffc4}
+#fullscreenLeaderRows li+li{margin-top:1px}
+#fullscreenLeaderRows .fullscreen-self{background:#d6f18b33;color:#ebffc4}
 #fullscreenLeaderRows .fullscreen-rank{color:#bdcdb7}
 #fullscreenLeaderRows strong{font-weight:750;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-@media(pointer:coarse){
-  .arena.free>.fullscreen-leaders{right:calc(var(--leader-right) + 50px)}
+@media(orientation:landscape) and (min-width:400px){
+  .arena.fullscreen-hud.fullscreen-rank-open .fullscreen-side-hud{grid-template-columns:auto auto}
+  .arena.fullscreen-hud.fullscreen-rank-open .fullscreen-side-hud>.minimap{grid-area:1/1}
+  .arena.fullscreen-hud.fullscreen-rank-open .fullscreen-leaders{grid-area:1/2}
 }
-.arena.phone-play>.fullscreen-leaders{
-  top:calc(var(--phone-top) + 53px);right:calc(var(--phone-right) + 80px);
-}
-.arena.phone-play:has(#phoneBuildPanel:not([hidden]))>.fullscreen-leaders{visibility:hidden}
-@media(orientation:portrait){
-  .arena.phone-play>.fullscreen-leaders{top:calc(var(--phone-top) + 174px);right:var(--phone-right)}
-}
-#fullscreenLeaderRows[data-two-cols]{
-  display:grid;grid-auto-flow:column;grid-template-rows:repeat(var(--leader-rows,10),auto);
-  grid-auto-columns:minmax(0,1fr);column-gap:5px;
-}
-@media(orientation:landscape) and (max-height:300px) and (min-width:480px){
-  .arena>.fullscreen-leaders{width:min(308px,56%);--leader-rows:5}
-}
-@media(orientation:portrait) and (max-height:410px){
-  .arena.phone-play>.fullscreen-leaders{width:min(260px,66%);--leader-rows:5}
+@media(orientation:landscape) and (max-height:390px) and (min-width:400px){
+  .fullscreen-hud #fullscreenLeaderRows:has(>li:nth-child(6)){
+    width:min(300px,48vw);display:grid;grid-auto-flow:column;
+    grid-template-rows:repeat(5,auto);grid-auto-columns:minmax(0,1fr);gap:2px 4px;
+  }
+  .fullscreen-hud #fullscreenLeaderRows li{margin:0}
 }
 .arena.phone-full-build{
   --class-row-top:53px;
@@ -392,19 +426,28 @@ button{-webkit-tap-highlight-color:transparent}
   .arena.phone-full-build #phoneEvolutionStrip{
     max-width:calc(100% - var(--phone-left) - var(--phone-right) - 76px);
   }
-  .arena.phone-full-build.phone-evolution-open>.fullscreen-leaders{
-    top:calc(var(--phone-top) + var(--class-row-top) + var(--class-row-height) + 5px);
-  }
 }
 @media(orientation:portrait){
-  .arena.phone-full-build.phone-evolution-open>.minimap{
-    top:calc(var(--phone-top) + var(--class-row-top) + var(--class-row-height) + 4px)
+  .arena.fullscreen-hud.phone-full-build #phoneEvolutionStrip{
+    max-width:calc(100% - var(--phone-left) - var(--hud-right) - var(--rank-button-width) - var(--hud-gap));
   }
-  .arena.phone-full-build.phone-evolution-open>.touch-tools{
+  .arena.fullscreen-hud.phone-full-build #phoneBuildPanel,
+  .arena.fullscreen-hud.phone-play>.touch-tools{
+    top:calc(var(--hud-top) + var(--hud-button-size) + var(--rank-button-height) + 2 * var(--hud-gap));
+  }
+  .arena.fullscreen-hud.phone-play>.touch-tools{
+    right:calc(var(--hud-right) + var(--hud-map-size) + var(--hud-gap));
+  }
+  .arena.fullscreen-hud.phone-play.fullscreen-rank-open>.touch-tools{
+    right:calc(var(--hud-right) + var(--rank-list-width) + var(--hud-gap));
+  }
+  .arena.fullscreen-hud.phone-evolution-open>.touch-tools{
     top:calc(var(--phone-top) + var(--class-row-top) + var(--class-strip-height) + 4px);
-    right:calc(var(--phone-right) + 70px);
   }
-  .arena.phone-full-build.phone-evolution-open>.fullscreen-leaders{top:calc(var(--phone-top) + 181px)}
+}
+@media(orientation:portrait) and (max-width:380px){
+  .arena.phone-full-build #phoneEvolutionChoices .phone-evolution-tile{font-size:10px}
+  .arena.phone-full-build #phoneEvolutionChoices .phone-evolution-tile canvas{height:25px}
 }
 @media(orientation:landscape) and (min-width:640px){
   .arena.phone-full-build:not(:has(>.boss-hud:not([hidden]),>.dom-hud:not([hidden]),>.survival-hud:not([hidden]),>.convoy-hud:not([hidden]))){
@@ -467,11 +510,13 @@ button{-webkit-tap-highlight-color:transparent}
           <button id="zoomIn" type="button" aria-label="Aproximar câmera">+</button>
           <button id="zoomOut" type="button" aria-label="Afastar câmera">−</button>
         </div>
-        <div class="overlay minimap"><canvas id="map" aria-label="Minimapa"></canvas></div>
-        <section class="overlay fullscreen-leaders" id="fullscreenLeaders" aria-label="Placar dos tanques" hidden>
-          <button id="fullscreenLeadersToggle" type="button" aria-controls="fullscreenLeaderRows" aria-expanded="true">Top 10 ▴</button>
-          <ol id="fullscreenLeaderRows"></ol>
-        </section>
+        <div class="fullscreen-side-hud">
+          <section class="fullscreen-leaders" id="fullscreenLeaders" aria-label="Placar dos tanques" hidden>
+            <button id="fullscreenLeadersToggle" type="button" aria-controls="fullscreenLeaderRows" aria-expanded="false">Top 10 ▾</button>
+            <ol id="fullscreenLeaderRows" hidden></ol>
+          </section>
+          <div class="overlay minimap"><canvas id="map" aria-label="Minimapa"></canvas></div>
+        </div>
         <div class="overlay survival-hud" id="survivalHud" hidden><strong id="survivalAlive"></strong><span id="survivalPhase"></span><span id="survivalReturn" hidden></span></div>
         <div class="overlay convoy-hud" id="convoyHud" hidden>
           <button id="convoyFocus" type="button" aria-label="Acompanhar o comboio"><strong id="convoyRound"></strong><span id="convoyTime"></span></button>
@@ -479,7 +524,16 @@ button{-webkit-tap-highlight-color:transparent}
           <p id="convoyStatus"></p>
         </div>
         <div class="overlay closing-hud" id="closingHud" hidden><strong id="closingStatus"></strong><button id="nextClosingRound" hidden>Nova rodada</button></div>
-        <div class="overlay player-hud" id="playerHud"><div class="hud-top"><strong id="tankLabel">Tank</strong><span class="hp" id="hpLabel"></span></div><div class="bar"><i id="xpFill"></i></div><div class="hud-top"><span id="levelLabel">Nível 1</span><span id="xpLabel">0 pts</span></div></div>
+        <div class="overlay player-hud" id="playerHud">
+          <div class="hud-top" id="roomScore" role="group" aria-label="Placar de eliminações entre jogadores" hidden>
+            <span id="roomScoreHost"></span><strong id="roomScorePoints"></strong><span id="roomScoreGuest"></span>
+          </div>
+          <div id="playerTankHud">
+            <div class="hud-top"><strong id="tankLabel">Tank</strong><span class="hp" id="hpLabel"></span></div>
+            <div class="bar"><i id="xpFill"></i></div>
+            <div class="hud-top"><span id="levelLabel">Nível 1</span><span id="xpLabel">0 pts</span></div>
+          </div>
+        </div>
         <section class="replay-panel" id="replayPanel" aria-label="Replay" hidden>
           <div class="hud-top"><strong id="replayTitle"></strong><button id="closeReplay">Voltar à partida</button></div>
           <p class="replay-decision" id="replayDecision" hidden></p>
@@ -510,6 +564,7 @@ button{-webkit-tap-highlight-color:transparent}
             <div class="room-row"><label>Seu nome<input id="roomName" maxlength="16" autocomplete="off"></label></div>
             <form class="room-row" id="roomHostForm">
               <label>Bots na arena<select id="roomBots"><option value="0">0 · Duelo 1×1</option><option value="4">4 · FFA</option><option value="8">8 · FFA</option></select></label>
+              <label>Reiniciar ao morrer<select id="roomRestartOnDeath"><option value="on">Ligado</option><option value="off">Desligado</option></select></label>
               <button class="primary" type="submit">Criar sala</button>
             </form>
             <form class="room-row" id="roomJoinForm">
@@ -6022,7 +6077,7 @@ const camera={x:0,y:0,zoom:1};
 const freeTouches=new Map();
 let freeDrag=null, renderedTarget=null, renderedBlend=1;
 let statSignature="", leaderSignature="", classSignature="", inspectSignature="";
-let fullscreenLeaderSignature="",fullscreenLeadersOpen=true,autoFullRoom=null;
+let fullscreenLeaderSignature="",fullscreenLeadersOpen=null,autoFullRoom=null;
 const HISTORY_PAGE=40;
 const phoneLayout=matchMedia("(pointer: coarse) and (max-width: 950px)");
 let replay=null, historyBest=false, historyRevision=-1, historySelection="", historyRows=HISTORY_PAGE;
@@ -6045,6 +6100,9 @@ const phonePlayLayout=matchMedia(
   "(any-pointer: coarse) and (orientation: landscape) and (max-height: 680px)"
 );
 const phoneOrientation=matchMedia("(orientation: portrait)");
+const rankingSharesEvolutionSpace=matchMedia(
+  "(orientation: portrait) and (max-width: 559px), (orientation: landscape) and (max-width: 759px)"
+);
 const phoneBuildToggle=el("phoneBuildToggle"),phoneBuildPanel=el("phoneBuildPanel");
 const phoneBuildStats=el("phoneBuildStats"),phoneBuildClasses=el("phoneBuildClasses");
 const phoneStatsTab=el("phoneStatsTab"),phoneClassesTab=el("phoneClassesTab");
@@ -6060,6 +6118,7 @@ function isPhonePlay(){
 function setPhoneBuild(open){
   phoneBuildPanel.hidden=!open;
   phoneBuildToggle.setAttribute("aria-expanded",String(open));
+  if(open&&fullscreenLeadersOpen)setFullscreenLeadersOpen(false);
 }
 function setPhoneEvolutionFolded(folded){
   phoneEvolutionFolded=folded;
@@ -6068,6 +6127,7 @@ function setPhoneEvolutionFolded(folded){
   phoneEvolutionFold.setAttribute("aria-label",folded?"Mostrar evoluções":"Ignorar evoluções");
   phoneEvolutionFold.textContent=folded?"Evoluções ▾":"Ignorar";
   arenaEl.classList.toggle("phone-evolution-open",!folded&&!phoneEvolutionStrip.hidden);
+  if(!folded&&rankingSharesEvolutionSpace.matches&&fullscreenLeadersOpen)setFullscreenLeadersOpen(false);
 }
 function syncPhoneEvolutionStrip(t,options){
   const available=options.length>0;
@@ -6326,7 +6386,9 @@ function resize(){
   map.width=Math.round(mw*dpr);map.height=Math.round(mh*dpr);
   lastDraw=-Infinity;
 }
-new ResizeObserver(resize).observe(arenaEl);
+const arenaResizeObserver=new ResizeObserver(resize);
+arenaResizeObserver.observe(arenaEl);
+arenaResizeObserver.observe(map);
 function tp(t,blend=1){
   return [t.px+(t.x-t.px)*blend,t.py+(t.y-t.py)*blend];
 }
@@ -7719,8 +7781,25 @@ function updateConvoyHud(){
 function arenaIsFullscreen(){
   return document.fullscreenElement===arenaEl||iframeFull;
 }
+function setFullscreenLeadersOpen(open){
+  fullscreenLeadersOpen=open;
+  arenaEl.classList.toggle("fullscreen-rank-open",open);
+  const button=el("fullscreenLeadersToggle");
+  button.setAttribute("aria-expanded",String(open));
+  button.textContent=open?"Top 10 ▴":"Top 10 ▾";
+  el("fullscreenLeaderRows").hidden=!open;
+  if(open)lastHud=-1000;
+}
 function updateFullscreenLeadersVisibility(){
-  el("fullscreenLeaders").hidden=!arenaIsFullscreen()||Boolean(replay);
+  const fullscreen=arenaIsFullscreen(), visible=fullscreen&&!replay;
+  const mobile=mobileBrowser||phonePlayLayout.matches;
+  arenaEl.classList.toggle("fullscreen-hud",visible);
+  arenaEl.classList.toggle("hud-mobile",visible&&mobile);
+  el("fullscreenLeaders").hidden=!visible;
+  if(!fullscreen)fullscreenLeadersOpen=null;
+  if(visible&&fullscreenLeadersOpen===null)setFullscreenLeadersOpen(!mobile);
+  if(visible&&fullscreenLeadersOpen&&rankingSharesEvolutionSpace.matches&&
+    arenaEl.classList.contains("phone-evolution-open"))setFullscreenLeadersOpen(false);
 }
 function renderFullscreenLeaders(ordered){
   const panel=el("fullscreenLeaders");
@@ -7730,9 +7809,10 @@ function renderFullscreenLeaders(ordered){
   if(signature===fullscreenLeaderSignature)return;
   fullscreenLeaderSignature=signature;
   const list=el("fullscreenLeaderRows");
-  list.toggleAttribute("data-two-cols",leaders.length>5);
+  const highScore=leaders[0]?.score||0;
   list.replaceChildren(...leaders.map((tank,index)=>{
     const row=node("li",null,tank===world.human?"fullscreen-self":"");
+    row.style.setProperty("--leader-fill",highScore?100*tank.score/highScore+"%":"0%");
     const name=node("strong",tank.name);
     name.title=tank.name;
     row.append(node("span",String(index+1),"fullscreen-rank"),name,node("span",fmt.format(tank.score)));
@@ -7844,7 +7924,7 @@ function updateHud(){
     el("bossHud").style.borderColor=boss.spec.color;
     el("bossFocus").disabled=Boolean(mode==="play"&&world.human?.alive);
   }
-  el("playerHud").hidden=focus?.type!=="tank";
+  updateRoomHud(focus);
   if(focus?.type==="tank"){
     const cur=XP[focus.level-1], next=XP[focus.level];
     el("tankLabel").textContent=focus.cls;el("levelLabel").textContent="Nível "+focus.level;
@@ -8133,6 +8213,16 @@ function pointerEnd(e){
 }
 for(const e of ["pointerup","pointercancel","lostpointercapture"])canvas.addEventListener(e,pointerEnd);
 canvas.addEventListener("contextmenu",e=>e.preventDefault());
+arenaEl.addEventListener("touchend",e=>{
+  if(!e.cancelable||(!touches.move&&!touches.aim))return;
+  const button=e.target.closest("button");
+  if(!button||button.disabled||button.id==="secondary")return;
+  // Activate the tap directly while another finger controls the tank.
+  e.preventDefault();
+  const releasedOnButton=Array.from(e.changedTouches).some(touch=>
+    button.contains(document.elementFromPoint(touch.clientX,touch.clientY)));
+  if(releasedOnButton)button.click();
+},{passive:false});
 map.addEventListener("click",e=>{
   if(replay||!world.domination&&!world.mothership)return;
   const rect=map.getBoundingClientRect();
@@ -8296,14 +8386,16 @@ document.addEventListener("fullscreenchange",()=>{
   if(!arenaIsFullscreen())autoFullRoom=null;
   if(world){updateInterface();lastHud=-1000;}
 });
+phonePlayLayout.addEventListener("change",updateFullscreenLeadersVisibility);
+rankingSharesEvolutionSpace.addEventListener("change",updateFullscreenLeadersVisibility);
 el("fullscreen").onclick=toggleFull;
 el("fullscreenLeadersToggle").onclick=()=>{
-  fullscreenLeadersOpen=!fullscreenLeadersOpen;
-  const button=el("fullscreenLeadersToggle");
-  button.setAttribute("aria-expanded",String(fullscreenLeadersOpen));
-  button.textContent=fullscreenLeadersOpen?"Top 10 ▴":"Top 10 ▾";
-  el("fullscreenLeaderRows").hidden=!fullscreenLeadersOpen;
-  if(fullscreenLeadersOpen)lastHud=-1000;
+  const open=!fullscreenLeadersOpen;
+  if(open){
+    if(!phoneBuildPanel.hidden)setPhoneBuild(false);
+    if(rankingSharesEvolutionSpace.matches&&!phoneEvolutionStrip.hidden&&!phoneEvolutionFolded)setPhoneEvolutionFolded(true);
+  }
+  setFullscreenLeadersOpen(open);
 };
 el("autoFire").onclick=toggleAuto;
 el("touchStats").onclick=()=>showStats(!optStats);
@@ -8324,11 +8416,19 @@ function stepGame(){
   const priorPursuitEnded=world.closing?.tanksDone,priorConvoy=world.convoy?.round;
   const current=room?.role==="host"&&room.phase==="playing"?room:null;
   const guest=current?.guestTank;
+  const guestWasAlive=guest?.alive;
   const guestCommand=guest?.alive&&performance.now()-current.lastInputAt<ROOM_IDLE_MS?current.command:null;
   world.step(humanCommand(),guest?{tank:guest,command:guestCommand??{x:0,y:0,aim:guest.aim,fire:false,alt:false}}:null);
-  if(current&&current.bots===0&&(!world.human.alive||!guest.alive)){
-    world.duelEnded=true;
-    world.winner=world.human.alive?world.human:guest.alive?guest:null;
+  if(current){
+    const hostFell=priorHuman&&!world.human.alive, guestFell=guestWasAlive&&!guest.alive;
+    if(current.restartOnDeath&&(hostFell||guestFell)){
+      world.duelEnded=true;
+      world.winner=hostFell&&guestFell?null:hostFell?guest:world.human;
+    }else if(!current.restartOnDeath){
+      const hostKiller=world.human.killer,guestKiller=guest.killer;
+      if(hostFell&&hostKiller?.human&&hostKiller.slot===1)current.points[1]++;
+      if(guestFell&&guestKiller?.human&&guestKiller.slot===0)current.points[0]++;
+    }
   }
   if(world.survival&&priorHuman&&!world.human.alive&&follow!=="free"){
     const killer=world.human.killer;
@@ -8361,13 +8461,14 @@ function frame(now){
   if(now-lastHud>(liteMode?LITE_HUD_INTERVAL:160)){lastHud=now;updateHud();}
   requestAnimationFrame(frame);
 }
-const ROOM_VERSION=2;
+const ROOM_VERSION=3;
 const ROOM_ALPHABET="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const ROOM_PEER_PREFIX="diep-arena-v4-";
 const ROOM_SNAPSHOT_MS=1000/15,ROOM_INPUT_MS=40,ROOM_IDLE_MS=400;
+const ROOM_RESTART_MS=4000;
 const ROOM_BOTS=[0,4,8];
 const ROOM_HOST_COLOR="#39b7ed",ROOM_GUEST_COLOR="#ef8078";
-let room=null,peerLibrary;
+let room=null,peerLibrary,roomRestartChosen=false;
 
 function loadRoomPeer(){
   if(typeof window.Peer==="function")return Promise.resolve(window.Peer);
@@ -8443,7 +8544,8 @@ async function openRoom(role){
   const bots=Number(el("roomBots").value);
   const current={role,code:role==="host"?makeRoomCode():input,
     name:normalizedRoomName(el("roomName").value,role==="host"?"Anfitrião":"Convidado"),
-    bots:ROOM_BOTS.includes(bots)?bots:0,phase:"connecting",ready:false,round:0};
+    bots:ROOM_BOTS.includes(bots)?bots:0,restartOnDeath:el("roomRestartOnDeath").value==="on",
+    points:[0,0],phase:"connecting",ready:false,round:0};
   room=current;
   updateRoomDialog(role==="host"?"Criando sala…":"Buscando a sala…");
   if(role==="guest")enterGuestFullscreen(current);
@@ -8516,6 +8618,7 @@ function enterRoomWorld(current,seed,bots){
   current.phase="playing";current.scene=null;current.units=new Map();
   current.snapshotAt=-Infinity;current.inputAt=-Infinity;current.lastInputAt=-Infinity;current.sentTick=-1;
   current.command=null;current.guestTank=null;
+  current.restartAt=null;
   current.bots=bots;
   world=new Arena(seed,bots,null,"both",true,"open","off");
   world.history.lite=true;
@@ -8525,8 +8628,9 @@ function enterRoomWorld(current,seed,bots){
   cleanseInputs();
   pointer.present=false;
   setSidePanel("arena");
-  el("roomDialog").close();
-  updateRoomDialog(bots===0?"Duelo 1×1 em andamento.":"FFA em andamento · "+bots+" bots.");
+  if(current.round===1)el("roomDialog").close();
+  updateRoomDialog((bots===0?"Duelo 1×1":"FFA · "+bots+" bots")+
+    (current.restartOnDeath?" · Reinício ao morrer ligado.":" · Reinício ao morrer desligado."));
 }
 function spawnRoomPlayer(current,guest,old=null){
   const slot=guest?1:0;
@@ -8553,7 +8657,8 @@ function startRoomRound(current){
   enterRoomWorld(current,seed,current.bots);
   spawnRoomPlayer(current,false);
   const guest=spawnRoomPlayer(current,true);
-  if(!sendRoom(current,{type:"start",version:ROOM_VERSION,seed,bots:current.bots,round:current.round}))return;
+  if(!sendRoom(current,{type:"start",version:ROOM_VERSION,seed,bots:current.bots,round:current.round,
+    restartOnDeath:current.restartOnDeath}))return;
   updateInterface(true);
   sendRoomSnapshot(current,performance.now(),guest);
 }
@@ -8578,7 +8683,7 @@ function receiveRoomHost(current,message){
   }
   if(message.round!==current.round||world.duelEnded)return;
   const tank=current.guestTank;
-  if(message.type==="respawn"&&current.bots>0&&!tank.alive&&message.player===tank.id){
+  if(message.type==="respawn"&&!current.restartOnDeath&&!tank.alive&&message.player===tank.id){
     spawnRoomPlayer(current,true,tank);
     return;
   }
@@ -8600,10 +8705,11 @@ function sendRoomSnapshot(current,now,guest=current.guestTank){
   if(!current.conn?.open||current.sentTick===world.tick||current.conn.dataChannel?.bufferedAmount>65536)return;
   current.snapshotAt=now;current.sentTick=world.tick;
   const {forms,shots,bits}=snapshotArena(world,true);
-  sendRoom(current,{type:"state",round:current.round,tick:world.tick,time:world.time,
+  const sent=sendRoom(current,{type:"state",round:current.round,tick:world.tick,time:world.time,
     player:guest.id,tanks:world.tanks.filter(t=>t.alive||t.human).map(roomUnit),
     forms:forms.slice().buffer,shots:shots.slice().buffer,bits:bits.slice().buffer,
-    events:world.events,done:world.duelEnded,winner:world.winner?.id??null});
+    events:world.events,points:current.points,done:world.duelEnded,winner:world.winner?.id??null});
+  if(sent&&world.duelEnded)current.restartAt=now+ROOM_RESTART_MS;
 }
 function receiveRoomGuest(current,message){
   if(message.type==="unavailable"||message.type==="incompatible"){
@@ -8611,10 +8717,11 @@ function receiveRoomGuest(current,message){
     return;
   }
   if(message.type==="start"){
-    if(message.version!==ROOM_VERSION||!ROOM_BOTS.includes(message.bots)||
+    if(message.version!==ROOM_VERSION||!ROOM_BOTS.includes(message.bots)||typeof message.restartOnDeath!=="boolean"||
       !Number.isInteger(message.seed)||message.seed<1||message.seed>4294967295||
       !Number.isInteger(message.round)||message.round<=current.round)return;
     current.round=message.round;current.lastTick=-1;
+    current.restartOnDeath=message.restartOnDeath;
     enterRoomWorld(current,message.seed,message.bots);
     world.tanks=[];world.shapes=[];world.shots=[];world.bits=[];
     current.timer=setTimeout(()=>roomFailure(current,"A arena não foi recebida. Tentem abrir a sala de novo."),10000);
@@ -8623,6 +8730,7 @@ function receiveRoomGuest(current,message){
   }
   if(current.phase!=="playing"||message.type!=="state"||message.round!==current.round||
     !Number.isInteger(message.tick)||message.tick<=current.lastTick||!Number.isFinite(message.time)||
+    !Array.isArray(message.points)||message.points.length!==2||!message.points.every(n=>Number.isSafeInteger(n)&&n>=0)||
     !Array.isArray(message.tanks)||message.tanks.length>current.bots+2||
     !message.tanks.every(t=>t&&Object.hasOwn(C,t.cls)&&Array.isArray(t.stats)&&t.stats.length===8&&Array.isArray(t.cool))||
     ![[message.forms,32],[message.shots,24],[message.bits,16]].every(([buffer,stride])=>
@@ -8641,9 +8749,11 @@ function receiveRoomGuest(current,message){
   current.scene={time:message.time,tanks,towers:[],ships:[],forms:new Float32Array(message.forms),
     shots:new Float32Array(message.shots),bits:new Float32Array(message.bits)};
   current.received=performance.now();current.lastTick=message.tick;
+  current.points=message.points;
   world.tanks=tanks;world.human=units.get(message.player)??null;
   world.time=message.time;world.tick=message.tick;world.events=Array.isArray(message.events)?message.events:[];
   world.duelEnded=message.done===true;world.winner=units.get(message.winner)??null;
+  if(world.duelEnded&&!wasDone)current.restartAt=current.received+ROOM_RESTART_MS;
   if(oldHuman!==world.human&&world.human)resetRoomPlayer(world.human);
   if(oldHuman!==world.human||wasAlive!==world.human?.alive||wasDone!==world.duelEnded){
     cleanseInputs();updateInterface(true);
@@ -8667,11 +8777,32 @@ function tickRoom(now){
   const current=room;
   if(current?.phase!=="playing"||document.hidden)return;
   if(current.role==="host"){
-    if(now-current.snapshotAt>=ROOM_SNAPSHOT_MS)sendRoomSnapshot(current,now);
+    if(current.restartAt!==null&&now>=current.restartAt)startRoomRound(current);
+    else if(now-current.snapshotAt>=ROOM_SNAPSHOT_MS)sendRoomSnapshot(current,now);
   }else if(now-current.inputAt>=ROOM_INPUT_MS&&world.human?.alive&&!world.duelEnded){
     current.inputAt=now;
     roomGuestAction("input",humanCommand());
   }
+}
+function updateRoomHud(focus){
+  const current=room?.phase==="playing"?room:null;
+  const showScore=current&&!current.restartOnDeath&&world.human;
+  const showTank=focus?.type==="tank";
+  el("roomScore").hidden=!showScore;
+  el("playerTankHud").hidden=!showTank;
+  el("playerHud").hidden=!showScore&&!showTank;
+  if(showScore){
+    for(const [slot,id] of [[0,"roomScoreHost"],[1,"roomScoreGuest"]]){
+      el(id).textContent=world.tanks.find(t=>t.human&&t.slot===slot)?.name??"";
+    }
+    el("roomScorePoints").textContent=current.points[0]+" × "+current.points[1];
+  }
+  if(current&&world.duelEnded)updateRoomCountdown(current);
+}
+function updateRoomCountdown(current){
+  const seconds=current.restartAt===null?null:Math.ceil((current.restartAt-performance.now())/1000);
+  const text=seconds>0?"Nova rodada em "+seconds+" s":"Reiniciando…";
+  if(el("enter").textContent!==text)el("enter").textContent=text;
 }
 function updateRoomInterface(){
   const current=room?.phase==="playing"?room:null;
@@ -8681,19 +8812,17 @@ function updateRoomInterface(){
   el("spectate").textContent=current?"Sair da sala":"Assistir";
   if(!current)return;
   el("pause").disabled=el("step").disabled=true;
-  el("stateText").textContent=world.duelEnded?"DUELO ENCERRADO":current.bots?"FFA LOCAL":"DUELO LOCAL";
+  el("stateText").textContent=world.duelEnded?"RODADA ENCERRADA":current.bots?"FFA LOCAL":"DUELO LOCAL";
   if(world.duelEnded){
     el("mask").hidden=false;el("nameField").hidden=true;
-    el("dialogTitle").textContent=world.winner?world.winner.name+" venceu":"Duelo empatado";
-    el("dialogText").textContent="A revanche recomeça no nível 1.";
-    el("enter").textContent=current.role==="host"?"Revanche":"Aguardando revanche";
-    el("enter").disabled=current.role!=="host";
+    el("dialogTitle").textContent=world.winner?world.winner.name+" venceu a rodada":"Rodada empatada";
+    el("dialogText").textContent="A próxima rodada começa no nível 1.";
+    el("enter").disabled=true;
+    updateRoomCountdown(current);
   }
 }
 function enterRoomAction(){
-  if(world.duelEnded){
-    if(room.role==="host")startRoomRound(room);
-  }else if(world.human&&!world.human.alive&&room.bots>0){
+  if(!world.duelEnded&&!room.restartOnDeath&&world.human&&!world.human.alive){
     if(room.role==="guest")roomGuestAction("respawn");
     else{spawnRoomPlayer(room,false,world.human);updateInterface(true);}
   }
@@ -8702,6 +8831,10 @@ function enterRoomAction(){
 el("multi").onclick=el("roomMenu").onclick=showRoomDialog;
 el("roomClose").onclick=()=>el("roomDialog").close();
 el("roomExit").onclick=()=>closeRoom();
+el("roomRestartOnDeath").onchange=()=>{roomRestartChosen=true;};
+el("roomBots").onchange=()=>{
+  if(!roomRestartChosen)el("roomRestartOnDeath").value=el("roomBots").value==="0"?"on":"off";
+};
 el("roomHostForm").onsubmit=event=>{event.preventDefault();openRoom("host");};
 el("roomJoinForm").onsubmit=event=>{event.preventDefault();openRoom("guest");};
 el("roomCopy").onclick=async ()=>{
