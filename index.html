@@ -6100,6 +6100,7 @@ const phonePlayLayout=matchMedia(
   "(any-pointer: coarse) and (orientation: landscape) and (max-height: 680px)"
 );
 const phoneOrientation=matchMedia("(orientation: portrait)");
+const PHONE_LANDSCAPE_HALF_VIEW=560;
 const rankingSharesEvolutionSpace=matchMedia(
   "(orientation: portrait) and (max-width: 559px), (orientation: landscape) and (max-width: 759px)"
 );
@@ -6954,9 +6955,15 @@ function drawGame(blend){
   const t=followTarget();
   renderedTarget=t;renderedBlend=blend;
   const marked=follow==="free"?freeSelection:t;
-  const toZoom=t?clamp(Math.min(w/975,h/700)/(1+((t.type==="convoy"?1.49:C[t.cls]?.fov??1.36)-1)*.62),.37,1.23):clamp(Math.min(w/1350,h/930),.30,1);
-  const playerZoom=mode==="play"&&t?.alive&&t===world.human?toZoom/1.22:toZoom;
-  const zoom=follow==="free"&&!world.human?.alive?camera.zoom:playerZoom;
+  const classFov=t?.type==="convoy"?1.49:C[t?.cls]?.fov??1.36;
+  const viewScale=1+(classFov-1)*.62;
+  const toZoom=t?clamp(Math.min(w/975,h/700)/viewScale,.37,1.23):clamp(Math.min(w/1350,h/930),.30,1);
+  const playing=mode==="play"&&t?.alive&&t===world.human;
+  let zoom=follow==="free"&&!world.human?.alive?camera.zoom:playing?toZoom/1.22:toZoom;
+  if(playing&&w>h&&isPhonePlay()){
+    // Keep ordinary bot engagements inside the short edge of a phone in landscape.
+    zoom=Math.min(zoom,h/(2*PHONE_LANDSCAPE_HALF_VIEW*viewScale));
+  }
   const partner=highlightPartner(t);
   let sceneZoom=zoom;
   if(partner){
