@@ -1058,6 +1058,18 @@ function newMemory(adaptiveBuilds){
     buildChanges:0,lastPoint:null,lastAdaptivePoint:null,
     build:adaptiveBuilds?{pressure:new Float64Array(8),time:0,burst:0,burstEnd:0,lastHit:-Infinity,recoverable:0,dealt:0,taken:0}:null};
 }
+// Same arena clock: keep the original timestamps and confidence. The 1A JSON
+// codec is for crossing arena clocks and deliberately caps inherited evidence.
+function respawnLearning(previous,adaptiveBuilds){
+  const memory=newMemory(adaptiveBuilds);
+  for(const key of ["samples","escapes","changes","buildChanges","exchanges"]){
+    if(previous[key]!==undefined)memory[key]=previous[key];
+  }
+  for(const [key,record] of previous.classes){
+    memory.classes.set(key,{time:record.time,choice:record.choice,entries:record.entries.map(entry=>({...entry}))});
+  }
+  return memory;
+}
 function buildPressure(t,time){
   const build=t.learning.build;
   if(time>build.time){
@@ -1815,11 +1827,12 @@ class Arena {
     t.rivalryMoment={kind:"encontro",other:e,at:this.time,until:this.time+4.3};
   }
 
-  constructor(seed,bots,duel=null,learningMode="both",adaptiveBuilds=true,mapKind="open",bossSchedule="off",shipStart=1,eventBosses=false,survivalPlayer=null){
+  constructor(seed,bots,duel=null,learningMode="both",adaptiveBuilds=true,mapKind="open",bossSchedule="off",shipStart=1,eventBosses=false,survivalPlayer=null,rosterScope=null){
     this.seed=seed; this.rand=rngFrom(seed); this.duel=duel; this.bots=bots;
     this.learningMode=learningMode;
     this.adaptiveBuilds=adaptiveBuilds;
     this.mapKind=duel?"open":mapKind;
+    this.profileRoster=rosterScope??(duel?(duel[3]?"lab-boss":"lab"):this.mapKind);
     this.rivalries=!duel&&["open","maze","maze-seed"].includes(this.mapKind)?new Map():null;
     this.rivalExchanges=this.rivalries?new Map():null;
     this.survival=this.mapKind==="survival"?{phase:"opening",radius:SURVIVAL.startRadius,preview:null,xpAt:1,alive:SURVIVAL.count}:null;
@@ -2058,6 +2071,7 @@ class Arena {
   }
   setConvoyControl(t,human,name){
     t.human=human;
+    if(!human&&!t.profileId)t.profileId=this.profileRoster+":bot:"+t.slot;
     t.name=name;
     t.intent={x:0,y:0,aim:t.aim,fire:false,alt:false};
     this.human=human?t:null;
@@ -2821,7 +2835,7 @@ class Arena {
     }
     return this.maze?(this.maze.hit(x,y,x,y,r)===null?[x,y]:fallback??[this.mid,this.mid]):[x,y];
   }
-  spawnTank(name,human,slot,level=1,goal=null,x=null,y=null,force=false,team=null,autoBranch=null,localHuman=human){
+  spawnTank(name,human,slot,level=1,goal=null,x=null,y=null,force=false,team=null,autoBranch=null,localHuman=human,previousLearning=null){
     if(this.closing)return null;
     if(this.teams)team??=human?this.joinTeam():(slot+this.seed)%this.teamColors.length;
     if(x==null) [x,y]=this.convoy?this.convoySpawn(team,slot):this.tag?this.tagSpawn(team):this.mothership?this.shipSpawn(team):this.hasBases?this.baseSpawn(team):this.freePosition();
@@ -2839,9 +2853,10 @@ class Arena {
       t.goal=CONVOY_CLASSES[roleIndex];
     }
     if(autoBranch)t.autoBranch=autoBranch;
-    if(!human)t.skin=this.skins[slot];
+    if(!human){t.skin=this.skins[slot];t.profileId=this.profileRoster+":bot:"+slot;}
     t.hp=hull(t);
-    if(!human&&(this.learningMode==="both"||this.duel&&this.learningMode===(slot===0?"a":"b"))) t.learning=newMemory(this.adaptiveBuilds);
+    if(!human&&(this.learningMode==="both"||this.duel&&this.learningMode===(slot===0?"a":"b")))
+      t.learning=previousLearning?respawnLearning(previousLearning,this.adaptiveBuilds):newMemory(this.adaptiveBuilds);
     if(this.convoy&&!human)changeClass(t,t.goal,true);
     else if(force && C[goal]) changeClass(t,goal,true);
     if(!human) spendBot(t,this.time);
@@ -4625,7 +4640,7 @@ class Arena {
           this.tanks.splice(i,1);
           const level=Math.max(this.startLevel,RESPAWN[t.level-1]);
           const goal=t.goal==="Necromancer"||t.cls==="Factory"?"Overlord":t.goal;
-          this.spawnTank(t.name,false,t.slot,level,goal,null,null,false,t.nextTeam??t.team,t.autoBranch);
+          this.spawnTank(t.name,false,t.slot,level,goal,null,null,false,t.nextTeam??t.team,t.autoBranch,false,t.learning);
         }
       }
     }
@@ -8627,7 +8642,7 @@ function enterRoomWorld(current,seed,bots){
   current.command=null;current.guestTank=null;
   current.restartAt=null;
   current.bots=bots;
-  world=new Arena(seed,bots,null,"both",true,"open","off");
+  world=new Arena(seed,bots,null,"both",true,"open","off",1,false,null,"multiplayer");
   world.history.lite=true;
   mode="play";pending=false;paused=false;acc=0;follow="leader";focusId=null;
   optStats=false;humanAuto=false;freeSelection=null;renderedTarget=null;highlightView=null;
@@ -8863,3 +8878,4 @@ requestAnimationFrame(frame);
 </script>
 </body>
 </html>
+
