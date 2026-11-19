@@ -22,7 +22,7 @@ ctx.gate=(w,t,e,h,s)=>{
   if(w.tick===targetTick&&t.slot===targetBot&&e?.slot===targetEnemy){
    const dx=e.x-t.x,dy=e.y-t.y,d=Math.hypot(dx,dy);
    const snapshot=JSON.stringify({tick:w.tick,tanks:w.tanks.map(v=>[v.id,v.slot,v.alive,v.x,v.y,v.vx,v.vy,v.hp,v.cls,v.level]),shots:w.shots.map(p=>[p.id,p.owner.id,p.kind,p.alive,p.x,p.y,p.vx,p.vy,p.age])});
-   comparison={snapshotHash:crypto.createHash('sha256').update(snapshot).digest('hex'),tick:w.tick,observer:t.slot,enemy:e.slot,heavy:h,swarm:s,x:t.x,y:t.y,ex:e.x,ey:e.y,hp:t.hp,evx:e.vx,evy:e.vy,learning:[...(t.learning?.threats||[])],nx:dx/d,ny:dy/d,attacks:w.shots.filter(p=>p.alive&&p.owner===e&&p.kind==='bullet'&&p.r>=e.r*.75).length,suppress};
+   comparison={snapshotHash:crypto.createHash('sha256').update(snapshot).digest('hex'),tick:w.tick,observer:t.slot,enemy:e.slot,heavy:h,swarm:s,x:t.x,y:t.y,ex:e.x,ey:e.y,hp:t.hp,evx:e.vx,evy:e.vy,learning:[...(t.learning?.threats||[])],nx:dx/d,ny:dy/d,attacks:w.shots.filter(p=>p.alive&&p.owner===e&&p.kind==='bullet'&&p.r>=e.r*.75).length,ownerProjectiles:w.shots.filter(p=>p.alive&&p.owner===e).map(p=>({id:p.id,kind:p.kind,r:p.r,age:p.age})),enemyClass:e.cls,suppress};
    return suppress?[false,false]:[h,s];
   }
   return [h,s];
