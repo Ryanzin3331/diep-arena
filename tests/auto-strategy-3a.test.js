@@ -34,3 +34,18 @@ test('janelas vazias não impedem exploração periódica de flanco e distância
 test('resultados próprios continuam escolhendo a melhor resposta fora da exploração',()=>{
  const choose=vm.runInContext('chooseHeavyResponse',ctx),m={heavyTrials:3,heavyResults:[{sum:.7,count:1},{sum:-.4,count:1}]};assert.equal(choose(m),0);m.heavyResults=[{sum:-.4,count:1},{sum:.7,count:1}];assert.equal(choose(m),1);m.heavyTrials=5;assert.equal(choose(m),0);
 });
+test('resposta de distância aproxima, estabiliza e afasta conforme alcance real',()=>{
+ for(const [distance,expected] of [[200,'afasta'],[380,'faixa'],[520,'aproxima']]){
+  const {w,a,b}=setup();b.x=b.px=a.x+distance;b.cls='Destroyer';a.learning.heavyTrials=2;botThink(w,a);
+  console.log('distância:',distance,'radial:',a.intent.x,'tiro:',a.intent.fire);
+  if(expected==='afasta')assert.ok(a.intent.x<-.1,'perto deve afastar');
+  if(expected==='faixa'){assert.ok(Math.abs(a.intent.x)<.2,'na faixa deve manter distância');assert.ok(a.intent.fire,'deve poder atirar na faixa');}
+  if(expected==='aproxima')assert.ok(a.intent.x>.1,'longe deve aproximar');
+ }
+});
+
+test('na mesma situação flanco e distância mantêm movimentos distintos',()=>{
+ const flank=setup(),distance=setup();for(const g of [flank,distance]){g.b.x=g.b.px=g.a.x+380;g.b.cls='Destroyer';}
+ flank.a.learning.heavyTrials=0;distance.a.learning.heavyTrials=2;botThink(flank.w,flank.a);botThink(distance.w,distance.a);
+ assert.notDeepEqual([flank.a.intent.x,flank.a.intent.y],[distance.a.intent.x,distance.a.intent.y]);
+});

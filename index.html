@@ -5689,7 +5689,13 @@ function botThink(w,t){
       }
     }
     if(heavyPlan&&(radial!==heavyPlan.baseRadial||strafe!==heavyPlan.baseStrafe))heavyPlan=null;
-    if(heavyPlan){if(heavyPlan.choice===0)strafe=1.15*flank;else radial=Math.min(radial,-.55);}
+    if(heavyPlan){
+      if(heavyPlan.choice===0)strafe=1.15*flank;
+      else if(weapon&&shotRange>0){
+        const reach=Math.min(vision*.98,shotRange*.9+enemy.r);
+        radial=eDist<reach*.50?-.55:eDist>reach*.80?.55:0;
+      }
+    }
     targetX=t.x+(Math.cos(a)*radial-Math.sin(a)*strafe)*150;
     targetY=t.y+(Math.sin(a)*radial+Math.cos(a)*strafe)*150;
     if(heavyPlan)
