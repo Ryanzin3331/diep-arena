@@ -1108,13 +1108,13 @@ function observeDroneSwarm(w,t,risks,nearby){
   }
 }
 function threatDistance(heavy,swarm){return Math.min(140,(heavy?110:0)+(swarm?80:0));}
-// Aggregate only exchanges with damage; idle windows never create a reward.
+// Idle windows never create a reward; defensive credit is small and capped.
 function finishHeavyAttempt(m){
   const a=m?.heavyAttempt;if(!a)return;
   m.heavyAttempt=null;
-  if(!(a.dealt>0||a.taken>0))return;
+  if(!(a.dealt>0||a.taken>0||a.defensive>0))return;
   m.heavyResults??=[{sum:0,count:0},{sum:0,count:0}];
-  const row=m.heavyResults[a.choice];row.sum=row.sum*.8+clamp((a.dealt-a.taken)/100,-1,1);row.count++;
+  const row=m.heavyResults[a.choice];row.sum=row.sum*.8+clamp((a.dealt-a.taken)/100+Math.min(.06,(a.defensive||0)*.02),-1,1);row.count++;
 }
 function chooseHeavyResponse(m){
   if(m.heavyAttempt)return m.heavyAttempt.choice;
@@ -4548,6 +4548,20 @@ class Arena {
       if(seeA)observeHit(b,a,aClass,taken,false,this.time);
     }
   }
+  creditHeavyInterception(own,hostile){
+    const t=own.owner, rival=hostile.owner, a=t.learning?.heavyAttempt;
+    if(!localDiscoveryArena(this)||!t.alive||!a||own.heavyAttempt!==a||this.time>a.until||
+      rival?.id!==a.rivalId||hostile.kind!=="bullet"||hostile.r<rival.r*.75||
+      !perceived(this,t,rival)||!perceived(this,t,hostile))return;
+    const dx=hostile.x-t.x,dy=hostile.y-t.y;
+    const vx=hostile.vx+(hostile.kx||0),vy=hostile.vy+(hostile.ky||0);
+    const time=-(dx*vx+dy*vy)/Math.max(1,vx*vx+vy*vy);
+    if(time<0||time>.61||Math.hypot(dx+vx*time,dy+vy*time)>t.r+hostile.r+10+t.trait*1.4)return;
+    if((a.defensive||0)>=3)return;
+    a.defensiveShots??=new Set();
+    if(a.defensiveShots.has(hostile.id))return;
+    a.defensiveShots.add(hostile.id);a.defensive=Math.min(3,(a.defensive||0)+1);
+  }
   collidingShots(){
     const candidates=this.collisionCandidates,hits=this.shotHits;
     for(const p of this.shots){
@@ -4571,6 +4585,8 @@ class Arena {
           const pressure=buildPressure(blocked.owner,this.time);
           pressure[4]=Math.min(11,pressure[4]+.45);
         }
+        if(p.dur<=0)this.creditHeavyInterception(q,p);
+        if(q.dur<=0)this.creditHeavyInterception(p,q);
         if(p.dur<=0) this.removeShot(p,q.owner);
         if(q.dur<=0) this.removeShot(q,p.owner);
       }

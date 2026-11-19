@@ -49,3 +49,25 @@ test('na mesma situação flanco e distância mantêm movimentos distintos',()=>
  flank.a.learning.heavyTrials=0;distance.a.learning.heavyTrials=2;botThink(flank.w,flank.a);botThink(distance.w,distance.a);
  assert.notDeepEqual([flank.a.intent.x,flank.a.intent.y],[distance.a.intent.x,distance.a.intent.y]);
 });
+test('interceptação real credita apenas tiro pesado do rival em risco e tentativa ativa',()=>{
+ function run(kind){
+  const {w,a,b}=setup();b.cls='Destroyer';botThink(w,a);const attempt=a.learning.heavyAttempt;assert.ok(attempt);
+  if(kind==='antiga'){w.spawnShot(a,C.Tank.guns[0]);const old=w.shots.at(-1);w.time=2.1;botThink(w,a);assert.notEqual(a.learning.heavyAttempt,attempt);var own=old;}
+  else{w.spawnShot(a,C.Tank.guns[0]);var own=w.shots.at(-1);}
+  let rival=b;if(kind==='terceiro'){rival=w.spawnTank('Outro',false,7,30,'Destroyer',1300,1000,true);rival.protect=0;}
+  w.spawnShot(rival,C.Destroyer.guns[0]);const hostile=w.shots.at(-1);
+  Object.assign(own,{px:1120,py:1000,x:1140,y:1000,bornTick:-1,damage:1000,dur:1000});
+  Object.assign(hostile,{px:1160,py:1000,x:1140,y:1000,bornTick:-1,r:30,dur:1,vx:kind==='fora'?0:-400,vy:kind==='fora'?400:0});
+  w.ballistic.clear();w.solid.clear();w.ballistic.add(own);w.ballistic.add(hostile);w.collidingShots();assert.equal(hostile.alive,false);
+  return a.learning.heavyAttempt?.defensive||0;
+ }
+ assert.equal(run('positivo'),1);for(const kind of ['terceiro','fora','antiga'])assert.equal(run(kind),0,kind);
+});
+test('crédito defensivo é único por tiro hostil e limitado por tentativa',()=>{
+ const {w,a,b}=setup();b.cls='Destroyer';botThink(w,a);const attempt=a.learning.heavyAttempt;
+ w.spawnShot(a,C.Tank.guns[0]);const own=w.shots.at(-1);
+ w.spawnShot(b,C.Destroyer.guns[0]);const shot=w.shots.at(-1);Object.assign(shot,{x:1140,y:1000,r:30,vx:-400,vy:0});
+ w.creditHeavyInterception(own,shot);w.creditHeavyInterception(own,shot);assert.equal(attempt.defensive,1);
+ for(let i=0;i<8;i++)w.creditHeavyInterception(own,{...shot,id:shot.id+i+100});assert.equal(attempt.defensive,3);
+ w.time=2.1;botThink(w,a);assert.equal(a.learning.heavyResults[attempt.choice].sum,.06);
+});
