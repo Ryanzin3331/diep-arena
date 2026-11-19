@@ -4516,11 +4516,15 @@ class Arena {
     if(!(a.learning||b.learning))return;
     const dealt=Math.min(aDamage,b.hp),taken=Math.min(bDamage,a.hp);
     if(dealt>0){
+      if(localDiscoveryArena(this)&&seeA&&b.learning?.heavyAttempt?.rivalId===a.id)
+        b.learning.heavyAttempt.taken=(b.learning.heavyAttempt.taken||0)+dealt;
       if(localDiscoveryArena(this)&&seeB&&shotAttempt&&a.learning?.heavyAttempt===shotAttempt&&shotAttempt.rivalId===b.id)shotAttempt.dealt+=dealt;
       if(seeB&&aClass===a.cls) observeHit(a,b,bClass,dealt,false,this.time,shotTactic);
       if(seeA)observeHit(b,a,aClass,dealt,true,this.time);
     }
     if(taken>0){
+      if(localDiscoveryArena(this)&&seeB&&a.learning?.heavyAttempt?.rivalId===b.id)
+        a.learning.heavyAttempt.taken=(a.learning.heavyAttempt.taken||0)+taken;
       if(seeB)observeHit(a,b,bClass,taken,true,this.time);
       if(seeA)observeHit(b,a,aClass,taken,false,this.time);
     }
