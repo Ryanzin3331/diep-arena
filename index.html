@@ -1120,8 +1120,8 @@ function chooseHeavyResponse(m){
   if(m.heavyAttempt)return m.heavyAttempt.choice;
   const n=m.heavyTrials??0;if(n<2)return n;
   const rows=m.heavyResults;
-  if(!rows||!rows.some(r=>r.count))return 1;
   if(n%6===5)return (Math.floor(n/6)%2);
+  if(!rows||!rows.some(r=>r.count))return 1;
   const score=r=>r?.count?r.sum/Math.min(r.count,5):0;
   return score(rows[0])>score(rows[1])?0:1;
 }

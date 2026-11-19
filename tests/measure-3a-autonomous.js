@@ -21,7 +21,7 @@ c.hitEvent=(w,a,b,dealt,taken)=>{
   const type=source.id===attempt.rivalId?'rival':'outro';incoming[type]=(incoming[type]||0)+1;
  }
 };
-c.opened=(t,a,tick)=>{attempts.set(a,{slot:t.slot,tick});bots.add(t.slot);};
+c.opened=(t,a,tick)=>{attempts.set(a,{slot:t.slot,tick,choice:a.choice});bots.add(t.slot);};
 c.ended=(a,reason)=>{const rec=attempts.get(a);if(!rec||rec.ended)return;rec.ended=true;rec.end=clock;rec.reason=reason;rec.dealt=a.dealt;rec.taken=a.taken;reasons[reason]=(reasons[reason]||0)+1;if(a.dealt>0||a.taken>0){scored.add(rec.slot);const flags=byChoice.get(rec.slot)||new Set();flags.add(a.choice);byChoice.set(rec.slot,flags);}};
 c.spawned=(p,tick)=>{if(tick<=2400)shots.set(p,{tick,category:null});};
 c.impact=(p,e,w)=>{const record=shots.get(p);if(!record||record.category)return;let type=e.id!==p.heavyAttempt.rivalId?'outro_alvo':p.owner.alive&&p.owner.learning?.heavyAttempt===p.heavyAttempt&&w.time<=p.heavyAttempt.until?(c.api.perceived(w,p.owner,e)?'rival_ativa_perceptivel':'rival_ativa_oculto'):'rival_encerrada';record.category=type;record.endTick=w.tick;events[type]=(events[type]||0)+1;};
