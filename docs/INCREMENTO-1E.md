@@ -15,7 +15,9 @@ A transição conserva a configuração e a promessa originais. Uma revisão de 
 
 ## Interface visível
 
-Em Chromium com interface, no endereço local `http://127.0.0.1:8765/index.html`, foram verificados o download real do JSON, a seleção e reimportação do mesmo arquivo com diálogo nativo de confirmação (24 perfis), e a preferência ativada após fechar e reabrir a aba. A exclusão em duas abas foi verificada na automação, mas não concluída pela interface visível. O fechamento e reabertura foram da aba, não do processo completo do navegador.
+Em Chromium com interface, no endereço local `http://127.0.0.1:8765/index.html`, foram verificados o download real do JSON, a seleção e reimportação do mesmo arquivo com diálogo nativo de confirmação (24 perfis), e a preferência ativada após fechar e reabrir a aba. No desktop, a aba A apagou 24 perfis pelos diálogos nativos; ao reiniciar, a arena antiga da aba B foi impedida de gravar e o banco permaneceu vazio. Após fechar e reabrir o Chromium com o mesmo perfil, a preferência continuou ligada e o banco vazio.
+
+No Poco C75, Chrome Android em prévia HTTPS, os controles funcionaram por toque em retrato e paisagem. O FFA salvou 36 perfis; o JSON foi baixado e reimportado no Android com confirmação de 36 perfis. O backup continha os 36 slots FFA sem duplicatas. A importação mostrou a mensagem de sucesso duas vezes; a correção deste incremento elimina a duplicação. Não houve medição de desempenho no celular.
 
 ## Medições
 
@@ -30,4 +32,4 @@ Linux x86_64, AMD EPYC 7763 (3 CPUs disponíveis), Node 24.22.1, Chromium 156 he
 
 ## Pendente
 
-Validar a exclusão com diálogos nativos em duas abas visíveis; fechamento e reabertura completa do navegador; toque, rotação e download no Poco C75 físico. Permanecem também os limites registrados no 1D-B: outros navegadores, modo privado, quota real e multiplayer em dispositivos reais. `pagehide` é tentativa sem garantia de conclusão.
+Permanecem os limites registrados no 1D-B: outros navegadores, modo privado, quota real e multiplayer em dispositivos reais. `pagehide` é tentativa sem garantia de conclusão.

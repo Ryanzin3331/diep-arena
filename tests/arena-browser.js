@@ -173,10 +173,14 @@
     assert(JSON.stringify(await db.export())===before);
   });
   await run('reimportação do arquivo exportado confirma e substitui atomicamente',async()=>{
+    ui.doc.getElementById('panelConfig').click();
     const parsed=JSON.parse(backupText),changed=JSON.parse(backupText);changed.profiles[0].memory.experience.samples=77;
     await db.replace(changed.profiles);const active=ui.api.world;active.tanks[0].learning.samples=88;let prompt='';ui.win.confirm=message=>{prompt=message;return true;};
     const input=ui.doc.getElementById('memoryFile'),dt=new ui.win.DataTransfer();dt.items.add(new ui.win.File([backupText],'backup.json',{type:'application/json'}));input.files=dt.files;input.dispatchEvent(new ui.win.Event('change',{bubbles:true}));
     await until(()=>ui.doc.getElementById('memoryStatus').textContent.includes('Importação concluída'));
+    const message='Importação concluída: '+parsed.profiles.length+' perfil(is). Vale para próximas arenas.';
+    const visible=[...ui.doc.querySelectorAll('#memoryStatus, #memoryResult')].filter(e=>e.textContent===message&&e.getClientRects().length);
+    assert(visible.length===1,'resultado de importação deve aparecer uma única vez');
     const restored=await db.export();assert(prompt.includes(String(parsed.profiles.length)));
     assert(restored.profiles.find(p=>p.profileId==='open:bot:0').memory.experience.samples===14);
     assert(ui.api.world===active&&active.tanks[0].learning.samples===88);

@@ -6103,8 +6103,13 @@ try{reuseBotMemory=localStorage.getItem(MEMORY_PREF)==='on';}catch(error){prefer
 el('reuseBotMemory').value=reuseBotMemory?'on':'off';
 let botMemoryStore=null;
 let indexedMemoryBridge=null,arenaTransition=0,memoryRevision=0,transitionPending=false,transitionReady=null,memorySaveBarrier=null,memoryMutation=null,memoryDbPromise=null,memoryWarning='';
-function memoryMessage(message){el('memoryStatus').textContent=message;}
-function memoryResult(message){el('memoryResult').textContent=message;}
+function memoryMessage(message){
+  const result=el('memoryResult');if(result.textContent&&message.includes(result.textContent))result.hidden=true;
+  el('memoryStatus').textContent=message;result.hidden=!result.textContent||message.includes(result.textContent);
+}
+function memoryResult(message){
+  const result=el('memoryResult');result.hidden=!message||el('memoryStatus').textContent.includes(message);result.textContent=message;
+}
 function memoryFailure(error){console.warn('Memória dos bots indisponível:',error);memoryWarning='Falha no armazenamento de memória. O jogo continua disponível.';memoryMessage(memoryWarning);memoryResult(memoryWarning);}
 if(preferenceFailure)memoryFailure(preferenceFailure);
 function withMemoryLock(task){
