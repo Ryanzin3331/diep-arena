@@ -6,7 +6,7 @@ const executable=process.env.CHROME_BIN||(process.platform==='win32'?'C:\\Progra
 const tempRoot=path.resolve(os.tmpdir()),profile=fs.mkdtempSync(path.join(tempRoot,'diep-arena-test-'));
 const files=new Set(['/tests/arena-browser.html','/tests/arena-browser.js','/memory-codec.js','/memory-store.js','/memory-idb.js','/memory-bridge.js','/memory-backup.js']);
 const hook=`window.__arenaTest={get world(){return world},get mode(){return mode},get pendingTransition(){return transitionPending},
-  restart,setMode,recordOutcome,enterRoomWorld,pause(){paused=true},get bridge(){return indexedMemoryBridge},set bridge(value){indexedMemoryBridge=value},
+  restart,setMode,join,recordOutcome,enterRoomWorld,pause(){paused=true},get bridge(){return indexedMemoryBridge},set bridge(value){indexedMemoryBridge=value},
   failingBridge(){return createIndexedMemoryBridge({indexedDB:{open(){throw Error('unavailable')}},codec:createMemoryCodec({classes:C,newMemory,ttl:MEMORY_TTL}),createStore:createTransactionalMemoryStore})},
   legacyBridge(name,getLegacyStorage){return createIndexedMemoryBridge({indexedDB,codec:createMemoryCodec({classes:C,newMemory,ttl:MEMORY_TTL}),createStore:createTransactionalMemoryStore,name,getLegacyStorage})},
   database(){return createTransactionalMemoryStore({indexedDB,codec:createMemoryCodec({classes:C,newMemory,ttl:MEMORY_TTL})}).open()}};`;
@@ -18,6 +18,7 @@ const server=http.createServer((req,res)=>{
     if(url.searchParams.get('enabled')==='1')html=html.replace("try{reuseBotMemory=localStorage.getItem(MEMORY_PREF)==='on';}catch(error){preferenceFailure=error;}",'reuseBotMemory=true;');
     if(url.searchParams.get('enabled')==='0')html=html.replace("try{reuseBotMemory=localStorage.getItem(MEMORY_PREF)==='on';}catch(error){preferenceFailure=error;}",'reuseBotMemory=false;');
     if(url.searchParams.get('bench')==='1'){
+      if(url.searchParams.get('map')==='maze')html=html.replace('const initialArena=restart();','el("arenaMap").value="maze";const initialArena=restart();');
       html=html.replace('<option selected>24</option><option>36</option>','<option>24</option><option selected>36</option>');
       html=html.replace('el("botCount").value=initialBots;','el("botCount").value=36;');
       html=html.replace('createIndexedMemoryBridge({indexedDB,codec:',`createIndexedMemoryBridge({indexedDB,name:'diep-benchmark-${Date.now()}-${Math.random()}',codec:`);

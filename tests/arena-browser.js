@@ -4,10 +4,10 @@
   const assert=(v,m)=>{if(!v)throw Error(m||'assertion failed');};
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   async function until(predicate){for(let i=0;i<300;i++){if(predicate())return;await sleep(20);}throw Error('tempo esgotado');}
-  async function run(name,fn){try{await fn();lines.push('PASS '+name);}catch(e){lines.push('FAIL '+name+': '+(e.stack||e));}}
-  async function game(enabled,bench=false){
+  async function run(name,fn){try{await fn();lines.push('PASS '+name);output.textContent=lines.join('\n');}catch(e){lines.push('FAIL '+name+': '+(e.stack||e));output.textContent=lines.join('\n');}}
+  async function game(enabled,bench=false,map="open"){
     const frame=document.createElement('iframe');frame.style.cssText='position:absolute;left:-2000px;width:1024px;height:768px';
-    frame.src='/game?enabled='+(enabled==='ui'?'ui':enabled?'1':'0')+(bench?'&bench=1':'');document.body.append(frame);
+    frame.src='/game?enabled='+(enabled==='ui'?'ui':enabled?'1':'0')+(bench?'&bench=1&map='+map:'');document.body.append(frame);
     await new Promise((resolve,reject)=>{frame.onload=resolve;frame.onerror=reject;});
     const win=frame.contentWindow;await until(()=>win.__arenaTest?.world&&!win.__arenaTest.pendingTransition);
     win.__arenaTest.pause();return {frame,win,api:win.__arenaTest,doc:win.document};
@@ -134,6 +134,19 @@
     lines.push('METRIC reinícios 36 bots mediana total='+fmt(median('total'))+'ms serialização='+fmt(median('serialize'))+'ms gravação='+fmt(median('write'))+'ms leitura/validação='+fmt(median('read'))+'ms construção='+fmt(median('build'))+'ms verificação marcador='+fmt(median('marker'))+'ms');
     bench.frame.remove();
   });
+  await run('mede carregamento inicial e reinícios FFA e Maze com 36 bots',async()=>{
+    const median=a=>a.slice().sort((x,y)=>x-y)[Math.floor(a.length/2)].toFixed(1);
+    for(const map of ['open','maze'])for(const enabled of [false,true]){
+      const initial=[],restarts=[];
+      for(let i=0;i<3;i++){
+        const start=performance.now(),sample=await game(enabled,true,map);initial.push(performance.now()-start);
+        assert(sample.api.world.mapKind===map&&sample.api.world.tanks.length===36);
+        for(let j=0;j<5;j++){const t=performance.now();await sample.api.restart();restarts.push(performance.now()-t);sample.api.pause();}
+        sample.frame.remove();
+      }
+      lines.push('METRIC 1E mapa='+map+' memória='+(enabled?'ligada':'desligada')+' inicial n=3 mediana='+median(initial)+'ms reinícios n=15 mediana='+median(restarts)+'ms');
+    }
+  });
   let ui,other,db,backupText;
   await run('controle ligado → desligado → ligado preserva backup e preferência',async()=>{
     db=await g.api.database();await db.clear();localStorage.setItem('diep-arena:bot-memory:reuse','off');
@@ -177,6 +190,40 @@
     dt.items.add(new ui.win.File([backupText],'backup.json',{type:'application/json'}));input.files=dt.files;input.dispatchEvent(new ui.win.Event('change',{bubbles:true}));
     await until(()=>ui.doc.getElementById('memoryResult').textContent.includes('Importação concluída'));release();await pending;
     await until(()=>!ui.api.pendingTransition&&ui.api.world!==old);ui.api.pause();assert(ui.api.world.tanks[0].learning.samples===14);ui.api.bridge=original;
+  });
+  await run('importação durante entrada Survival preserva mapa e jogador',async()=>{
+    dom(ui,'arenaMap','survival');await ui.api.restart();ui.api.setMode('play');
+    dom(ui,'arenaMap','open');const old=ui.api.world;let release,entered=false;
+    const gate=new Promise(r=>release=r),original=old.botMemorySession;
+    // Force the asynchronous window even though Survival itself has no persistent session.
+    old.botMemorySession={save(){entered=true;return gate;}};
+    ui.api.join();await until(()=>entered&&ui.api.pendingTransition);
+    ui.doc.getElementById('memoryResult').textContent='';ui.win.confirm=()=>true;const input=ui.doc.getElementById('memoryFile'),dt=new ui.win.DataTransfer();
+    dt.items.add(new ui.win.File([backupText],'backup.json',{type:'application/json'}));input.files=dt.files;input.dispatchEvent(new ui.win.Event('change',{bubbles:true}));
+    await until(()=>ui.doc.getElementById('memoryResult').textContent.includes('Importação concluída'));
+    release();await until(()=>!ui.api.pendingTransition&&ui.api.world!==old);
+    assert(ui.api.world.survival&&ui.api.world.human?.alive,'entrada perdeu Survival ou jogador');ui.api.pause();
+  });
+  await run('exclusão em outra aba preserva ensaio de chefe pendente',async()=>{
+    ui.api.setMode('lab');await until(()=>!ui.api.pendingTransition&&ui.api.world.duel);
+    const old=ui.api.world,original=ui.api.bridge;let release,entered=false;const gate=new Promise(r=>release=r);
+    old.botMemorySession={save(){entered=true;return gate;}};
+    const pending=ui.api.restart('guardian');await until(()=>entered&&ui.api.pendingTransition);
+    other.doc.getElementById('memoryResult').textContent='';const answers=[false,true];other.win.confirm=()=>answers.shift();other.doc.getElementById('deleteMemory').click();
+    await until(()=>other.doc.getElementById('memoryResult').textContent.includes('Memórias apagadas'));
+    await sleep(100);release();await pending;await until(()=>!ui.api.pendingTransition&&ui.api.world!==old);
+    assert(ui.api.world.bossTrial&&ui.api.world.boss,'ensaio de chefe perdido');ui.api.pause();ui.api.bridge=original;await db.replace(JSON.parse(backupText).profiles);
+  });
+  await run('pedido mais recente prevalece durante operação de memória',async()=>{
+    const original=ui.api.bridge;let release,entered=false;const gate=new Promise(r=>release=r);
+    ui.api.bridge={prepare:async scope=>{entered=true;await gate;return original.prepare(scope);}};
+    dom(ui,'seed','7311');const first=ui.api.restart();await until(()=>entered);
+    ui.doc.getElementById('memoryResult').textContent='';ui.win.confirm=()=>true;
+    const input=ui.doc.getElementById('memoryFile'),dt=new ui.win.DataTransfer();
+    dt.items.add(new ui.win.File([backupText],'backup.json',{type:'application/json'}));input.files=dt.files;input.dispatchEvent(new ui.win.Event('change',{bubbles:true}));
+    await until(()=>ui.doc.getElementById('memoryResult').textContent.includes('Importação concluída'));
+    dom(ui,'seed','7312');const latest=ui.api.restart();release();
+    assert(await first===false);await latest;assert(ui.api.world.seed===7312,'pedido antigo prevaleceu');ui.api.pause();ui.api.bridge=original;
   });
   await run('falha transacional na importação preserva os dados e informa erro',async()=>{
     const before=JSON.stringify(await db.export()),original=ui.win.IDBObjectStore.prototype.put;let armed=true;

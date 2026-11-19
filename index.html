@@ -6102,7 +6102,7 @@ let reuseBotMemory=false,preferenceFailure=null;
 try{reuseBotMemory=localStorage.getItem(MEMORY_PREF)==='on';}catch(error){preferenceFailure=error;}
 el('reuseBotMemory').value=reuseBotMemory?'on':'off';
 let botMemoryStore=null;
-let indexedMemoryBridge=null,arenaTransition=0,transitionPending=false,transitionReady=null,memorySaveBarrier=null,memoryMutation=null,memoryDbPromise=null,memoryWarning='';
+let indexedMemoryBridge=null,arenaTransition=0,memoryRevision=0,transitionPending=false,transitionReady=null,memorySaveBarrier=null,memoryMutation=null,memoryDbPromise=null,memoryWarning='';
 function memoryMessage(message){el('memoryStatus').textContent=message;}
 function memoryResult(message){el('memoryResult').textContent=message;}
 function memoryFailure(error){console.warn('Memória dos bots indisponível:',error);memoryWarning='Falha no armazenamento de memória. O jogo continua disponível.';memoryMessage(memoryWarning);memoryResult(memoryWarning);}
@@ -6157,7 +6157,7 @@ try{if(typeof BroadcastChannel==='function')memoryChannel=new BroadcastChannel('
 function notifyMemoryChanged(){try{memoryChannel?.postMessage('changed');}catch(_){}}
 if(memoryChannel)memoryChannel.onmessage=event=>{
   if(event.data!=='changed')return;
-  if(transitionPending){++arenaTransition;transitionPending=false;restart();}
+  ++memoryRevision;
   void refreshMemoryStatus();
 };
 function backupCodec(){return createMemoryBackup(createMemoryCodec({classes:C,newMemory,ttl:MEMORY_TTL}));}
@@ -6174,15 +6174,13 @@ async function exportBotMemory(){
 }
 function mutateBotMemory(task){
   if(memoryMutation)return Promise.resolve(false);
-  const restartCanceled=transitionPending,request=++arenaTransition;
-  transitionPending=false;
+  ++memoryRevision;
   memoryControlsBusy(true);
   const operation=(async()=>{try{return await withMemoryLock(task);}catch(error){memoryFailure(error);return false;}})();
   memoryMutation=operation;
   operation.then(()=>{
     if(memoryMutation===operation)memoryMutation=null;
     memoryControlsBusy(false);
-    if(restartCanceled&&request===arenaTransition)restart();
   });
   return operation;
 }
@@ -6448,29 +6446,41 @@ function restart(bossTrial=false){
   if(bridge)memoryMessage('Preparando memória para a próxima arena…');
   const ready=(async()=>{
     try{await save;}catch(error){console.warn('Memória dos bots não foi salva:',error);}
-    try{await mutation;}catch(_){}
-    if(request!==arenaTransition)return false;
-    let prepared=null;
-    if(bridge){
-      try{
-        prepared=await bridge.prepare(scope);
-        if(request!==arenaTransition)return false;
-        return await withMemoryLock(async()=>{
+    while(request===arenaTransition){
+      const revision=memoryRevision;
+      try{await memoryMutation;}catch(_){}
+      if(request!==arenaTransition)return false;
+      if(revision!==memoryRevision)continue;
+      let prepared=null;
+      if(bridge){
+        try{
+          prepared=await bridge.prepare(scope);
           if(request!==arenaTransition)return false;
-          for(let attempts=0;prepared?.isCurrent&&attempts<3;attempts++){
-            if(await prepared.isCurrent())break;
-            prepared=await bridge.prepare(scope);
+          if(revision!==memoryRevision)continue;
+          const result=await withMemoryLock(async()=>{
             if(request!==arenaTransition)return false;
-            if(attempts===2)prepared=null;
-          }
-          if(request!==arenaTransition)return false;
-          if(!prepared)memoryMessage('Memória indisponível para esta arena. O jogo continua.');
-          transitionPending=false;finishRestart(config,bossTrial,prepared);return true;
-        });
-      }catch(error){memoryFailure(error);prepared=null;}
+            if(revision!==memoryRevision)return null;
+            for(let attempts=0;prepared?.isCurrent&&attempts<3;attempts++){
+              if(await prepared.isCurrent())break;
+              prepared=await bridge.prepare(scope);
+              if(request!==arenaTransition)return false;
+              if(revision!==memoryRevision)return null;
+              if(attempts===2)prepared=null;
+            }
+            if(request!==arenaTransition)return false;
+            if(revision!==memoryRevision)return null;
+            if(!prepared)memoryMessage('Memória indisponível para esta arena. O jogo continua.');
+            transitionPending=false;finishRestart(config,bossTrial,prepared);return true;
+          });
+          if(result===null)continue;
+          return result;
+        }catch(error){memoryFailure(error);prepared=null;}
+      }
+      if(request!==arenaTransition)return false;
+      if(revision!==memoryRevision)continue;
+      transitionPending=false;finishRestart(config,bossTrial,prepared);return true;
     }
-    if(request!==arenaTransition)return false;
-    transitionPending=false;finishRestart(config,bossTrial,prepared);return true;
+    return false;
   })();
   transitionReady=ready;
   return ready;
