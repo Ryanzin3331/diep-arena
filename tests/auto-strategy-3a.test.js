@@ -71,3 +71,10 @@ test('crédito defensivo é único por tiro hostil e limitado por tentativa',()=
  for(let i=0;i<8;i++)w.creditHeavyInterception(own,{...shot,id:shot.id+i+100});assert.equal(attempt.defensive,3);
  w.time=2.1;botThink(w,a);assert.equal(a.learning.heavyResults[attempt.choice].sum,.06);
 });
+test('duelo FFA reproduzível mantém descoberta no controle e tenta 3A somente no tratamento',()=>{
+ const {spawnSync}=require('node:child_process');
+ function run(control){const r=spawnSync(process.execPath,['tests/measure-3a-duel.js'],{encoding:'utf8',env:{...process.env,SEED:'7102',DISTANCE:'300',TICKS:'900',CONTROL:String(control)}});assert.equal(r.status,0,r.stderr);return JSON.parse(r.stdout);}
+ const control=run(1),active=run(0);assert.deepEqual(active,run(0));
+ for(const r of [control,active]){assert.deepEqual(r.finalClasses,['Tank','Destroyer']);assert.ok(r.threat>=2);assert.ok(r.fired.tank>0&&r.fired.destroyer>0);}
+ assert.equal(control.attempts.length,0);assert.ok(active.attempts.length>0);assert.equal(active.results,null);assert.equal(active.hits.length,0);
+});
