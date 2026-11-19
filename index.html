@@ -3770,7 +3770,7 @@ class Arena {
       x=t.x+(x-t.x)*Math.max(0,wall-.01);
       y=t.y+(y-t.y)*Math.max(0,wall-.01);
     }
-    const child={type:"shot",kind:g.kind,owner:t,sourceClass:t.cls,learningTarget:t.learning?.foeId,sourceTactic:t.learning?.tactic,alive:true,x,y,px:x,py:y,angle:a,
+    const child={type:"shot",kind:g.kind,owner:t,sourceClass:t.cls,heavyAttempt:localDiscoveryArena(this)?t.learning?.heavyAttempt:undefined,learningTarget:t.learning?.foeId,sourceTactic:t.learning?.tactic,alive:true,x,y,px:x,py:y,angle:a,
       r,
       life:g.kind===FACTORY_MINION?Infinity:g.battleshipWing!=null?g.life:isDrone?90:1.35*g.life,
       damage:(7+3*t.stats[5])*g.damage,dur:(2+1.5*t.stats[4])*g.pen,age:0,speed};
@@ -3857,7 +3857,7 @@ class Arena {
       for(let i=0;i<6;i++){
         const a=i*TAU/6+(ring%2)*Math.PI/6;
         const speed=(170+ring*92)*(1+p.owner.stats[3]*.045);
-        this.shots.push({type:"shot",kind:"bullet",owner:p.owner,sourceClass:p.sourceClass,learningTarget:p.learningTarget,sourceTactic:p.sourceTactic,alive:true,id:++this.serial,x:p.x,y:p.y,px:p.x,py:p.y,
+        this.shots.push({type:"shot",kind:"bullet",owner:p.owner,sourceClass:p.sourceClass,heavyAttempt:p.heavyAttempt,learningTarget:p.learningTarget,sourceTactic:p.sourceTactic,alive:true,id:++this.serial,x:p.x,y:p.y,px:p.x,py:p.y,
           angle:a,vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,r:3.8,life:.58,age:0,damage:p.damage*.86,dur:p.dur*.22});
       }
     }
@@ -4416,7 +4416,7 @@ class Arena {
       this.maze?.hit(p.x,p.y,x,y,r)!=null||this.baseImpact(p.owner,p.x,p.y,x,y,r)!=null)return;
     this.shots.push({
       type:"shot",kind:"bullet",owner:p.owner,sourceClass:p.sourceClass,
-      learningTarget:p.learningTarget,sourceTactic:p.sourceTactic,
+      learningTarget:p.learningTarget,sourceTactic:p.sourceTactic,heavyAttempt:p.heavyAttempt,
       alive:true,id:++this.serial,bornTick:this.tick,x,y,px:x,py:y,angle,r,
       vx:ca*p.sideSpeed+p.vx*.18,vy:sa*p.sideSpeed+p.vy*.18,
       life:gun.life,age:0,damage:p.sideDamage,dur:p.sideDur
@@ -4503,7 +4503,7 @@ class Arena {
       }
     }
   }
-  combatHit(a,b,aClass,bClass,aDamage,bDamage=0,shotTactic){
+  combatHit(a,b,aClass,bClass,aDamage,bDamage=0,shotTactic,shotAttempt){
     if(!a.alive||!b.alive)return;
     if(this.rivalries&&(!localDiscoveryArena(this)||perceived(this,a,b)&&perceived(this,b,a)))this.observeRivalExchange(a,b,aDamage,bDamage);
     const seeA=!localDiscoveryArena(this)||perceived(this,b,a),seeB=!localDiscoveryArena(this)||perceived(this,a,b);
@@ -4516,6 +4516,7 @@ class Arena {
     if(!(a.learning||b.learning))return;
     const dealt=Math.min(aDamage,b.hp),taken=Math.min(bDamage,a.hp);
     if(dealt>0){
+      if(localDiscoveryArena(this)&&seeB&&shotAttempt&&a.learning?.heavyAttempt===shotAttempt&&shotAttempt.rivalId===b.id)shotAttempt.dealt+=dealt;
       if(seeB&&aClass===a.cls) observeHit(a,b,bClass,dealt,false,this.time,shotTactic);
       if(seeA)observeHit(b,a,aClass,dealt,true,this.time);
     }
@@ -4592,7 +4593,7 @@ class Arena {
           (this.survival&&e.type==="tank"&&p.owner.type==="tank"?this.survivalTankDamage():1);
         if(e.type==="tank"&&p.owner.type==="tank"){
           const tactic=p.kind==="drone"||p.kind===NECRO_DRONE||p.kind===FACTORY_MINION?undefined:p.learningTarget===e.id?p.sourceTactic:0;
-          this.combatHit(p.owner,e,p.sourceClass??p.owner.cls,e.cls,p.damage*load,0,tactic);
+          this.combatHit(p.owner,e,p.sourceClass??p.owner.cls,e.cls,p.damage*load,0,tactic,p.heavyAttempt);
         }
         e.hp-=p.damage*load;e.damaged=e.hit=this.time;
         if(e.type==="boss")this.bossDamage(e,p.owner);
