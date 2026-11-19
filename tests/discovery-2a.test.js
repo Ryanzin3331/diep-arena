@@ -59,3 +59,25 @@ test('descoberta fica fora do backup e não se aplica ao multiplayer',()=>{
  const multi=new Arena(12345,2,null,'both',true,'open','off',1,false,null,'multiplayer');const x=multi.tanks[0],y=multi.tanks[1];x.x=1000;x.y=1000;y.x=1100;y.y=1000;
  observeHeavyShot(multi,x,shot(y,2));assert.equal(x.learning.threats,undefined);
 });
+test('deduplicação expira pelo relógio e preserva tiro elegível após renascimento',()=>{
+ const {w,a,b}=setup();const first=shot(b,100);first.age=0;observeHeavyShot(w,a,first);
+ w.time=.1;observeHeavyShot(w,a,first);assert.equal(a.learning.threats.get(b.profileId),1);
+ // Losing sight does not discard the record, including through respawn.
+ const old=a.learning;w.maze={hit:()=>.5};observeHeavyShot(w,a,first);a.learning=respawnLearning(old,true);
+ w.maze=null;first.age=.2;w.time=.2;observeHeavyShot(w,a,first);assert.equal(a.learning.threats.get(b.profileId),1);
+ w.time=.6;const second=shot(b,101);second.age=0;observeHeavyShot(w,a,second);assert.equal(a.learning.threats.get(b.profileId),2);assert.equal(a.learning.seenThreatShots.size,1);
+ for(let i=1;i<=300;i++){
+   w.time=i;const p=shot(b,2000+i);p.age=0;observeHeavyShot(w,a,p);
+   assert.ok(a.learning.seenThreatShots.size<=2,'histórico cresce com total de tiros');
+ }
+ assert.equal(a.learning.threats.get(b.profileId),3);
+ w.time=301;const p=shot(b,999);p.age=0;observeHeavyShot(w,a,p);assert.equal(a.learning.seenThreatShots.size,1);
+ w.time=302;botThink(w,a);assert.equal(a.learning.seenThreatShots.size,0);
+});
+
+test('renascimento real não duplica tiro ainda elegível',()=>{
+ const {w,a,b}=setup(),p=shot(b,17);p.age=0;observeHeavyShot(w,a,p);
+ w.kill(a,null,'teste');a.respawnAt=w.time;w.step(null);const next=w.tanks.find(t=>t.slot===a.slot);
+ next.x=1000;next.y=1000;p.age=.05;observeHeavyShot(w,next,p,[next,b,p]);
+ assert.equal(next.learning.threats.get(b.profileId),1);
+});

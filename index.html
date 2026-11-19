@@ -1062,6 +1062,12 @@ const TACTIC_NAMES=["Postura padrão","Flanco","Defesa"];
 const MEMORY_TTL=115;
 function localDiscoveryArena(w){return ["open","maze","maze-seed"].includes(w.profileRoster);}
 function perceived(w,t,e){return !!e&&e.alive&&sq(e.x-t.x)+sq(e.y-t.y)<=sq(range(t))&&(!w.maze||w.maze.hit(t.x,t.y,e.x,e.y)===null);}
+// Projectile age advances once per arena tick. Keep one extra tick for newborn
+// shots, whose first age update may occur after an observer has seen them.
+function pruneThreatShots(memory,time){
+  if(!memory?.seenThreatShots)return;
+  for(const [id,until] of memory.seenThreatShots)if(time>until)memory.seenThreatShots.delete(id);
+}
 // Evidence belongs to an opponent and a visible threat, not its internal class.
 function observeHeavyShot(w,t,p,nearby=w.sense.nearby(t.x,t.y,range(t))){
   if(!localDiscoveryArena(w)||!t.learning||p.kind!=="bullet"||!p.owner?.profileId||p.owner===t||!perceived(w,t,p)||!perceived(w,t,p.owner))return;
@@ -1071,9 +1077,10 @@ function observeHeavyShot(w,t,p,nearby=w.sense.nearby(t.x,t.y,range(t))){
     if(other.type!=="tank"||other===p.owner||other===t||!perceived(w,t,other))continue;
     if(Math.hypot(p.x-other.x,p.y-other.y)<=other.r*3.5)return;
   }
-  const memory=t.learning;memory.threats??=new Map();memory.seenThreatShots??=new Set();
+  const memory=t.learning;memory.threats??=new Map();memory.seenThreatShots??=new Map();
+  pruneThreatShots(memory,w.time);
   if(memory.seenThreatShots.has(p.id))return;
-  memory.seenThreatShots.add(p.id);
+  memory.seenThreatShots.set(p.id,w.time+Math.max(0,.25-p.age)+DT);
   const key=p.owner.profileId;memory.threats.set(key,Math.min(3,(memory.threats.get(key)||0)+1));
 }
 // A swarm episode stays active through short visibility or movement gaps.
@@ -1119,7 +1126,7 @@ function respawnLearning(previous,adaptiveBuilds){
   if(previous.threats)memory.threats=new Map(previous.threats);
   if(previous.swarmThreats)memory.swarmThreats=new Map(previous.swarmThreats);
   if(previous.swarmEpisodes)memory.swarmEpisodes=new Map(previous.swarmEpisodes);
-  if(previous.seenThreatShots)memory.seenThreatShots=new Set(previous.seenThreatShots);
+  if(previous.seenThreatShots)memory.seenThreatShots=new Map(previous.seenThreatShots);
   return memory;
 }
 function buildPressure(t,time){
@@ -5217,6 +5224,7 @@ function necroPlan(w,t,enemy,boss,risks,tactic,pressure){
   return null;
 }
 function botThink(w,t){
+  if(localDiscoveryArena(w))pruneThreatShots(t.learning,w.time);
   const c=C[t.cls], vision=range(t);
   const weapon=c.guns[0]||null;
   const hp=t.hp/hull(t);
