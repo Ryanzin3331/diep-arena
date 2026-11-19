@@ -42,10 +42,12 @@
           return lastPromise;
         }
       };
-      return Object.freeze({open:requested=>requested===scope?view:null});
+      return Object.freeze({open:requested=>requested===scope?view:null,
+        isCurrent:async()=> (await db.export()).generation===session.generation});
     }catch(error){report(error);return null;}
   }
   return Object.freeze({prepare});
 });
+
 
 

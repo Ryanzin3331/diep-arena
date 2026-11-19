@@ -7,10 +7,15 @@
   async function run(name,fn){try{await fn();lines.push('PASS '+name);}catch(e){lines.push('FAIL '+name+': '+(e.stack||e));}}
   async function game(enabled,bench=false){
     const frame=document.createElement('iframe');frame.style.cssText='position:absolute;left:-2000px;width:1024px;height:768px';
-    frame.src='/game?enabled='+(enabled?'1':'0')+(bench?'&bench=1':'');document.body.append(frame);
+    frame.src='/game?enabled='+(enabled==='ui'?'ui':enabled?'1':'0')+(bench?'&bench=1':'');document.body.append(frame);
     await new Promise((resolve,reject)=>{frame.onload=resolve;frame.onerror=reject;});
     const win=frame.contentWindow;await until(()=>win.__arenaTest?.world&&!win.__arenaTest.pendingTransition);
     win.__arenaTest.pause();return {frame,win,api:win.__arenaTest,doc:win.document};
+  }
+  async function tabGame(){
+    const win=window.open('/game?enabled=ui','_blank');assert(win,'não foi possível abrir aba de teste');
+    await until(()=>win.__arenaTest?.world&&!win.__arenaTest.pendingTransition);
+    win.__arenaTest.pause();return {frame:{remove:()=>win.close()},win,api:win.__arenaTest,doc:win.document};
   }
   const dom=(g,id,value)=>{g.doc.getElementById(id).value=value;};
   function learn(g,slot,n){const w=g.api.world,a=w.tanks[slot],b=w.tanks[(slot+1)%w.tanks.length];
@@ -129,7 +134,118 @@
     lines.push('METRIC reinícios 36 bots mediana total='+fmt(median('total'))+'ms serialização='+fmt(median('serialize'))+'ms gravação='+fmt(median('write'))+'ms leitura/validação='+fmt(median('read'))+'ms construção='+fmt(median('build'))+'ms verificação marcador='+fmt(median('marker'))+'ms');
     bench.frame.remove();
   });
+  let ui,other,db,backupText;
+  await run('controle ligado → desligado → ligado preserva backup e preferência',async()=>{
+    db=await g.api.database();await db.clear();localStorage.setItem('diep-arena:bot-memory:reuse','off');
+    ui=await tabGame();const select=ui.doc.getElementById('reuseBotMemory');
+    assert(select.value==='off'&&!ui.api.world.botMemorySession);
+    const old=ui.api.world;select.value='on';select.dispatchEvent(new ui.win.Event('change'));
+    assert(ui.api.world===old&&!old.botMemorySession);await ui.api.restart();ui.api.pause();assert(ui.api.world.botMemorySession);
+    learn(ui,0,14);select.value='off';select.dispatchEvent(new ui.win.Event('change'));await ui.api.restart();ui.api.pause();
+    assert(!ui.api.world.botMemorySession&&ui.api.world.tanks[0].learning.samples===0);
+    learn(ui,0,99);await ui.api.restart();ui.api.pause();assert(ui.api.world.tanks[0].learning.samples===0);
+    select.value='on';select.dispatchEvent(new ui.win.Event('change'));await ui.api.restart();ui.api.pause();
+    assert(ui.api.world.tanks[0].learning.samples===14&&localStorage.getItem('diep-arena:bot-memory:reuse')==='on');
+    other=await tabGame();assert(other.doc.getElementById('reuseBotMemory').value==='on'&&other.api.world.tanks[0].learning.samples===14);
+  });
+  await run('exportação e importação rejeitada ou cancelada preservam dados',async()=>{
+    let downloaded;ui.win.HTMLAnchorElement.prototype.click=function(){if(this.download)downloaded=ui.win.fetch(this.href).then(r=>r.text());};
+    ui.doc.getElementById('exportMemory').click();await until(()=>!!downloaded);backupText=await downloaded;
+    assert(JSON.parse(backupText).profiles.some(p=>p.memory.experience.samples===14));
+    const before=JSON.stringify(await db.export());
+    async function upload(text){const input=ui.doc.getElementById('memoryFile'),dt=new ui.win.DataTransfer();dt.items.add(new ui.win.File([text],'backup.json',{type:'application/json'}));input.files=dt.files;input.dispatchEvent(new ui.win.Event('change',{bubbles:true}));}
+    await upload('{');await until(()=>ui.doc.getElementById('memoryStatus').textContent.includes('recusada'));
+    assert(JSON.stringify(await db.export())===before);
+    ui.win.confirm=()=>false;await upload(backupText);await until(()=>ui.doc.getElementById('memoryStatus').textContent.includes('cancelada'));
+    assert(JSON.stringify(await db.export())===before);
+  });
+  await run('reimportação do arquivo exportado confirma e substitui atomicamente',async()=>{
+    const parsed=JSON.parse(backupText),changed=JSON.parse(backupText);changed.profiles[0].memory.experience.samples=77;
+    await db.replace(changed.profiles);const active=ui.api.world;active.tanks[0].learning.samples=88;let prompt='';ui.win.confirm=message=>{prompt=message;return true;};
+    const input=ui.doc.getElementById('memoryFile'),dt=new ui.win.DataTransfer();dt.items.add(new ui.win.File([backupText],'backup.json',{type:'application/json'}));input.files=dt.files;input.dispatchEvent(new ui.win.Event('change',{bubbles:true}));
+    await until(()=>ui.doc.getElementById('memoryStatus').textContent.includes('Importação concluída'));
+    const restored=await db.export();assert(prompt.includes(String(parsed.profiles.length)));
+    assert(restored.profiles.find(p=>p.profileId==='open:bot:0').memory.experience.samples===14);
+    assert(ui.api.world===active&&active.tanks[0].learning.samples===88);
+    await ui.api.restart();ui.api.pause();assert(ui.api.world.tanks[0].learning.samples===14);
+  });
+  await run('importação cancela carga antiga e prepara a arena com dados importados',async()=>{
+    const original=ui.api.bridge;let release,entered=false;const gate=new Promise(r=>release=r);
+    ui.api.bridge={prepare:async scope=>{const prepared=await original.prepare(scope);entered=true;await gate;return prepared;}};
+    const old=ui.api.world,pending=ui.api.restart();await until(()=>entered);
+    ui.doc.getElementById('memoryResult').textContent='';ui.win.confirm=()=>true;const input=ui.doc.getElementById('memoryFile'),dt=new ui.win.DataTransfer();
+    dt.items.add(new ui.win.File([backupText],'backup.json',{type:'application/json'}));input.files=dt.files;input.dispatchEvent(new ui.win.Event('change',{bubbles:true}));
+    await until(()=>ui.doc.getElementById('memoryResult').textContent.includes('Importação concluída'));release();await pending;
+    await until(()=>!ui.api.pendingTransition&&ui.api.world!==old);ui.api.pause();assert(ui.api.world.tanks[0].learning.samples===14);ui.api.bridge=original;
+  });
+  await run('falha transacional na importação preserva os dados e informa erro',async()=>{
+    const before=JSON.stringify(await db.export()),original=ui.win.IDBObjectStore.prototype.put;let armed=true;
+    ui.win.IDBObjectStore.prototype.put=function(...args){const result=original.apply(this,args);if(armed&&this.name==='profiles'){armed=false;this.transaction.abort();}return result;};
+    try{
+      ui.win.confirm=()=>true;const input=ui.doc.getElementById('memoryFile'),dt=new ui.win.DataTransfer();
+      dt.items.add(new ui.win.File([backupText],'backup.json',{type:'application/json'}));input.files=dt.files;input.dispatchEvent(new ui.win.Event('change',{bubbles:true}));
+      await until(()=>ui.doc.getElementById('memoryStatus').textContent.includes('Falha no armazenamento'));
+      assert(JSON.stringify(await db.export())===before);
+    }finally{ui.win.IDBObjectStore.prototype.put=original;}
+  });
+  await run('exclusão cancelada preserva as memórias',async()=>{
+    const before=JSON.stringify(await db.export()),answers=[false,false];ui.win.confirm=()=>answers.shift();
+    ui.doc.getElementById('deleteMemory').click();await until(()=>ui.doc.getElementById('memoryStatus').textContent.includes('Exclusão cancelada'));
+    assert(JSON.stringify(await db.export())===before);
+  });
+  await run('exclusão oferece exportar backup antes da confirmação final',async()=>{
+    const before=JSON.stringify(await db.export());let downloaded;
+    ui.win.HTMLAnchorElement.prototype.click=function(){if(this.download)downloaded=ui.win.fetch(this.href).then(r=>r.text());};
+    const answers=[true,false];ui.win.confirm=()=>answers.shift();ui.doc.getElementById('memoryResult').textContent='';
+    ui.doc.getElementById('deleteMemory').click();await until(()=>ui.doc.getElementById('memoryResult').textContent.includes('Exclusão cancelada'));
+    assert(downloaded&&JSON.parse(await downloaded).profiles.length>0&&JSON.stringify(await db.export())===before);
+  });
+  await run('configurações mostram quantidade de perfis armazenados',async()=>{
+    ui.doc.getElementById('panelConfig').click();await until(()=>/perfil\(is\) de memória salvo/.test(ui.doc.getElementById('memoryStatus').textContent));
+  });
+  await run('controles cabem em viewport estreito simulado',async()=>{
+    const mobile=await game('ui');mobile.frame.style.width='390px';mobile.doc.getElementById('panelConfig').click();
+    await sleep(50);const container=mobile.doc.querySelector('.memory-actions').getBoundingClientRect();
+    for(const id of ['exportMemory','importMemory','deleteMemory']){const el=mobile.doc.getElementById(id),r=el.getBoundingClientRect();
+      assert(r.width>0&&r.height>=44&&r.left>=container.left-1&&r.right<=container.right+1&&el.scrollHeight<=el.clientHeight,'controle cortado: '+id);}
+    mobile.frame.remove();
+  });
+  await run('exclusão em uma aba invalida arena e carga antiga de outra',async()=>{
+    other.frame.remove();other=await tabGame();const old=other.api.world;learn(other,0,61);
+    let release,entered=false;const gate=new Promise(r=>release=r),original=other.api.bridge;
+    other.api.bridge={prepare:async scope=>{const prepared=await original.prepare(scope);entered=true;await gate;return prepared;}};
+    const pending=other.api.restart();await until(()=>entered);
+    localStorage.setItem('diep-arena:bot-memory:v1:open:bot:7','legado');localStorage.setItem('dado-externo-teste','preservar');
+    const answers=[false,true];ui.win.confirm=()=>answers.shift();ui.doc.getElementById('deleteMemory').click();
+    await until(()=>ui.doc.getElementById('memoryStatus').textContent.includes('Memórias apagadas'));
+    assert(localStorage.getItem('diep-arena:bot-memory:v1:open:bot:7')===null&&localStorage.getItem('dado-externo-teste')==='preservar');
+    release();await pending;await until(()=>!other.api.pendingTransition&&other.api.world!==old);
+    assert(other.api.world.tanks[0].learning.samples===0);other.api.pause();await other.api.restart();other.api.pause();
+    assert(other.api.world.tanks[0].learning.samples===0&&(await db.export()).profiles.every(p=>p.memory.experience.samples!==61));
+  });
+  await run('falha na limpeza legada informa sucesso parcial sem reimportar',async()=>{
+    const key='diep-arena:bot-memory:v1:open:bot:7';localStorage.setItem(key,'legado preservado');
+    const original=ui.win.Storage.prototype.removeItem;
+    ui.win.Storage.prototype.removeItem=function(k){if(String(k).startsWith('diep-arena:bot-memory:v1:'))throw Error('negado');return original.call(this,k);};
+    try{
+      const answers=[false,true];ui.win.confirm=()=>answers.shift();ui.doc.getElementById('deleteMemory').click();
+      await until(()=>ui.doc.getElementById('memoryStatus').textContent.includes('restaram dados legados'));
+      assert(localStorage.getItem(key)==='legado preservado'&&(await db.export()).profiles.length===0);
+      assert((await db.migrateLegacy(()=>localStorage)).status==='blocked');
+    }finally{ui.win.Storage.prototype.removeItem=original;}
+  });
+  await run('ausência de coordenação entre abas impede exclusão e mantém o jogo utilizável',async()=>{
+    const before=JSON.stringify(await db.export()),original=Object.getOwnPropertyDescriptor(ui.win.navigator,'locks');
+    Object.defineProperty(ui.win.navigator,'locks',{configurable:true,value:undefined});
+    try{
+      const answers=[false,true];ui.win.confirm=()=>answers.shift();ui.doc.getElementById('deleteMemory').click();
+      await until(()=>ui.doc.getElementById('memoryResult').textContent.includes('Falha no armazenamento'));
+      assert(JSON.stringify(await db.export())===before&&!!ui.api.world);
+    }finally{if(original)Object.defineProperty(ui.win.navigator,'locks',original);else delete ui.win.navigator.locks;}
+  });
+  if(ui)ui.frame.remove();if(other)other.frame.remove();if(db)db.close();
   g.frame.remove();output.textContent=lines.join('\n')+'\n'+(lines.some(x=>x.startsWith('FAIL'))?'FAILED':'ALL PASSED');
 })();
+
 
 

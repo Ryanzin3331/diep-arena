@@ -4,7 +4,7 @@ const {spawn}=require('node:child_process');
 const root=path.resolve(__dirname,'..');
 const executable=process.env.CHROME_BIN||(process.platform==='win32'?'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe':'chromium');
 const tempRoot=path.resolve(os.tmpdir()),profile=fs.mkdtempSync(path.join(tempRoot,'diep-arena-test-'));
-const files=new Set(['/tests/arena-browser.html','/tests/arena-browser.js','/memory-codec.js','/memory-store.js','/memory-idb.js','/memory-bridge.js']);
+const files=new Set(['/tests/arena-browser.html','/tests/arena-browser.js','/memory-codec.js','/memory-store.js','/memory-idb.js','/memory-bridge.js','/memory-backup.js']);
 const hook=`window.__arenaTest={get world(){return world},get mode(){return mode},get pendingTransition(){return transitionPending},
   restart,setMode,recordOutcome,enterRoomWorld,pause(){paused=true},get bridge(){return indexedMemoryBridge},set bridge(value){indexedMemoryBridge=value},
   failingBridge(){return createIndexedMemoryBridge({indexedDB:{open(){throw Error('unavailable')}},codec:createMemoryCodec({classes:C,newMemory,ttl:MEMORY_TTL}),createStore:createTransactionalMemoryStore})},
@@ -15,7 +15,8 @@ const server=http.createServer((req,res)=>{
   const url=new URL(req.url,'http://localhost'),p=url.pathname;
   if(p==='/game'){
     let html=fs.readFileSync(path.join(root,'index.html'),'utf8');
-    if(url.searchParams.get('enabled')==='1')html=html.replace('const REUSE_BOT_MEMORY=false;','const REUSE_BOT_MEMORY=true;');
+    if(url.searchParams.get('enabled')==='1')html=html.replace("try{reuseBotMemory=localStorage.getItem(MEMORY_PREF)==='on';}catch(error){preferenceFailure=error;}",'reuseBotMemory=true;');
+    if(url.searchParams.get('enabled')==='0')html=html.replace("try{reuseBotMemory=localStorage.getItem(MEMORY_PREF)==='on';}catch(error){preferenceFailure=error;}",'reuseBotMemory=false;');
     if(url.searchParams.get('bench')==='1'){
       html=html.replace('<option selected>24</option><option>36</option>','<option>24</option><option selected>36</option>');
       html=html.replace('el("botCount").value=initialBots;','el("botCount").value=36;');
@@ -49,7 +50,7 @@ const server=http.createServer((req,res)=>{
   fs.createReadStream(path.join(root,p.slice(1))).pipe(res);
 });
 server.listen(0,'127.0.0.1',()=>{
-  const chrome=spawn(executable,['--headless=new','--disable-gpu','--no-first-run',`--user-data-dir=${profile}`,'--dump-dom',`http://127.0.0.1:${server.address().port}/tests/arena-browser.html`],{windowsHide:true});
+  const chrome=spawn(executable,['--headless=new','--disable-gpu','--disable-popup-blocking','--no-first-run',`--user-data-dir=${profile}`,'--dump-dom',`http://127.0.0.1:${server.address().port}/tests/arena-browser.html`],{windowsHide:true});
   let out='',err='';chrome.stdout.on('data',s=>out+=s);chrome.stderr.on('data',s=>err+=s);
   const timer=setTimeout(()=>chrome.kill(),60000);
   chrome.on('error',e=>{console.error(e.message);process.exitCode=1;});
@@ -58,5 +59,6 @@ server.listen(0,'127.0.0.1',()=>{
     if(path.dirname(path.resolve(profile))===tempRoot&&path.basename(profile).startsWith('diep-arena-test-'))try{fs.rmSync(profile,{recursive:true,force:true});}catch(e){console.error(e.message);}
   });
 });
+
 
 

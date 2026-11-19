@@ -92,6 +92,7 @@ button,select,input{font:inherit}button,select,input{border:1px solid var(--line
 }
 .bot-summary{display:none}
 .config .lite-help{margin:0;color:var(--muted);font-size:11px;line-height:1.35}
+.config .memory-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}.config .memory-actions button{min-height:44px;line-height:1.25;white-space:normal;overflow-wrap:anywhere}.config .memory-actions .danger{grid-column:1/-1}.config .memory-status{margin:0;color:var(--muted);font-size:11px;line-height:1.4;overflow-wrap:anywhere}
 @media(pointer:coarse) and (max-width:950px){
   .bot-summary{display:grid;gap:3px;width:fit-content;max-width:min(249px,calc(100vw - 86px));padding:6px 9px;
     color:var(--fg);background:#17231af5;border:1px solid #789071;border-radius:8px;font-size:11px;line-height:1.25}
@@ -635,6 +636,12 @@ button{-webkit-tap-highlight-color:transparent}
           </div>
           <label class="wide" title="A configuração vale ao iniciar ou reiniciar a partida">Aprendizado na próxima partida<select id="learningMode"><option value="both">Todos os bots</option><option value="a" hidden disabled>Só Tanque A</option><option value="b" hidden disabled>Só Tanque B</option><option value="off">Desligado</option></select></label>
           <label class="wide">Builds na próxima partida<select id="buildMode"><option value="adaptive">Adaptativas</option><option value="fixed">Fixas por classe</option></select></label>
+          <label class="wide">Usar memória da arena anterior<select id="reuseBotMemory"><option value="off">Desativado</option><option value="on">Ativado</option></select></label>
+          <p class="memory-status wide">Vale para a próxima arena. FFA, Maze e laboratório normal.</p>
+          <p class="memory-status wide" id="memoryStatus" role="status" aria-live="polite">Verificando memórias salvas…</p>
+          <p class="memory-status wide" id="memoryResult" role="status" aria-live="polite"></p>
+          <div class="memory-actions wide"><button type="button" id="exportMemory">Exportar memória</button><button type="button" id="importMemory">Importar memória</button><button type="button" id="deleteMemory" class="danger">Apagar memórias permanentemente</button></div>
+          <input type="file" id="memoryFile" accept=".json,application/json" hidden>
           <button id="shuffle">Outra seed</button><button id="restart" class="primary">Reiniciar</button>
         </div>
         <p class="help" id="help"><kbd>WASD</kbd> mover · <kbd>Mouse</kbd> mirar · <kbd>Espaço</kbd> atirar · <kbd>E</kbd> autofire</p>
@@ -6077,6 +6084,7 @@ function botThink(w,t){
 <script src="memory-store.js"></script>
 <script src="memory-idb.js"></script>
 <script src="memory-bridge.js"></script>
+<script src="memory-backup.js"></script>
 <script id="app">
 "use strict";
 const el=id=>document.getElementById(id);
@@ -6089,19 +6097,50 @@ let liteMode=false,lastDraw=-Infinity;
 try{liteMode=localStorage.getItem(LITE_PREF)==="on";}catch{}
 el("liteMode").value=liteMode?"on":"off";
 let world,mode="watch",pending=false,paused=false,rate=1,follow="leader",focusId=null,freeSelection=null;
-// 1C internal switch. Off by default until an explicit user-facing preference exists.
-const REUSE_BOT_MEMORY=false;
+const MEMORY_PREF='diep-arena:bot-memory:reuse';
+let reuseBotMemory=false,preferenceFailure=null;
+try{reuseBotMemory=localStorage.getItem(MEMORY_PREF)==='on';}catch(error){preferenceFailure=error;}
+el('reuseBotMemory').value=reuseBotMemory?'on':'off';
 let botMemoryStore=null;
-let indexedMemoryBridge=null,arenaTransition=0,transitionPending=false,transitionReady=null,memorySaveBarrier=null;
-if(REUSE_BOT_MEMORY){
+let indexedMemoryBridge=null,arenaTransition=0,transitionPending=false,transitionReady=null,memorySaveBarrier=null,memoryMutation=null,memoryDbPromise=null,memoryWarning='';
+function memoryMessage(message){el('memoryStatus').textContent=message;}
+function memoryResult(message){el('memoryResult').textContent=message;}
+function memoryFailure(error){console.warn('Memória dos bots indisponível:',error);memoryWarning='Falha no armazenamento de memória. O jogo continua disponível.';memoryMessage(memoryWarning);memoryResult(memoryWarning);}
+if(preferenceFailure)memoryFailure(preferenceFailure);
+function withMemoryLock(task){
+  if(!navigator.locks?.request)throw Error('Coordenação entre abas indisponível neste navegador.');
+  return navigator.locks.request('diep-arena-bot-memory-commit',{mode:'exclusive'},task);
+}
+function getMemoryBridge(){
+  if(indexedMemoryBridge)return indexedMemoryBridge;
   try{
+    if(!navigator.locks?.request)throw Error('Coordenação entre abas indisponível neste navegador.');
     if(typeof createMemoryCodec==='function'&&typeof createTransactionalMemoryStore==='function'&&typeof createIndexedMemoryBridge==='function')
       indexedMemoryBridge=createIndexedMemoryBridge({indexedDB,codec:createMemoryCodec({classes:C,newMemory,ttl:MEMORY_TTL}),
         createStore:createTransactionalMemoryStore,getLegacyStorage:()=>localStorage,
-        onMigration:result=>{if(result.invalid)console.warn('Perfis legados inválidos preservados:',result.invalid);},
-        onError:error=>console.warn('Memória dos bots indisponível:',error)});
-  }catch(_){} // Storage unavailable: keep the game playable.
+        onMigration:result=>{if(result.invalid){memoryWarning=result.invalid+' perfil(is) legado(s) inválido(s), mantidos sem alterações.';memoryMessage(memoryWarning);}},
+        onError:memoryFailure});
+  }catch(error){memoryFailure(error);}
+  return indexedMemoryBridge;
 }
+function memoryDatabase(){
+  if(!memoryDbPromise){
+    try{memoryDbPromise=createTransactionalMemoryStore({indexedDB,codec:createMemoryCodec({classes:C,newMemory,ttl:MEMORY_TTL})}).open();}
+    catch(error){memoryDbPromise=Promise.reject(error);}
+    memoryDbPromise=memoryDbPromise.catch(error=>{memoryDbPromise=null;throw error;});
+  }
+  return memoryDbPromise;
+}
+async function refreshMemoryStatus(){
+  if(memoryMutation)return;
+  try{const db=await memoryDatabase(),snapshot=await db.export();if(!memoryMutation){const count=snapshot.profiles.length?snapshot.profiles.length+' perfil(is) de memória salvo(s).':'Nenhum perfil salvo no IndexedDB.';memoryMessage(count+(memoryWarning?' '+memoryWarning:''));}}
+  catch(error){memoryFailure(error);}
+}
+el('reuseBotMemory').onchange=()=>{
+  reuseBotMemory=el('reuseBotMemory').value==='on';
+  try{localStorage.setItem(MEMORY_PREF,reuseBotMemory?'on':'off');}
+  catch(error){memoryFailure(error);}
+};
 function saveBotMemory(arena){
   const operation=arena?.botMemorySession?.save(arena);
   if(operation?.then){
@@ -6113,6 +6152,76 @@ function saveBotMemory(arena){
   return memorySaveBarrier;
 }
 window.addEventListener('pagehide',()=>saveBotMemory(world));
+let memoryChannel=null;
+try{if(typeof BroadcastChannel==='function')memoryChannel=new BroadcastChannel('diep-arena-bot-memory-v1');}catch(_){}
+function notifyMemoryChanged(){try{memoryChannel?.postMessage('changed');}catch(_){}}
+if(memoryChannel)memoryChannel.onmessage=event=>{
+  if(event.data!=='changed')return;
+  if(transitionPending){++arenaTransition;transitionPending=false;restart();}
+  void refreshMemoryStatus();
+};
+function backupCodec(){return createMemoryBackup(createMemoryCodec({classes:C,newMemory,ttl:MEMORY_TTL}));}
+function memoryControlsBusy(busy){for(const id of ['exportMemory','importMemory','deleteMemory'])el(id).disabled=busy;}
+async function exportBotMemory(){
+  try{
+    memoryMessage('Preparando exportação…');
+    const db=await memoryDatabase(),text=backupCodec().stringify(await db.export());
+    const url=URL.createObjectURL(new Blob([text],{type:'application/json'}));
+    const link=document.createElement('a');link.href=url;link.download='diep-arena-memorias.json';
+    document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    memoryMessage('Backup preparado para download.');memoryResult('Backup preparado para download.');return true;
+  }catch(error){memoryFailure(error);return false;}
+}
+function mutateBotMemory(task){
+  if(memoryMutation)return Promise.resolve(false);
+  const restartCanceled=transitionPending,request=++arenaTransition;
+  transitionPending=false;
+  memoryControlsBusy(true);
+  const operation=(async()=>{try{return await withMemoryLock(task);}catch(error){memoryFailure(error);return false;}})();
+  memoryMutation=operation;
+  operation.then(()=>{
+    if(memoryMutation===operation)memoryMutation=null;
+    memoryControlsBusy(false);
+    if(restartCanceled&&request===arenaTransition)restart();
+  });
+  return operation;
+}
+el('exportMemory').onclick=()=>{if(!memoryMutation)void exportBotMemory();};
+el('importMemory').onclick=()=>{if(!memoryMutation)el('memoryFile').click();};
+el('memoryFile').onchange=async()=>{
+  const input=el('memoryFile'),file=input.files?.[0];input.value='';if(!file)return;
+  memoryMessage('Validando arquivo de memória…');memoryResult('');
+  let profiles;
+  try{
+    const backup=backupCodec();if(file.size>backup.maxBytes)throw Error('Arquivo muito grande.');
+    profiles=backup.parse(await file.text());
+  }catch(error){memoryMessage('Importação recusada: '+error.message);memoryResult('Importação recusada: '+error.message);return;}
+  if(!confirm('Importar '+profiles.length+' perfil(is) e substituir as memórias salvas? A arena atual não será modificada.')){
+    memoryMessage('Importação cancelada; memórias preservadas.');memoryResult('Importação cancelada; memórias preservadas.');return;
+  }
+  void mutateBotMemory(async()=>{
+    memoryMessage('Importando memórias…');const db=await memoryDatabase();await db.replace(profiles);
+    notifyMemoryChanged();memoryMessage('Importação concluída: '+profiles.length+' perfil(is). Vale para próximas arenas.');memoryResult('Importação concluída: '+profiles.length+' perfil(is). Vale para próximas arenas.');return true;
+  });
+};
+el('deleteMemory').onclick=async()=>{
+  if(memoryMutation)return;
+  const backup=confirm('Deseja exportar um backup antes? OK exporta; Cancelar continua sem backup.');
+  if(backup&&!await exportBotMemory())return;
+  if(!confirm('Apagar permanentemente todas as memórias salvas dos bots? A arena atual não será modificada.')){
+    memoryMessage('Exclusão cancelada; memórias preservadas.');memoryResult('Exclusão cancelada; memórias preservadas.');return;
+  }
+  void mutateBotMemory(async()=>{
+    memoryMessage('Apagando memórias…');const db=await memoryDatabase();await db.clear();notifyMemoryChanged();
+    let failed=false;
+    try{
+      const keys=[];for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i);if(key?.startsWith('diep-arena:bot-memory:v1:'))keys.push(key);}
+      for(const key of keys){try{localStorage.removeItem(key);}catch(_){failed=true;}}
+    }catch(_){failed=true;}
+    const result=failed?'IndexedDB limpo; restaram dados legados bloqueados para migração.':'Memórias apagadas. A próxima arena começará sem elas.';
+    memoryMessage(result);memoryResult(result);return true;
+  });
+};
 let acc=0,last=0,lastHud=-1000, lastWatchChoice=-100;
 let playerName="Power",humanAuto=false,mouseFire=false,mouseAlt=false,buttonAlt=false;
 let optStats=false, iframeFull=false;
@@ -6329,16 +6438,37 @@ function restart(bossTrial=false){
   const source=world,save=saveBotMemory(source),request=++arenaTransition;
   const scope=duel?(duel[3]?"lab-boss":"lab"):config.map;
   const eligible=["open","maze","maze-seed","lab"].includes(scope);
-  if(!REUSE_BOT_MEMORY||!indexedMemoryBridge||!eligible&&!save){
+  const useMemory=reuseBotMemory,bridge=useMemory&&eligible?getMemoryBridge():null,mutation=memoryMutation;
+  if(!save&&!mutation&&!bridge){
     transitionPending=false;
     finishRestart(config,bossTrial,botMemoryStore);
     return;
   }
   transitionPending=true;paused=true;
+  if(bridge)memoryMessage('Preparando memória para a próxima arena…');
   const ready=(async()=>{
     try{await save;}catch(error){console.warn('Memória dos bots não foi salva:',error);}
+    try{await mutation;}catch(_){}
     if(request!==arenaTransition)return false;
-    const prepared=eligible?await indexedMemoryBridge.prepare(scope):null;
+    let prepared=null;
+    if(bridge){
+      try{
+        prepared=await bridge.prepare(scope);
+        if(request!==arenaTransition)return false;
+        return await withMemoryLock(async()=>{
+          if(request!==arenaTransition)return false;
+          for(let attempts=0;prepared?.isCurrent&&attempts<3;attempts++){
+            if(await prepared.isCurrent())break;
+            prepared=await bridge.prepare(scope);
+            if(request!==arenaTransition)return false;
+            if(attempts===2)prepared=null;
+          }
+          if(request!==arenaTransition)return false;
+          if(!prepared)memoryMessage('Memória indisponível para esta arena. O jogo continua.');
+          transitionPending=false;finishRestart(config,bossTrial,prepared);return true;
+        });
+      }catch(error){memoryFailure(error);prepared=null;}
+    }
     if(request!==arenaTransition)return false;
     transitionPending=false;finishRestart(config,bossTrial,prepared);return true;
   })();
@@ -6365,6 +6495,7 @@ function finishRestart(config,bossTrial,memoryStore){
     }else join();
   }
   updateInterface(true);
+  if(sidePanel==='config')void refreshMemoryStatus();
 }
 function setMode(next){
   if(room)closeRoom();
@@ -7353,6 +7484,7 @@ function setSidePanel(next){
   el("historyCard").hidden=sidePanel!=="history";
   el("configCard").hidden=sidePanel!=="config";
   if(sidePanel==="history")updateHistory();
+  if(sidePanel==="config")void refreshMemoryStatus();
 }
 function node(tag,text,className){
   const e=document.createElement(tag);
@@ -8931,7 +9063,7 @@ document.addEventListener("visibilitychange",()=>{
 el("seed").value=randomSeed();
 resize();
 function startFrames(){
-  if(!world){if(transitionReady)transitionReady.then(startFrames);return;}
+  if(!world){const wait=memoryMutation||transitionReady;if(wait)wait.then(()=>{if(world||transitionPending||memoryMutation)startFrames();});return;}
   const first=followTarget();
   if(first){camera.x=first.x;camera.y=first.y;}
   requestAnimationFrame(frame);
@@ -8941,6 +9073,7 @@ if(initialArena?.then)initialArena.then(startFrames);else startFrames();
 </script>
 </body>
 </html>
+
 
 
 
