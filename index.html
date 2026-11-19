@@ -1827,12 +1827,13 @@ class Arena {
     t.rivalryMoment={kind:"encontro",other:e,at:this.time,until:this.time+4.3};
   }
 
-  constructor(seed,bots,duel=null,learningMode="both",adaptiveBuilds=true,mapKind="open",bossSchedule="off",shipStart=1,eventBosses=false,survivalPlayer=null,rosterScope=null){
+  constructor(seed,bots,duel=null,learningMode="both",adaptiveBuilds=true,mapKind="open",bossSchedule="off",shipStart=1,eventBosses=false,survivalPlayer=null,rosterScope=null,memoryStore=null){
     this.seed=seed; this.rand=rngFrom(seed); this.duel=duel; this.bots=bots;
     this.learningMode=learningMode;
     this.adaptiveBuilds=adaptiveBuilds;
     this.mapKind=duel?"open":mapKind;
     this.profileRoster=rosterScope??(duel?(duel[3]?"lab-boss":"lab"):this.mapKind);
+    this.botMemorySession=memoryStore?.open(this.profileRoster)??null;
     this.rivalries=!duel&&["open","maze","maze-seed"].includes(this.mapKind)?new Map():null;
     this.rivalExchanges=this.rivalries?new Map():null;
     this.survival=this.mapKind==="survival"?{phase:"opening",radius:SURVIVAL.startRadius,preview:null,xpAt:1,alive:SURVIVAL.count}:null;
@@ -2856,7 +2857,8 @@ class Arena {
     if(!human){t.skin=this.skins[slot];t.profileId=this.profileRoster+":bot:"+slot;}
     t.hp=hull(t);
     if(!human&&(this.learningMode==="both"||this.duel&&this.learningMode===(slot===0?"a":"b")))
-      t.learning=previousLearning?respawnLearning(previousLearning,this.adaptiveBuilds):newMemory(this.adaptiveBuilds);
+      t.learning=previousLearning?respawnLearning(previousLearning,this.adaptiveBuilds):
+        this.botMemorySession?.load(t.profileId,this.adaptiveBuilds,this.time)??newMemory(this.adaptiveBuilds);
     if(this.convoy&&!human)changeClass(t,t.goal,true);
     else if(force && C[goal]) changeClass(t,goal,true);
     if(!human) spendBot(t,this.time);
@@ -6071,6 +6073,8 @@ function botThink(w,t){
   t.mood=MOOD[mode];t.detail=detail;
 }
 </script>
+<script src="memory-codec.js"></script>
+<script src="memory-store.js"></script>
 <script id="app">
 "use strict";
 const el=id=>document.getElementById(id);
@@ -6083,6 +6087,17 @@ let liteMode=false,lastDraw=-Infinity;
 try{liteMode=localStorage.getItem(LITE_PREF)==="on";}catch{}
 el("liteMode").value=liteMode?"on":"off";
 let world,mode="watch",pending=false,paused=false,rate=1,follow="leader",focusId=null,freeSelection=null;
+// 1C internal switch. Off by default until an explicit user-facing preference exists.
+const REUSE_BOT_MEMORY=false;
+let botMemoryStore=null;
+if(REUSE_BOT_MEMORY){
+  try{
+    if(typeof createMemoryCodec==='function'&&typeof createBotMemoryStore==='function')
+      botMemoryStore=createBotMemoryStore({storage:localStorage,codec:createMemoryCodec({classes:C,newMemory,ttl:MEMORY_TTL})});
+  }catch(_){} // Storage unavailable: keep the game playable.
+}
+function saveBotMemory(arena){arena?.botMemorySession?.save(arena);}
+window.addEventListener('pagehide',()=>saveBotMemory(world));
 let acc=0,last=0,lastHud=-1000, lastWatchChoice=-100;
 let playerName="Power",humanAuto=false,mouseFire=false,mouseAlt=false,buttonAlt=false;
 let optStats=false, iframeFull=false;
@@ -6289,13 +6304,14 @@ function cleanseInputs(){
 }
 function restart(bossTrial=false){
   closeReplay(false);
+  saveBotMemory(world);
   const seed=clamp(Math.floor(seedValue()),1,4294967295);
   el("seed").value=seed;
   const l=Number(el("labLevel").value);
   const duel=mode==="lab"?[el("classA").value,el("classB").value,l,bossTrial]:null;
   world=new Arena(seed,Number(el("botCount").value),duel,el("learningMode").value,el("buildMode").value==="adaptive",
     el("arenaMap").value,el("bossSchedule").value,Number(el("shipStart").value),el("eventBosses").value==="on",
-    mode==="play"&&!pending?playerName:null);
+    mode==="play"&&!pending?playerName:null,null,botMemoryStore);
   world.history.lite=liteMode;lastDraw=-Infinity;
   towerUiSignature="";
   tagChartSignature="";
@@ -8452,6 +8468,7 @@ function stepGame(){
       if(guestFell&&guestKiller?.human&&guestKiller.slot===0)current.points[0]++;
     }
   }
+  if(!priorDead&&world.duelEnded)saveBotMemory(world);
   if(world.survival&&priorHuman&&!world.human.alive&&follow!=="free"){
     const killer=world.human.killer;
     if(killer?.type==="tank"&&killer.alive){follow="chosen";focusId=killer.id;}
@@ -8637,6 +8654,7 @@ function attachRoomConnection(current,connection){
 function enterRoomWorld(current,seed,bots){
   clearTimeout(current.timer);
   closeReplay(false);
+  saveBotMemory(world);
   current.phase="playing";current.scene=null;current.units=new Map();
   current.snapshotAt=-Infinity;current.inputAt=-Infinity;current.lastInputAt=-Infinity;current.sentTick=-1;
   current.command=null;current.guestTank=null;
@@ -8878,4 +8896,5 @@ requestAnimationFrame(frame);
 </script>
 </body>
 </html>
+
 
