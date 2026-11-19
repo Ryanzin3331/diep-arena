@@ -1108,6 +1108,23 @@ function observeDroneSwarm(w,t,risks,nearby){
   }
 }
 function threatDistance(heavy,swarm){return Math.min(140,(heavy?110:0)+(swarm?80:0));}
+// Aggregate only exchanges with damage; idle windows never create a reward.
+function finishHeavyAttempt(m){
+  const a=m?.heavyAttempt;if(!a)return;
+  m.heavyAttempt=null;
+  if(!(a.dealt>0||a.taken>0))return;
+  m.heavyResults??=[{sum:0,count:0},{sum:0,count:0}];
+  const row=m.heavyResults[a.choice];row.sum=row.sum*.8+clamp((a.dealt-a.taken)/100,-1,1);row.count++;
+}
+function chooseHeavyResponse(m){
+  if(m.heavyAttempt)return m.heavyAttempt.choice;
+  const n=m.heavyTrials??0;if(n<2)return n;
+  const rows=m.heavyResults;
+  if(!rows||!rows.some(r=>r.count))return 1;
+  if(n%6===5)return (Math.floor(n/6)%2);
+  const score=r=>r?.count?r.sum/Math.min(r.count,5):0;
+  return score(rows[0])>score(rows[1])?0:1;
+}
 function newMemory(adaptiveBuilds){
   return {foes:new Map(), classes:new Map(), samples:0, escapes:0, changes:0, tactic:0, foeId:null, until:0, note:"", retreat:null,
     buildChanges:0,lastPoint:null,lastAdaptivePoint:null,
@@ -1123,6 +1140,8 @@ function respawnLearning(previous,adaptiveBuilds){
   for(const [key,record] of previous.classes){
     memory.classes.set(key,{time:record.time,choice:record.choice,entries:record.entries.map(entry=>({...entry}))});
   }
+  if(previous.heavyResults)memory.heavyResults=previous.heavyResults.map(r=>({...r}));
+  if(previous.heavyTrials!==undefined)memory.heavyTrials=previous.heavyTrials;
   if(previous.threats)memory.threats=new Map(previous.threats);
   if(previous.swarmThreats)memory.swarmThreats=new Map(previous.swarmThreats);
   if(previous.swarmEpisodes)memory.swarmEpisodes=new Map(previous.swarmEpisodes);
@@ -4516,14 +4535,14 @@ class Arena {
     if(!(a.learning||b.learning))return;
     const dealt=Math.min(aDamage,b.hp),taken=Math.min(bDamage,a.hp);
     if(dealt>0){
-      if(localDiscoveryArena(this)&&seeA&&b.learning?.heavyAttempt?.rivalId===a.id)
+      if(localDiscoveryArena(this)&&seeA&&b.learning?.heavyAttempt?.rivalId===a.id&&this.time<=(b.learning.heavyAttempt.until??Infinity))
         b.learning.heavyAttempt.taken=(b.learning.heavyAttempt.taken||0)+dealt;
-      if(localDiscoveryArena(this)&&seeB&&shotAttempt&&a.learning?.heavyAttempt===shotAttempt&&shotAttempt.rivalId===b.id)shotAttempt.dealt+=dealt;
+      if(localDiscoveryArena(this)&&seeB&&shotAttempt&&a.learning?.heavyAttempt===shotAttempt&&shotAttempt.rivalId===b.id&&this.time<=(shotAttempt.until??Infinity))shotAttempt.dealt+=dealt;
       if(seeB&&aClass===a.cls) observeHit(a,b,bClass,dealt,false,this.time,shotTactic);
       if(seeA)observeHit(b,a,aClass,dealt,true,this.time);
     }
     if(taken>0){
-      if(localDiscoveryArena(this)&&seeB&&a.learning?.heavyAttempt?.rivalId===b.id)
+      if(localDiscoveryArena(this)&&seeB&&a.learning?.heavyAttempt?.rivalId===b.id&&this.time<=(a.learning.heavyAttempt.until??Infinity))
         a.learning.heavyAttempt.taken=(a.learning.heavyAttempt.taken||0)+taken;
       if(seeB)observeHit(a,b,bClass,taken,true,this.time);
       if(seeA)observeHit(b,a,aClass,taken,false,this.time);
@@ -5240,6 +5259,7 @@ function botThink(w,t){
   let boss=null, bossDrones=0, incoming=null, droneGap=Infinity;
   let defenderTraps=0;
   const risks=[], forms=[];
+  let heavyPlan=null,heavyCandidate=null;
   const ownShip=w.ships[t.team],rivalShip=w.ships[1-t.team];
   const zone=w.survival;
   const overseer=w.duel||t.cls!=="Overseer"?null:t.overseerAttack;
@@ -5332,6 +5352,7 @@ function botThink(w,t){
   if(shipTarget?.alive&&shipTarget.team!==t.team&&shipTarget.protect<=0&&
     sq(t.x-shipTarget.x)+sq(t.y-shipTarget.y)<Math.min(vision,575)**2&&
     (!enemy||enemy===shipTarget||sq(t.x-enemy.x)+sq(t.y-enemy.y)>185**2))enemy=shipTarget;
+  if(t.learning?.heavyAttempt&&(!enemy||t.learning.heavyAttempt.rivalId!==enemy.id||!perceived(w,t,enemy)))finishHeavyAttempt(t.learning);
   t.enemy=enemy;t.food=food;
   t.crasherThreat=crasher;
   t.bossTarget=null;
@@ -5609,6 +5630,11 @@ function botThink(w,t){
     let radial=clamp((eDist-preferred)/108,-1,1);
     if(c.ram&&cautious&&eDist<210&&risks.some(p=>p.type==="shot"&&p.owner===enemy&&p.age<.16))radial=1;
     let strafe=((c.ram&&tactic===0?0:(tactic===1?.85:c.ram?.58:.52)+.23*Math.sin(w.time*2.2+t.id))+(swarmExperience?.35:0))*flank;
+    if(heavyExperience&&tankCombat&&t.learning&&opening==null){
+      if(t.learning.heavyAttempt&&w.time>=t.learning.heavyAttempt.until)finishHeavyAttempt(t.learning);
+      const choice=chooseHeavyResponse(t.learning);
+      heavyPlan={choice,baseRadial:radial,baseStrafe:strafe};
+    }
     [aimX,aimY]=lead(t,enemy,bulletSpeed(t,weapon||gun()),1.25);
     const shotRange=weapon?bulletSpeed(t,weapon)*1.35*weapon.life:0;
     fire=!!weapon && eDist<Math.min(vision*.98,shotRange*.9+enemy.r);
@@ -5662,8 +5688,12 @@ function botThink(w,t){
         }
       }
     }
+    if(heavyPlan&&(radial!==heavyPlan.baseRadial||strafe!==heavyPlan.baseStrafe))heavyPlan=null;
+    if(heavyPlan){if(heavyPlan.choice===0)strafe=1.15*flank;else radial=Math.min(radial,-.55);}
     targetX=t.x+(Math.cos(a)*radial-Math.sin(a)*strafe)*150;
     targetY=t.y+(Math.sin(a)*radial+Math.cos(a)*strafe)*150;
+    if(heavyPlan)
+      heavyCandidate={...heavyPlan,x:targetX,y:targetY,rivalId:enemy.id,cls:t.cls};
     if(c.style==="drone"){
       fire=sustainsAttack||(t.drones>=2&&hp>.30&&eDist<vision*.88)||eDist<180;
       if(eDist>260&&t.drones<2){
@@ -6128,6 +6158,16 @@ function botThink(w,t){
   const radialSpin=c.radial&&fire&&pressure>=2&&enemy?.type==="tank"&&eDist<345
     ?(t.trait%2?1:-1)*(t.cls==="Octo Tank"?.83:.62):0;
   if(radialSpin&&mode===2)detail="Girando para cobrir vários ângulos";
+  if(t.learning&&localDiscoveryArena(w)){
+    const m=t.learning,valid=heavyCandidate&&enemy?.id===heavyCandidate.rivalId&&targetEntity===enemy&&
+      t.cls===heavyCandidate.cls&&Math.abs(targetX-heavyCandidate.x)<1e-6&&Math.abs(targetY-heavyCandidate.y)<1e-6&&
+      Math.abs(bestOffset)<1e-9&&Math.hypot(bestX,bestY)>.4;
+    if(!valid)finishHeavyAttempt(m);
+    else if(!m.heavyAttempt){
+      m.heavyTrials=(m.heavyTrials??0)+1;
+      m.heavyAttempt={id:m.heavyTrials,rivalId:enemy.id,choice:heavyCandidate.choice,dealt:0,taken:0,until:w.time+2};
+    }
+  }
   t.intent={x:bestX,y:bestY,aim,aimX,aimY,fire,alt,guardDrones,droneCover,droneCutoff};
   if(c.radial){
     t.intent.radialSpin=radialSpin;
