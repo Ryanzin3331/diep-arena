@@ -17,7 +17,7 @@ A transição conserva a configuração e a promessa originais. Uma revisão de 
 
 Em Chromium com interface, no endereço local `http://127.0.0.1:8765/index.html`, foram verificados o download real do JSON, a seleção e reimportação do mesmo arquivo com diálogo nativo de confirmação (24 perfis), e a preferência ativada após fechar e reabrir a aba. No desktop, a aba A apagou 24 perfis pelos diálogos nativos; ao reiniciar, a arena antiga da aba B foi impedida de gravar e o banco permaneceu vazio. Após fechar e reabrir o Chromium com o mesmo perfil, a preferência continuou ligada e o banco vazio.
 
-No Poco C75, Chrome Android em prévia HTTPS, os controles funcionaram por toque em retrato e paisagem. O FFA salvou 36 perfis; o JSON foi baixado e reimportado no Android com confirmação de 36 perfis. O backup continha os 36 slots FFA sem duplicatas. A importação mostrou a mensagem de sucesso duas vezes; a correção deste incremento elimina a duplicação. Não houve medição de desempenho no celular.
+No Poco C75, Chrome Android em prévia HTTPS, os controles funcionaram por toque em retrato e paisagem. O FFA salvou 36 perfis; o JSON foi baixado e reimportado no Android com confirmação de 36 perfis. O backup continha os 36 slots FFA sem duplicatas. A importação mostrou a mensagem de sucesso duas vezes; a correção deste incremento elimina a duplicação. No commit `4a73d82cc3d7ef8e526b49af775bbda92614c41c`, a reimportação do backup de 36 perfis no Poco C75 exibiu a confirmação uma única vez. Não houve medição de desempenho no celular.
 
 ## Medições
 
