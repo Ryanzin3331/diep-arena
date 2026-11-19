@@ -4,7 +4,7 @@
   else root.createIndexedMemoryBridge=factory;
 })(typeof globalThis==='object'?globalThis:this,function createIndexedMemoryBridge(options){
   'use strict';
-  const {indexedDB,codec,createStore,onError=()=>{},name}=options;
+  const {indexedDB,codec,createStore,onError=()=>{},onMigration=()=>{},getLegacyStorage=()=>localStorage,name}=options;
   const eligible=new Set(['open','maze','maze-seed','lab']);
   let dbPromise;
   const report=error=>{try{onError(error);}catch(_){};};
@@ -19,7 +19,10 @@
   async function prepare(scope){
     if(!eligible.has(scope))return null;
     try{
-      const db=await connect(),session=await db.session();
+      const db=await connect();
+      const migration=await db.migrateLegacy(getLegacyStorage);
+      try{onMigration(migration);}catch(_){}
+      const session=await db.session();
       const profiles=new Map(session.profiles.filter(p=>p.profileId.startsWith(scope+':bot:')).map(p=>[p.profileId,p.memory]));
       let tail=Promise.resolve(true),lastTick=null,lastPromise=null;
       const view={
@@ -44,4 +47,5 @@
   }
   return Object.freeze({prepare});
 });
+
 

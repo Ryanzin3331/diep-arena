@@ -6097,7 +6097,9 @@ if(REUSE_BOT_MEMORY){
   try{
     if(typeof createMemoryCodec==='function'&&typeof createTransactionalMemoryStore==='function'&&typeof createIndexedMemoryBridge==='function')
       indexedMemoryBridge=createIndexedMemoryBridge({indexedDB,codec:createMemoryCodec({classes:C,newMemory,ttl:MEMORY_TTL}),
-        createStore:createTransactionalMemoryStore,onError:error=>console.warn('Memória dos bots indisponível:',error)});
+        createStore:createTransactionalMemoryStore,getLegacyStorage:()=>localStorage,
+        onMigration:result=>{if(result.invalid)console.warn('Perfis legados inválidos preservados:',result.invalid);},
+        onError:error=>console.warn('Memória dos bots indisponível:',error)});
   }catch(_){} // Storage unavailable: keep the game playable.
 }
 function saveBotMemory(arena){
@@ -8939,6 +8941,7 @@ if(initialArena?.then)initialArena.then(startFrames);else startFrames();
 </script>
 </body>
 </html>
+
 
 
 
