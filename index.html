@@ -311,6 +311,10 @@ button{-webkit-tap-highlight-color:transparent}
 .room-row input,.room-row select,.room-row button,.room-head button{min-height:38px}
 .room-row button,.room-head button{padding:0 8px;font-size:12px;font-weight:750}
 .room-row .primary{align-self:end}
+#roomHostForm{flex-wrap:wrap}
+#roomHostForm label{min-width:66px}
+#roomScoreRoster{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 9px}
+#roomScoreRoster span{display:block}
 #roomHostForm{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:end}
 #roomHostForm .primary{grid-column:1/-1}
 #roomScore{gap:5px;font-variant-numeric:tabular-nums}
@@ -528,6 +532,7 @@ button{-webkit-tap-highlight-color:transparent}
         <div class="overlay player-hud" id="playerHud">
           <div class="hud-top" id="roomScore" role="group" aria-label="Placar de eliminações entre jogadores" hidden>
             <span id="roomScoreHost"></span><strong id="roomScorePoints"></strong><span id="roomScoreGuest"></span>
+            <div id="roomScoreRoster" hidden></div>
           </div>
           <div id="playerTankHud">
             <div class="hud-top"><strong id="tankLabel">Tank</strong><span class="hp" id="hpLabel"></span></div>
@@ -564,7 +569,8 @@ button{-webkit-tap-highlight-color:transparent}
           <div id="roomSetup">
             <div class="room-row"><label>Seu nome<input id="roomName" maxlength="16" autocomplete="off"></label></div>
             <form class="room-row" id="roomHostForm">
-              <label>Bots na arena<select id="roomBots"><option value="0">0 · Duelo 1×1</option><option value="4">4 · FFA</option><option value="8">8 · FFA</option></select></label>
+              <label>Jogadores<select id="roomSize"><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></label>
+              <label>Bots na arena<select id="roomBots"><option value="0">0</option><option value="4">4 · FFA</option><option value="8">8 · FFA</option></select></label>
               <label>Reiniciar ao morrer<select id="roomRestartOnDeath"><option value="on">Ligado</option><option value="off">Desligado</option></select></label>
               <button class="primary" type="submit">Criar sala</button>
             </form>
@@ -1641,19 +1647,32 @@ function snapshotEffects(items,stride,write){
   }
   return data.subarray(0,index);
 }
-function snapshotArena(w,effectsOnly=false){
-  const forms=snapshotEffects(w.shapes,8,(a,i,e)=>{
+function packedForms(w){
+  return snapshotEffects(w.shapes,8,(a,i,e)=>{
     a[i]=e.x;a[i+1]=e.y;a[i+2]=e.r;a[i+3]=e.angle;
     a[i+4]=e.hp;a[i+5]=e.damaged;a[i+6]=FORM_INDEX.get(e.name);a[i+7]=+e.shiny;
   });
-  const shots=snapshotEffects(w.shots,6,(a,i,p)=>{
+}
+const ROOM_SHOT_STRIDE=7;
+function packedShots(w,stride){
+  return snapshotEffects(w.shots,stride,(a,i,p)=>{
     a[i]=p.x;a[i+1]=p.y;a[i+2]=p.r;a[i+3]=p.angle;
     a[i+4]=SHOT_KINDS.indexOf(shotAppearance(p));a[i+5]=Number.parseInt(shotColor(p,w.time).slice(1),16);
+    if(stride===ROOM_SHOT_STRIDE)a[i+6]=p.id;
   });
-  const bits=snapshotEffects(w.bits,4,(a,i,p)=>{
+}
+function packedBits(w){
+  return snapshotEffects(w.bits,4,(a,i,p)=>{
     a[i]=p.x;a[i+1]=p.y;a[i+2]=p.life;a[i+3]=Number.parseInt(p.color.slice(1),16);
   });
-  if(effectsOnly)return {forms,shots,bits};
+}
+function snapshotRoomEffects(w,includeForms){
+  const buffer=data=>data.byteLength===data.buffer.byteLength?data.buffer:data.slice().buffer;
+  return {forms:includeForms?buffer(packedForms(w)):undefined,
+    shots:buffer(packedShots(w,ROOM_SHOT_STRIDE)),bits:buffer(packedBits(w))};
+}
+function snapshotArena(w){
+  const forms=packedForms(w),shots=packedShots(w,6),bits=packedBits(w);
   return {time:w.time,tanks:w.tanks.filter(t=>t.alive).map(snapshotUnit),
     closers:w.closing?.closers.map(({id,name,x,y,r,aim,hit})=>({type:"closer",id,name,x,y,r,aim,hit,alive:true})),
     boss:w.boss?.alive?snapshotUnit(w.boss):null,
@@ -4559,7 +4578,7 @@ class Arena {
     // Surviving missiles release side shots after wall and entity impacts.
     this.advanceDeployerMissiles();
   }
-  step(humanIntent,guest=null){
+  step(humanIntent,guestCommands=null){
     if(this.duelEnded) return;
     this.time=++this.tick*DT;
     if(this.closing){this.advanceClosing(humanIntent);return;}
@@ -4591,8 +4610,10 @@ class Arena {
     if(this.tag&&this.tick%30===1)this.tagIntel();
     for(const t of this.tanks){
       if(!t.alive) continue;
-      if(guest?.tank===t)t.intent=guest.command;
-      else if(t.human&&humanIntent)t.intent=humanIntent;
+      if(t.human){
+        const command=guestCommands?.get(t)??(t===this.human?humanIntent:null);
+        if(command)t.intent=command;
+      }
       else if(!t.human&&(this.tick+t.id)%5===0) botThink(this,t);
       this.advanceTank(t);
     }
@@ -7166,7 +7187,7 @@ function drawGame(blend){
   }
   const remote=room?.role==="guest"&&room.phase==="playing"?room:null;
   if(remote&&!remote.scene)return;
-  if(remote)blend=clamp((performance.now()-remote.received)/ROOM_SNAPSHOT_MS,0,1);
+  if(remote)blend=roomBlend(remote,performance.now());
   const t=followTarget();
   renderedTarget=t;renderedBlend=blend;
   const marked=follow==="free"?freeSelection:t;
@@ -7335,8 +7356,11 @@ function drawArena(scene,lens,blend,marked,recorded,network=false){
       const x=forms[i],y=forms[i+1],r=forms[i+2];
       if(visible(x,y,r))paintForm(x,y,r,forms[i+3],forms[i+4],forms[i+5],FORM_ART[FORM_KEYS[forms[i+6]]],forms[i+7],time,lens.zoom);
     }
-    for(let i=0;i<shots.length;i+=6){
-      const x=shots[i],y=shots[i+1],r=shots[i+2];
+    const shotStride=network?ROOM_SHOT_STRIDE:6;
+    for(let i=0;i<shots.length;i+=shotStride){
+      const r=shots[i+2],start=i/shotStride*2;
+      const px=network?scene.shotStarts[start]:shots[i],py=network?scene.shotStarts[start+1]:shots[i+1];
+      const x=px+(shots[i]-px)*blend,y=py+(shots[i+1]-py)*blend;
       if(!visible(x,y,r))continue;
       const kind=SHOT_KINDS[shots[i+4]],color=hexColor(shots[i+5]);
       if(kind==="decadeBullet")decadeShots.push({x,y,r,color});
@@ -8121,7 +8145,7 @@ function updateHud(){
   if(world.tag&&sidePanel==="arena")updateTagChart();
   const remoteScene=room?.role==="guest"?room.scene:null;
   const formCount=remoteScene?remoteScene.forms.length/8:world.shapes.length;
-  const shotCount=remoteScene?remoteScene.shots.length/6:world.shots.length;
+  const shotCount=remoteScene?remoteScene.shots.length/ROOM_SHOT_STRIDE:world.shots.length;
   el("counts").textContent=formCount+" formas · "+shotCount+" projéteis";
   if(world.closing)el("closingStatus").textContent=world.duelEnded?world.closing.summary:
     world.closing.tanksDone&&world.domination?"Closers atacando os Dominadores · "+world.towers.filter(t=>t.alive).length+"/4 de pé":
@@ -8639,21 +8663,8 @@ function stepGame(){
   const priorDead=world.duelEnded, priorHuman=world.human?.alive, priorClosing=world.closing;
   const priorPursuitEnded=world.closing?.tanksDone,priorConvoy=world.convoy?.round;
   const current=room?.role==="host"&&room.phase==="playing"?room:null;
-  const guest=current?.guestTank;
-  const guestWasAlive=guest?.alive;
-  const guestCommand=guest?.alive&&performance.now()-current.lastInputAt<ROOM_IDLE_MS?current.command:null;
-  world.step(humanCommand(),guest?{tank:guest,command:guestCommand??{x:0,y:0,aim:guest.aim,fire:false,alt:false}}:null);
-  if(current){
-    const hostFell=priorHuman&&!world.human.alive, guestFell=guestWasAlive&&!guest.alive;
-    if(current.restartOnDeath&&(hostFell||guestFell)){
-      world.duelEnded=true;
-      world.winner=hostFell&&guestFell?null:hostFell?guest:world.human;
-    }else if(!current.restartOnDeath){
-      const hostKiller=world.human.killer,guestKiller=guest.killer;
-      if(hostFell&&hostKiller?.human&&hostKiller.slot===1)current.points[1]++;
-      if(guestFell&&guestKiller?.human&&guestKiller.slot===0)current.points[0]++;
-    }
-  }
+  if(current)stepRoomHost(current,priorHuman);
+  else world.step(humanCommand());
   if(!priorDead&&world.duelEnded)saveBotMemory(world);
   if(world.survival&&priorHuman&&!world.human.alive&&follow!=="free"){
     const killer=world.human.killer;
@@ -8686,13 +8697,15 @@ function frame(now){
   if(now-lastHud>(liteMode?LITE_HUD_INTERVAL:160)){lastHud=now;updateHud();}
   requestAnimationFrame(frame);
 }
-const ROOM_VERSION=3;
+const ROOM_VERSION=4;
 const ROOM_ALPHABET="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const ROOM_PEER_PREFIX="diep-arena-v4-";
-const ROOM_SNAPSHOT_MS=1000/15,ROOM_INPUT_MS=40,ROOM_IDLE_MS=400;
+const ROOM_SNAPSHOT_MS=1000/15,ROOM_FORMS_MS=200,ROOM_INPUT_MS=40,ROOM_IDLE_MS=400;
+const ROOM_MAX_BUFFER=24*1024;
+const ROOM_SIZES=[2,3,4];
 const ROOM_RESTART_MS=4000;
 const ROOM_BOTS=[0,4,8];
-const ROOM_HOST_COLOR="#39b7ed",ROOM_GUEST_COLOR="#ef8078";
+const ROOM_COLORS=["#39b7ed","#ef8078","#bd9cf7","#e9bf51"];
 let room=null,peerLibrary,roomRestartChosen=false;
 
 function loadRoomPeer(){
@@ -8737,6 +8750,10 @@ function closeRoom(message="",show=false){
   if(current){
     if(autoFullRoom===current){autoFullRoom=null;void exitArenaFullscreen();}
     clearTimeout(current.timer);
+    for(const guest of current.guests?.values()??[]){
+      clearTimeout(guest.timer);
+      guest.conn.close();
+    }
     current.conn?.close();
     current.peer?.destroy();
     if(current.phase==="playing"){
@@ -8751,12 +8768,47 @@ function closeRoom(message="",show=false){
 function roomFailure(current,message){
   if(room===current)closeRoom(message,true);
 }
-function sendRoom(current,data){
-  if(!current.conn?.open)return false;
-  try{current.conn.send(data);return true;}catch{
-    roomFailure(current,"A conexão da sala foi interrompida.");
+function sendRoom(current,data,guest=null){
+  const conn=guest?.conn??current.conn;
+  if(!conn?.open)return false;
+  try{conn.send(data);return true;}catch{
+    if(guest)dropRoomGuest(current,guest);
+    else roomFailure(current,"A conexão da sala foi interrompida.");
     return false;
   }
+}
+function roomCongested(conn){
+  return conn?.dataChannel?.bufferedAmount>ROOM_MAX_BUFFER||conn?.bufferSize>0;
+}
+function readyRoomGuests(current){
+  return [...current.guests.values()].filter(guest=>guest.ready);
+}
+function updateRoomLobby(current){
+  const guests=readyRoomGuests(current);
+  const ready=guests.length+1;
+  const message="Jogadores: "+ready+"/"+current.size+" · Aguardando "+(current.size-ready)+".";
+  updateRoomDialog(message);
+  for(const guest of guests)sendRoom(current,{type:"lobby",ready,size:current.size},guest);
+}
+function dropRoomGuest(current,guest){
+  if(room!==current||current.guests.get(guest.conn)!==guest)return;
+  current.guests.delete(guest.conn);
+  clearTimeout(guest.timer);
+  guest.conn.close();
+  if(current.phase!=="playing"){
+    updateRoomLobby(current);
+    return;
+  }
+  if(!current.guests.size){
+    roomFailure(current,"Os convidados saíram ou perderam a conexão.");
+    return;
+  }
+  world.tanks=world.tanks.filter(t=>t!==guest.tank);
+  world.shots=world.shots.filter(p=>!(p.owner.human&&p.owner.slot===guest.slot));
+  world.indexSense();
+  if(world.winner===guest.tank)world.winner=null;
+  updateRoomDialog(guest.name+" saiu. A partida continua.");
+  updateInterface(true);
 }
 
 async function openRoom(role){
@@ -8766,11 +8818,12 @@ async function openRoom(role){
     updateRoomDialog("Digite o código de oito caracteres da sala.");
     return;
   }
-  const bots=Number(el("roomBots").value);
+  const bots=Number(el("roomBots").value),size=Number(el("roomSize").value);
   const current={role,code:role==="host"?makeRoomCode():input,
     name:normalizedRoomName(el("roomName").value,role==="host"?"Anfitrião":"Convidado"),
     bots:ROOM_BOTS.includes(bots)?bots:0,restartOnDeath:el("roomRestartOnDeath").value==="on",
-    points:[0,0],phase:"connecting",ready:false,round:0};
+    size:ROOM_SIZES.includes(size)?size:2,guests:new Map(),phase:"connecting",ready:false,round:0};
+  current.points=Array(current.size).fill(0);
   room=current;
   updateRoomDialog(role==="host"?"Criando sala…":"Buscando a sala…");
   if(role==="guest")enterGuestFullscreen(current);
@@ -8782,15 +8835,15 @@ async function openRoom(role){
     current.peer.on("open",()=>{
       if(room!==current)return;
       if(role==="guest"){
-        attachRoomConnection(current,current.peer.connect(ROOM_PEER_PREFIX+current.code,{reliable:true}));
+        attachRoomGuestConnection(current,current.peer.connect(ROOM_PEER_PREFIX+current.code,{reliable:true}));
         return;
       }
       clearTimeout(current.timer);
       current.ready=true;
-      updateRoomDialog("Mostre o código ao seu amigo. A partida começa quando ele entrar.");
+      updateRoomLobby(current);
     });
     current.peer.on("connection",connection=>{
-      if(room!==current||role!=="host"||current.conn){
+      if(room!==current||role!=="host"||current.phase==="playing"||current.guests.size>=current.size-1){
         connection.on("open",()=>{
           try{connection.send({type:"unavailable"});}finally{
             setTimeout(()=>connection.close(),200);
@@ -8798,7 +8851,7 @@ async function openRoom(role){
         });
         return;
       }
-      attachRoomConnection(current,connection);
+      attachRoomHostConnection(current,connection);
     });
     current.peer.on("error",error=>{
       const messages={
@@ -8816,7 +8869,21 @@ async function openRoom(role){
     roomFailure(current,error.message||"Falha ao abrir o multiplayer.");
   }
 }
-function attachRoomConnection(current,connection){
+function attachRoomHostConnection(current,connection){
+  const occupied=new Set([...current.guests.values()].map(guest=>guest.slot));
+  const slot=ROOM_SIZES.find(n=>n<=current.size&&!occupied.has(n-1))-1;
+  const guest={conn:connection,slot,ready:false};
+  current.guests.set(connection,guest);
+  guest.timer=setTimeout(()=>dropRoomGuest(current,guest),15000);
+  connection.on("data",message=>{
+    if(room===current&&current.guests.get(connection)===guest&&message&&typeof message==="object"){
+      receiveRoomHost(current,guest,message);
+    }
+  });
+  connection.on("close",()=>dropRoomGuest(current,guest));
+  connection.on("error",()=>dropRoomGuest(current,guest));
+}
+function attachRoomGuestConnection(current,connection){
   if(!connection){
     roomFailure(current,"Não foi possível abrir a conexão com essa sala.");
     return;
@@ -8825,15 +8892,12 @@ function attachRoomConnection(current,connection){
   clearTimeout(current.timer);
   current.timer=setTimeout(()=>roomFailure(current,"A conexão entre os celulares não ficou pronta."),15000);
   connection.on("open",()=>{
-    if(room!==current)return;
-    if(current.role==="guest")sendRoom(current,{type:"hello",version:ROOM_VERSION,name:current.name});
+    if(room===current)sendRoom(current,{type:"hello",version:ROOM_VERSION,name:current.name});
   });
   connection.on("data",message=>{
-    if(room!==current||!message||typeof message!=="object")return;
-    if(current.role==="host")receiveRoomHost(current,message);
-    else receiveRoomGuest(current,message);
+    if(room===current&&message&&typeof message==="object")receiveRoomGuest(current,message);
   });
-  connection.on("close",()=>roomFailure(current,"O outro jogador saiu ou perdeu a conexão."));
+  connection.on("close",()=>roomFailure(current,"O anfitrião saiu ou perdeu a conexão."));
   connection.on("error",()=>roomFailure(current,"A conexão entre os celulares falhou."));
 }
 
@@ -8843,8 +8907,8 @@ function enterRoomWorld(current,seed,bots){
   ++arenaTransition;transitionPending=false;
   saveBotMemory(world);
   current.phase="playing";current.scene=null;current.units=new Map();
-  current.snapshotAt=-Infinity;current.inputAt=-Infinity;current.lastInputAt=-Infinity;current.sentTick=-1;
-  current.command=null;current.guestTank=null;
+  current.snapshotAt=-Infinity;current.inputAt=-Infinity;
+  current.received=null;current.interpolationMs=ROOM_SNAPSHOT_MS;current.lastTick=-1;
   current.restartAt=null;
   current.bots=bots;
   world=new Arena(seed,bots,null,"both",true,"open","off",1,false,null,"multiplayer");
@@ -8856,21 +8920,53 @@ function enterRoomWorld(current,seed,bots){
   pointer.present=false;
   setSidePanel("arena");
   if(current.round===1)el("roomDialog").close();
-  updateRoomDialog((bots===0?"Duelo 1×1":"FFA · "+bots+" bots")+
+  updateRoomDialog((bots===0&&current.size===2?"Duelo 1×1":"FFA · até "+(current.size??2)+" jogadores")+
+    (bots?" · "+bots+" bots":"")+
     (current.restartOnDeath?" · Reinício ao morrer ligado.":" · Reinício ao morrer desligado."));
+  resize();
 }
-function spawnRoomPlayer(current,guest,old=null){
-  const slot=guest?1:0;
+function spawnRoomPlayer(current,guest=null,old=null){
+  const slot=guest?.slot??0;
   const level=old?RESPAWN[old.level-1]:1;
   if(old)world.tanks=world.tanks.filter(t=>t!==old);
-  const x=old?null:world.mid+(guest?490:-490);
-  const y=old?null:world.mid+(guest?90:-90);
-  const tank=world.spawnTank(guest?current.guestName:current.name,true,slot,level,null,x,y,false,null,null,!guest);
-  tank.roomColor=guest?ROOM_GUEST_COLOR:ROOM_HOST_COLOR;
-  if(guest){current.guestTank=tank;current.command=null;}
-  else resetRoomPlayer(tank);
+  const angle=Math.PI+slot*TAU/current.size;
+  const x=old?null:world.mid+(current.size===2?(slot?490:-490):Math.cos(angle)*500);
+  const y=old?null:world.mid+(current.size===2?(slot?90:-90):Math.sin(angle)*500);
+  const tank=world.spawnTank(guest?.name??current.name,true,slot,level,null,x,y,false,null,null,!guest);
+  tank.roomColor=ROOM_COLORS[slot];
+  if(guest){
+    guest.tank=tank;
+    guest.command=null;
+    guest.lastInputAt=-Infinity;
+  }else resetRoomPlayer(tank);
   world.indexSense();
   return tank;
+}
+function stepRoomHost(current,hostWasAlive){
+  const now=performance.now(),commands=new Map(),wasAlive=[];
+  const guests=readyRoomGuests(current);
+  for(const guest of guests){
+    const tank=guest.tank;
+    if(!tank?.alive)continue;
+    wasAlive.push(tank);
+    commands.set(tank,guest.command&&now-guest.lastInputAt<ROOM_IDLE_MS?guest.command:
+      {x:0,y:0,aim:tank.aim,fire:false,alt:false});
+  }
+  if(hostWasAlive)wasAlive.push(world.human);
+  world.step(humanCommand(),commands);
+  const fallen=wasAlive.filter(tank=>!tank.alive);
+  if(!fallen.length)return;
+  if(current.restartOnDeath){
+    const surviving=wasAlive.filter(tank=>tank.alive);
+    world.duelEnded=true;
+    world.winner=surviving.length===1?surviving[0]:null;
+    current.restartAt=now+ROOM_RESTART_MS;
+  }else{
+    for(const victim of fallen){
+      const killer=victim.killer;
+      if(killer?.human&&killer.slot!==victim.slot&&(killer.slot===0||guests.some(guest=>guest.slot===killer.slot)))current.points[killer.slot]++;
+    }
+  }
 }
 function resetRoomPlayer(tank){
   camera.x=tank.x;camera.y=tank.y;
@@ -8878,16 +8974,23 @@ function resetRoomPlayer(tank){
   humanAuto=false;cleanseInputs();
 }
 function startRoomRound(current){
-  if(room!==current||!current.conn?.open)return;
+  const guests=readyRoomGuests(current);
+  if(room!==current||!guests.length)return;
   current.round++;
   const seed=randomSeed();
   enterRoomWorld(current,seed,current.bots);
-  spawnRoomPlayer(current,false);
-  const guest=spawnRoomPlayer(current,true);
-  if(!sendRoom(current,{type:"start",version:ROOM_VERSION,seed,bots:current.bots,round:current.round,
-    restartOnDeath:current.restartOnDeath}))return;
+  spawnRoomPlayer(current);
+  for(const guest of guests){
+    guest.sentTick=-1;
+    guest.formsAt=-Infinity;
+    spawnRoomPlayer(current,guest);
+    sendRoom(current,{type:"start",version:ROOM_VERSION,seed,bots:current.bots,round:current.round,
+      size:current.size,restartOnDeath:current.restartOnDeath},guest);
+    if(room!==current)return;
+  }
+  if(room!==current)return;
   updateInterface(true);
-  sendRoomSnapshot(current,performance.now(),guest);
+  sendRoomSnapshot(current,performance.now());
 }
 function readRoomCommand(message,tank){
   const finite=(n,fallback)=>Number.isFinite(n)?n:fallback;
@@ -8898,26 +9001,34 @@ function readRoomCommand(message,tank){
     aimY:clamp(finite(message.aimY,tank.y),-world.size,world.size*2),
     fire:message.fire===true,alt:message.alt===true};
 }
-function receiveRoomHost(current,message){
-  if(current.phase!=="playing"){
+function receiveRoomHost(current,guest,message){
+  if(!guest.ready){
     if(message.type!=="hello")return;
     if(message.version!==ROOM_VERSION){
-      sendRoom(current,{type:"incompatible"});return;
+      sendRoom(current,{type:"incompatible"},guest);
+      clearTimeout(guest.timer);
+      guest.timer=setTimeout(()=>dropRoomGuest(current,guest),200);
+      return;
     }
-    current.guestName=normalizedRoomName(message.name,"Convidado");
-    startRoomRound(current);
+    if(current.phase==="playing")return;
+    clearTimeout(guest.timer);
+    guest.ready=true;
+    guest.name=normalizedRoomName(message.name,"Convidado "+guest.slot);
+    if(readyRoomGuests(current).length===current.size-1)startRoomRound(current);
+    else updateRoomLobby(current);
     return;
   }
-  if(message.round!==current.round||world.duelEnded)return;
-  const tank=current.guestTank;
-  if(message.type==="respawn"&&!current.restartOnDeath&&!tank.alive&&message.player===tank.id){
-    spawnRoomPlayer(current,true,tank);
+  if(current.phase!=="playing"||message.round!==current.round||world.duelEnded)return;
+  const tank=guest.tank;
+  if(!tank||message.player!==tank.id)return;
+  if(message.type==="respawn"&&!current.restartOnDeath&&!tank.alive){
+    spawnRoomPlayer(current,guest,tank);
     return;
   }
-  if(!tank.alive||message.player!==tank.id)return;
+  if(!tank.alive)return;
   if(message.type==="input"){
-    current.command=readRoomCommand(message,tank);
-    current.lastInputAt=performance.now();
+    guest.command=readRoomCommand(message,tank);
+    guest.lastInputAt=performance.now();
   }else if(message.type==="stat"){
     world.playerUpgrade(tank,message.index);
   }else if(message.type==="class"&&typeof message.name==="string"&&picks(tank).includes(message.name)){
@@ -8928,26 +9039,60 @@ function roomUnit(t){
   return {...snapshotUnit(t),alive:t.alive,level:t.level,score:t.score,kills:t.kills,drones:t.drones,
     mood:t.mood,detail:t.detail,roomColor:t.roomColor,cause:t.cause??"",killer:t.killer?{name:t.killer.name}:null};
 }
-function sendRoomSnapshot(current,now,guest=current.guestTank){
-  if(!current.conn?.open||current.sentTick===world.tick||current.conn.dataChannel?.bufferedAmount>65536)return;
-  current.snapshotAt=now;current.sentTick=world.tick;
-  const {forms,shots,bits}=snapshotArena(world,true);
-  const sent=sendRoom(current,{type:"state",round:current.round,tick:world.tick,time:world.time,
-    player:guest.id,tanks:world.tanks.filter(t=>t.alive||t.human).map(roomUnit),
-    forms:forms.slice().buffer,shots:shots.slice().buffer,bits:bits.slice().buffer,
-    events:world.events,points:current.points,done:world.duelEnded,winner:world.winner?.id??null});
-  if(sent&&world.duelEnded)current.restartAt=now+ROOM_RESTART_MS;
+function sendRoomSnapshot(current,now){
+  current.snapshotAt=now;
+  const guests=readyRoomGuests(current).filter(guest=>guest.conn.open&&guest.sentTick!==world.tick&&!roomCongested(guest.conn));
+  if(!guests.length)return;
+  const withForms=guests.filter(guest=>now-guest.formsAt>=ROOM_FORMS_MS);
+  const {forms,shots,bits}=snapshotRoomEffects(world,withForms.length>0);
+  const state={type:"state",round:current.round,tick:world.tick,time:world.time,
+    tanks:world.tanks.filter(t=>t.alive||t.human).map(roomUnit),shots,bits,
+    events:world.events,points:current.points,done:world.duelEnded,winner:world.winner?.id??null};
+  for(const guest of guests){
+    const includeForms=withForms.includes(guest);
+    if(sendRoom(current,{...state,player:guest.tank.id,...(includeForms?{forms}:{})},guest)){
+      guest.sentTick=world.tick;
+      if(includeForms)guest.formsAt=now;
+    }
+  }
+}
+function roomBlend(current,now){
+  return current.received===null?1:clamp((now-current.received)/current.interpolationMs,0,1);
+}
+function roomShotStarts(shots,previous,blend){
+  const offsets=new Map(),starts=new Float32Array(shots.length/ROOM_SHOT_STRIDE*2);
+  if(previous){
+    for(let i=0;i<previous.shots.length;i+=ROOM_SHOT_STRIDE)offsets.set(previous.shots[i+6],i);
+  }
+  for(let i=0,start=0;i<shots.length;i+=ROOM_SHOT_STRIDE,start+=2){
+    const old=offsets.get(shots[i+6]);
+    if(old===undefined){starts[start]=shots[i];starts[start+1]=shots[i+1];continue;}
+    const before=old/ROOM_SHOT_STRIDE*2;
+    starts[start]=previous.shotStarts[before]+(previous.shots[old]-previous.shotStarts[before])*blend;
+    starts[start+1]=previous.shotStarts[before+1]+(previous.shots[old+1]-previous.shotStarts[before+1])*blend;
+  }
+  return starts;
+}
+function validRoomBuffer(buffer,stride){
+  return buffer instanceof ArrayBuffer&&buffer.byteLength<=1024*1024&&buffer.byteLength%stride===0;
 }
 function receiveRoomGuest(current,message){
   if(message.type==="unavailable"||message.type==="incompatible"){
-    roomFailure(current,message.type==="unavailable"?"Essa sala já está ocupada.":"Abram a mesma versão do Diep Arena.");
+    roomFailure(current,message.type==="unavailable"?"Sala cheia ou partida em andamento.":"Abram a mesma versão do Diep Arena.");
+    return;
+  }
+  if(message.type==="lobby"&&current.phase!=="playing"){
+    if(!ROOM_SIZES.includes(message.size)||!Number.isInteger(message.ready)||message.ready<2||message.ready>=message.size)return;
+    clearTimeout(current.timer);
+    current.phase="lobby";
+    updateRoomDialog("Jogadores: "+message.ready+"/"+message.size+" · Aguardando início.");
     return;
   }
   if(message.type==="start"){
-    if(message.version!==ROOM_VERSION||!ROOM_BOTS.includes(message.bots)||typeof message.restartOnDeath!=="boolean"||
+    if(!ROOM_SIZES.includes(message.size)||message.version!==ROOM_VERSION||!ROOM_BOTS.includes(message.bots)||typeof message.restartOnDeath!=="boolean"||
       !Number.isInteger(message.seed)||message.seed<1||message.seed>4294967295||
       !Number.isInteger(message.round)||message.round<=current.round)return;
-    current.round=message.round;current.lastTick=-1;
+    current.round=message.round;current.size=message.size;
     current.restartOnDeath=message.restartOnDeath;
     enterRoomWorld(current,message.seed,message.bots);
     world.tanks=[];world.shapes=[];world.shots=[];world.bits=[];
@@ -8957,25 +9102,31 @@ function receiveRoomGuest(current,message){
   }
   if(current.phase!=="playing"||message.type!=="state"||message.round!==current.round||
     !Number.isInteger(message.tick)||message.tick<=current.lastTick||!Number.isFinite(message.time)||
-    !Array.isArray(message.points)||message.points.length!==2||!message.points.every(n=>Number.isSafeInteger(n)&&n>=0)||
-    !Array.isArray(message.tanks)||message.tanks.length>current.bots+2||
+    !Array.isArray(message.points)||message.points.length!==current.size||!message.points.every(n=>Number.isSafeInteger(n)&&n>=0)||
+    !Array.isArray(message.tanks)||message.tanks.length>current.bots+current.size||
     !message.tanks.every(t=>t&&Object.hasOwn(C,t.cls)&&Array.isArray(t.stats)&&t.stats.length===8&&Array.isArray(t.cool))||
-    ![[message.forms,32],[message.shots,24],[message.bits,16]].every(([buffer,stride])=>
-      buffer instanceof ArrayBuffer&&buffer.byteLength<=1024*1024&&buffer.byteLength%stride===0))return;
+    !validRoomBuffer(message.shots,ROOM_SHOT_STRIDE*4)||!validRoomBuffer(message.bits,16)||
+    (message.forms===undefined?!current.scene:!validRoomBuffer(message.forms,32)))return;
   clearTimeout(current.timer);
+  const now=performance.now(),blend=roomBlend(current,now),previous=current.scene;
+  const interpolationMs=current.received===null?ROOM_SNAPSHOT_MS:
+    clamp(Math.max(now-current.received,(message.tick-current.lastTick)*DT*1000),ROOM_SNAPSHOT_MS,150);
   const oldHuman=world.human,wasAlive=oldHuman?.alive,wasDone=world.duelEnded;
   const oldLevel=oldHuman?.level,oldClass=oldHuman?.cls,oldStats=oldHuman?.stats;
   const units=new Map(),tanks=[];
   for(const unit of message.tanks){
     const tank=current.units.get(unit.id)??{};
-    const px=tank.x??unit.x,py=tank.y??unit.y;
+    const px=tank.alive?tank.px+(tank.x-tank.px)*blend:unit.x;
+    const py=tank.alive?tank.py+(tank.y-tank.py)*blend:unit.y;
     Object.assign(tank,unit,{px,py});
     units.set(tank.id,tank);tanks.push(tank);
   }
   current.units=units;
-  current.scene={time:message.time,tanks,towers:[],ships:[],forms:new Float32Array(message.forms),
-    shots:new Float32Array(message.shots),bits:new Float32Array(message.bits)};
-  current.received=performance.now();current.lastTick=message.tick;
+  const shots=new Float32Array(message.shots);
+  current.scene={time:message.time,tanks,towers:[],ships:[],
+    forms:message.forms?new Float32Array(message.forms):previous?.forms??new Float32Array(),
+    shots,shotStarts:roomShotStarts(shots,previous,blend),bits:new Float32Array(message.bits)};
+  current.received=now;current.interpolationMs=interpolationMs;current.lastTick=message.tick;
   current.points=message.points;
   world.tanks=tanks;world.human=units.get(message.player)??null;
   world.time=message.time;world.tick=message.tick;world.events=Array.isArray(message.events)?message.events:[];
@@ -9005,8 +9156,8 @@ function tickRoom(now){
   if(current?.phase!=="playing"||document.hidden)return;
   if(current.role==="host"){
     if(current.restartAt!==null&&now>=current.restartAt)startRoomRound(current);
-    else if(now-current.snapshotAt>=ROOM_SNAPSHOT_MS)sendRoomSnapshot(current,now);
-  }else if(now-current.inputAt>=ROOM_INPUT_MS&&world.human?.alive&&!world.duelEnded){
+    else if(now-current.snapshotAt>=ROOM_SNAPSHOT_MS-1)sendRoomSnapshot(current,now);
+  }else if(now-current.inputAt>=ROOM_INPUT_MS&&world.human?.alive&&!world.duelEnded&&!roomCongested(current.conn)){
     current.inputAt=now;
     roomGuestAction("input",humanCommand());
   }
@@ -9019,10 +9170,27 @@ function updateRoomHud(focus){
   el("playerTankHud").hidden=!showTank;
   el("playerHud").hidden=!showScore&&!showTank;
   if(showScore){
-    for(const [slot,id] of [[0,"roomScoreHost"],[1,"roomScoreGuest"]]){
-      el(id).textContent=world.tanks.find(t=>t.human&&t.slot===slot)?.name??"";
+    const duel=current.size===2;
+    for(const id of ["roomScoreHost","roomScorePoints","roomScoreGuest"])el(id).hidden=!duel;
+    el("roomScoreRoster").hidden=duel;
+    if(duel){
+      for(const [slot,id] of [[0,"roomScoreHost"],[1,"roomScoreGuest"]]){
+        el(id).textContent=world.tanks.find(t=>t.human&&t.slot===slot)?.name??"";
+      }
+      el("roomScorePoints").textContent=current.points[0]+" × "+current.points[1];
+    }else{
+      const rows=world.tanks.filter(t=>t.human).sort((a,b)=>a.slot-b.slot)
+        .map(t=>[t.name,current.points[t.slot],t.roomColor]);
+      const signature=JSON.stringify(rows);
+      if(current.scoreSignature!==signature){
+        current.scoreSignature=signature;
+        el("roomScoreRoster").replaceChildren(...rows.map(([name,points,color])=>{
+          const row=node("span",name+" · "+points);
+          row.style.color=color;
+          return row;
+        }));
+      }
     }
-    el("roomScorePoints").textContent=current.points[0]+" × "+current.points[1];
   }
   if(current&&world.duelEnded)updateRoomCountdown(current);
 }
@@ -9039,10 +9207,10 @@ function updateRoomInterface(){
   el("spectate").textContent=current?"Sair da sala":"Assistir";
   if(!current)return;
   el("pause").disabled=el("step").disabled=true;
-  el("stateText").textContent=world.duelEnded?"RODADA ENCERRADA":current.bots?"FFA LOCAL":"DUELO LOCAL";
+  el("stateText").textContent=world.duelEnded?"RODADA ENCERRADA":current.bots||current.size>2?"FFA LOCAL":"DUELO LOCAL";
   if(world.duelEnded){
     el("mask").hidden=false;el("nameField").hidden=true;
-    el("dialogTitle").textContent=world.winner?world.winner.name+" venceu a rodada":"Rodada empatada";
+    el("dialogTitle").textContent=world.winner?world.winner.name+" venceu a rodada":current.size===2?"Rodada empatada":"Rodada encerrada";
     el("dialogText").textContent="A próxima rodada começa no nível 1.";
     el("enter").disabled=true;
     updateRoomCountdown(current);
@@ -9051,7 +9219,7 @@ function updateRoomInterface(){
 function enterRoomAction(){
   if(!world.duelEnded&&!room.restartOnDeath&&world.human&&!world.human.alive){
     if(room.role==="guest")roomGuestAction("respawn");
-    else{spawnRoomPlayer(room,false,world.human);updateInterface(true);}
+    else{spawnRoomPlayer(room,null,world.human);updateInterface(true);}
   }
 }
 
@@ -9059,8 +9227,8 @@ el("multi").onclick=el("roomMenu").onclick=showRoomDialog;
 el("roomClose").onclick=()=>el("roomDialog").close();
 el("roomExit").onclick=()=>closeRoom();
 el("roomRestartOnDeath").onchange=()=>{roomRestartChosen=true;};
-el("roomBots").onchange=()=>{
-  if(!roomRestartChosen)el("roomRestartOnDeath").value=el("roomBots").value==="0"?"on":"off";
+el("roomSize").onchange=el("roomBots").onchange=()=>{
+  if(!roomRestartChosen)el("roomRestartOnDeath").value=el("roomBots").value==="0"&&el("roomSize").value==="2"?"on":"off";
 };
 el("roomHostForm").onsubmit=event=>{event.preventDefault();openRoom("host");};
 el("roomJoinForm").onsubmit=event=>{event.preventDefault();openRoom("guest");};
