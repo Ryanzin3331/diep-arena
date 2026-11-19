@@ -109,6 +109,7 @@ test('restart e setMode reais salvam antes de trocar arenas sem duplicar snapsho
   const s=storage();ctx.testStorage=s;
   vm.runInContext(`
     let room=null,world,mode='watch',pending=false,paused=false,follow='leader',highlightView=null;
+    const REUSE_BOT_MEMORY=false;let indexedMemoryBridge=null,arenaTransition=0,transitionPending=false,transitionReady=null;
     let focusId=null,freeSelection=null,lastWatchChoice=0,acc=0,renderedTarget=null,humanAuto=false,optStats=false;
     let lastDraw=0,towerUiSignature='',tagChartSignature='',historyRevision=0,historySelection='',historyRows=0;
     let playerName='Teste';const HISTORY_PAGE=10,liteMode=false,camera={x:0,y:0},pointer={};
@@ -119,7 +120,7 @@ test('restart e setMode reais salvam antes de trocar arenas sem duplicar snapsho
     const el=id=>ui[id];const seedValue=()=>1234;
     const closeReplay=()=>{},cleanseInputs=()=>{},updateInterface=()=>{},setSidePanel=()=>{},closeRoom=()=>{},join=()=>{};
     const botMemoryStore=createBotMemoryStore({storage:testStorage,codec:createMemoryCodec({classes:C,newMemory,ttl:MEMORY_TTL})});
-    function saveBotMemory(arena){arena?.botMemorySession?.save(arena);}
+    function saveBotMemory(arena){return arena?.botMemorySession?.save(arena);}
     ${lifecycle}
     globalThis.testLife={restart,setMode,get world(){return world}};
   `,ctx);
@@ -130,4 +131,5 @@ test('restart e setMode reais salvam antes de trocar arenas sem duplicar snapsho
   const lab=life.world;learn(lab);life.setMode('watch');
   assert.ok(s.data.has(key('lab:bot:0')));assert.equal(life.world.tanks[0].learning.samples,1);
 });
+
 

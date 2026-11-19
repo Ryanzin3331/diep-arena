@@ -6075,6 +6075,8 @@ function botThink(w,t){
 </script>
 <script src="memory-codec.js"></script>
 <script src="memory-store.js"></script>
+<script src="memory-idb.js"></script>
+<script src="memory-bridge.js"></script>
 <script id="app">
 "use strict";
 const el=id=>document.getElementById(id);
@@ -6090,13 +6092,24 @@ let world,mode="watch",pending=false,paused=false,rate=1,follow="leader",focusId
 // 1C internal switch. Off by default until an explicit user-facing preference exists.
 const REUSE_BOT_MEMORY=false;
 let botMemoryStore=null;
+let indexedMemoryBridge=null,arenaTransition=0,transitionPending=false,transitionReady=null,memorySaveBarrier=null;
 if(REUSE_BOT_MEMORY){
   try{
-    if(typeof createMemoryCodec==='function'&&typeof createBotMemoryStore==='function')
-      botMemoryStore=createBotMemoryStore({storage:localStorage,codec:createMemoryCodec({classes:C,newMemory,ttl:MEMORY_TTL})});
+    if(typeof createMemoryCodec==='function'&&typeof createTransactionalMemoryStore==='function'&&typeof createIndexedMemoryBridge==='function')
+      indexedMemoryBridge=createIndexedMemoryBridge({indexedDB,codec:createMemoryCodec({classes:C,newMemory,ttl:MEMORY_TTL}),
+        createStore:createTransactionalMemoryStore,onError:error=>console.warn('Memória dos bots indisponível:',error)});
   }catch(_){} // Storage unavailable: keep the game playable.
 }
-function saveBotMemory(arena){arena?.botMemorySession?.save(arena);}
+function saveBotMemory(arena){
+  const operation=arena?.botMemorySession?.save(arena);
+  if(operation?.then){
+    const previous=memorySaveBarrier;
+    const barrier=previous?Promise.allSettled([previous,operation]):operation;
+    memorySaveBarrier=barrier;
+    barrier.then(()=>{if(memorySaveBarrier===barrier)memorySaveBarrier=null;},()=>{if(memorySaveBarrier===barrier)memorySaveBarrier=null;});
+  }
+  return memorySaveBarrier;
+}
 window.addEventListener('pagehide',()=>saveBotMemory(world));
 let acc=0,last=0,lastHud=-1000, lastWatchChoice=-100;
 let playerName="Power",humanAuto=false,mouseFire=false,mouseAlt=false,buttonAlt=false;
@@ -6304,14 +6317,35 @@ function cleanseInputs(){
 }
 function restart(bossTrial=false){
   closeReplay(false);
-  saveBotMemory(world);
   const seed=clamp(Math.floor(seedValue()),1,4294967295);
   el("seed").value=seed;
   const l=Number(el("labLevel").value);
   const duel=mode==="lab"?[el("classA").value,el("classB").value,l,bossTrial]:null;
-  world=new Arena(seed,Number(el("botCount").value),duel,el("learningMode").value,el("buildMode").value==="adaptive",
-    el("arenaMap").value,el("bossSchedule").value,Number(el("shipStart").value),el("eventBosses").value==="on",
-    mode==="play"&&!pending?playerName:null,null,botMemoryStore);
+  const config={seed,bots:Number(el("botCount").value),duel,learning:el("learningMode").value,
+    adaptive:el("buildMode").value==="adaptive",map:el("arenaMap").value,boss:el("bossSchedule").value,
+    ship:Number(el("shipStart").value),events:el("eventBosses").value==="on",player:mode==="play"&&!pending?playerName:null};
+  const source=world,save=saveBotMemory(source),request=++arenaTransition;
+  const scope=duel?(duel[3]?"lab-boss":"lab"):config.map;
+  const eligible=["open","maze","maze-seed","lab"].includes(scope);
+  if(!REUSE_BOT_MEMORY||!indexedMemoryBridge||!eligible&&!save){
+    transitionPending=false;
+    finishRestart(config,bossTrial,botMemoryStore);
+    return;
+  }
+  transitionPending=true;paused=true;
+  const ready=(async()=>{
+    try{await save;}catch(error){console.warn('Memória dos bots não foi salva:',error);}
+    if(request!==arenaTransition)return false;
+    const prepared=eligible?await indexedMemoryBridge.prepare(scope):null;
+    if(request!==arenaTransition)return false;
+    transitionPending=false;finishRestart(config,bossTrial,prepared);return true;
+  })();
+  transitionReady=ready;
+  return ready;
+}
+function finishRestart(config,bossTrial,memoryStore){
+  world=new Arena(config.seed,config.bots,config.duel,config.learning,config.adaptive,
+    config.map,config.boss,config.ship,config.events,config.player,null,memoryStore);
   world.history.lite=liteMode;lastDraw=-Infinity;
   towerUiSignature="";
   tagChartSignature="";
@@ -6332,6 +6366,7 @@ function restart(bossTrial=false){
 }
 function setMode(next){
   if(room)closeRoom();
+  if(!world){mode=next;pending=next==="play";restart();return;}
   if(next===mode && !pending && (mode!=="play"||world.human?.alive)) return;
   closeReplay(false);
   const prior=mode;
@@ -6345,7 +6380,7 @@ function setMode(next){
   }
   if(mode!=="lab"&&["a","b"].includes(learning.value)) learning.value="both";
   learning.options[0].textContent=mode==="lab"?"Os dois tanques":"Todos os bots";
-  if(next==="lab"||prior==="lab"){
+  if(next==="lab"||prior==="lab"||transitionPending){
     if(next==="play")pending=true;
     restart();
   }
@@ -6386,8 +6421,9 @@ function join(){
     if(!pending)return;
     const setup=el("arenaMap"),next=setup.value;
     setup.value="survival";
-    pending=false;restart();setup.value=next;updateInterface(true);
-    canvas.focus({preventScroll:true});return;
+    pending=false;const nextArena=restart();setup.value=next;
+    if(nextArena?.then)nextArena.then(applied=>{if(applied){updateInterface(true);canvas.focus({preventScroll:true});}});
+    else{updateInterface(true);canvas.focus({preventScroll:true});}return;
   }
   if(world.human?.alive||world.duelEnded||world.closing) return;
   const level=Math.max(world.startLevel,world.human?RESPAWN[world.human.level-1]:1);
@@ -8450,6 +8486,7 @@ el("cameraMode").onclick=()=>{
   updateInterface(false);
 };
 function stepGame(){
+  if(transitionPending)return;
   const priorDead=world.duelEnded, priorHuman=world.human?.alive, priorClosing=world.closing;
   const priorPursuitEnded=world.closing?.tanksDone,priorConvoy=world.convoy?.round;
   const current=room?.role==="host"&&room.phase==="playing"?room:null;
@@ -8481,7 +8518,7 @@ function stepGame(){
 function frame(now){
   const elapsed=last===0?0:Math.min(.07,(now-last)/1000);last=now;
   const networkMatch=room?.phase==="playing";
-  if(!paused&&!world.duelEnded&&!document.hidden&&!(networkMatch&&room.role==="guest")){
+  if(!transitionPending&&!paused&&!world.duelEnded&&!document.hidden&&!(networkMatch&&room.role==="guest")){
     acc+=elapsed*(networkMatch?1:rate);
     for(let turns=0;acc>=DT&&turns<18&&!world.duelEnded;turns++){
       stepGame();acc-=DT;
@@ -8654,6 +8691,7 @@ function attachRoomConnection(current,connection){
 function enterRoomWorld(current,seed,bots){
   clearTimeout(current.timer);
   closeReplay(false);
+  ++arenaTransition;transitionPending=false;
   saveBotMemory(world);
   current.phase="playing";current.scene=null;current.units=new Map();
   current.snapshotAt=-Infinity;current.inputAt=-Infinity;current.lastInputAt=-Infinity;current.sentTick=-1;
@@ -8889,12 +8927,18 @@ document.addEventListener("visibilitychange",()=>{
 });
 
 el("seed").value=randomSeed();
-resize();restart();
-const first=followTarget();
-if(first){camera.x=first.x;camera.y=first.y;}
-requestAnimationFrame(frame);
+resize();
+function startFrames(){
+  if(!world){if(transitionReady)transitionReady.then(startFrames);return;}
+  const first=followTarget();
+  if(first){camera.x=first.x;camera.y=first.y;}
+  requestAnimationFrame(frame);
+}
+const initialArena=restart();
+if(initialArena?.then)initialArena.then(startFrames);else startFrames();
 </script>
 </body>
 </html>
+
 
 
