@@ -92,6 +92,7 @@ button,select,input{font:inherit}button,select,input{border:1px solid var(--line
 }
 .bot-summary{display:none}
 .config .lite-help{margin:0;color:var(--muted);font-size:11px;line-height:1.35}
+.config .memory-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}.config .memory-actions button{min-height:44px;line-height:1.25;white-space:normal;overflow-wrap:anywhere}.config .memory-actions .danger{grid-column:1/-1}.config .memory-status{margin:0;color:var(--muted);font-size:11px;line-height:1.4;overflow-wrap:anywhere}
 @media(pointer:coarse) and (max-width:950px){
   .bot-summary{display:grid;gap:3px;width:fit-content;max-width:min(249px,calc(100vw - 86px));padding:6px 9px;
     color:var(--fg);background:#17231af5;border:1px solid #789071;border-radius:8px;font-size:11px;line-height:1.25}
@@ -635,6 +636,12 @@ button{-webkit-tap-highlight-color:transparent}
           </div>
           <label class="wide" title="A configuração vale ao iniciar ou reiniciar a partida">Aprendizado na próxima partida<select id="learningMode"><option value="both">Todos os bots</option><option value="a" hidden disabled>Só Tanque A</option><option value="b" hidden disabled>Só Tanque B</option><option value="off">Desligado</option></select></label>
           <label class="wide">Builds na próxima partida<select id="buildMode"><option value="adaptive">Adaptativas</option><option value="fixed">Fixas por classe</option></select></label>
+          <label class="wide">Usar memória da arena anterior<select id="reuseBotMemory"><option value="off">Desativado</option><option value="on">Ativado</option></select></label>
+          <p class="memory-status wide">Vale para a próxima arena. FFA, Maze e laboratório normal.</p>
+          <p class="memory-status wide" id="memoryStatus" role="status" aria-live="polite">Verificando memórias salvas…</p>
+          <p class="memory-status wide" id="memoryResult" role="status" aria-live="polite"></p>
+          <div class="memory-actions wide"><button type="button" id="exportMemory">Exportar memória</button><button type="button" id="importMemory">Importar memória</button><button type="button" id="deleteMemory" class="danger">Apagar memórias permanentemente</button></div>
+          <input type="file" id="memoryFile" accept=".json,application/json" hidden>
           <button id="shuffle">Outra seed</button><button id="restart" class="primary">Reiniciar</button>
         </div>
         <p class="help" id="help"><kbd>WASD</kbd> mover · <kbd>Mouse</kbd> mirar · <kbd>Espaço</kbd> atirar · <kbd>E</kbd> autofire</p>
@@ -1057,6 +1064,18 @@ function newMemory(adaptiveBuilds){
   return {foes:new Map(), classes:new Map(), samples:0, escapes:0, changes:0, tactic:0, foeId:null, until:0, note:"", retreat:null,
     buildChanges:0,lastPoint:null,lastAdaptivePoint:null,
     build:adaptiveBuilds?{pressure:new Float64Array(8),time:0,burst:0,burstEnd:0,lastHit:-Infinity,recoverable:0,dealt:0,taken:0}:null};
+}
+// Same arena clock: keep the original timestamps and confidence. The 1A JSON
+// codec is for crossing arena clocks and deliberately caps inherited evidence.
+function respawnLearning(previous,adaptiveBuilds){
+  const memory=newMemory(adaptiveBuilds);
+  for(const key of ["samples","escapes","changes","buildChanges","exchanges"]){
+    if(previous[key]!==undefined)memory[key]=previous[key];
+  }
+  for(const [key,record] of previous.classes){
+    memory.classes.set(key,{time:record.time,choice:record.choice,entries:record.entries.map(entry=>({...entry}))});
+  }
+  return memory;
 }
 function buildPressure(t,time){
   const build=t.learning.build;
@@ -1815,11 +1834,13 @@ class Arena {
     t.rivalryMoment={kind:"encontro",other:e,at:this.time,until:this.time+4.3};
   }
 
-  constructor(seed,bots,duel=null,learningMode="both",adaptiveBuilds=true,mapKind="open",bossSchedule="off",shipStart=1,eventBosses=false,survivalPlayer=null){
+  constructor(seed,bots,duel=null,learningMode="both",adaptiveBuilds=true,mapKind="open",bossSchedule="off",shipStart=1,eventBosses=false,survivalPlayer=null,rosterScope=null,memoryStore=null){
     this.seed=seed; this.rand=rngFrom(seed); this.duel=duel; this.bots=bots;
     this.learningMode=learningMode;
     this.adaptiveBuilds=adaptiveBuilds;
     this.mapKind=duel?"open":mapKind;
+    this.profileRoster=rosterScope??(duel?(duel[3]?"lab-boss":"lab"):this.mapKind);
+    this.botMemorySession=memoryStore?.open(this.profileRoster)??null;
     this.rivalries=!duel&&["open","maze","maze-seed"].includes(this.mapKind)?new Map():null;
     this.rivalExchanges=this.rivalries?new Map():null;
     this.survival=this.mapKind==="survival"?{phase:"opening",radius:SURVIVAL.startRadius,preview:null,xpAt:1,alive:SURVIVAL.count}:null;
@@ -2058,6 +2079,7 @@ class Arena {
   }
   setConvoyControl(t,human,name){
     t.human=human;
+    if(!human&&!t.profileId)t.profileId=this.profileRoster+":bot:"+t.slot;
     t.name=name;
     t.intent={x:0,y:0,aim:t.aim,fire:false,alt:false};
     this.human=human?t:null;
@@ -2821,7 +2843,7 @@ class Arena {
     }
     return this.maze?(this.maze.hit(x,y,x,y,r)===null?[x,y]:fallback??[this.mid,this.mid]):[x,y];
   }
-  spawnTank(name,human,slot,level=1,goal=null,x=null,y=null,force=false,team=null,autoBranch=null,localHuman=human){
+  spawnTank(name,human,slot,level=1,goal=null,x=null,y=null,force=false,team=null,autoBranch=null,localHuman=human,previousLearning=null){
     if(this.closing)return null;
     if(this.teams)team??=human?this.joinTeam():(slot+this.seed)%this.teamColors.length;
     if(x==null) [x,y]=this.convoy?this.convoySpawn(team,slot):this.tag?this.tagSpawn(team):this.mothership?this.shipSpawn(team):this.hasBases?this.baseSpawn(team):this.freePosition();
@@ -2839,9 +2861,11 @@ class Arena {
       t.goal=CONVOY_CLASSES[roleIndex];
     }
     if(autoBranch)t.autoBranch=autoBranch;
-    if(!human)t.skin=this.skins[slot];
+    if(!human){t.skin=this.skins[slot];t.profileId=this.profileRoster+":bot:"+slot;}
     t.hp=hull(t);
-    if(!human&&(this.learningMode==="both"||this.duel&&this.learningMode===(slot===0?"a":"b"))) t.learning=newMemory(this.adaptiveBuilds);
+    if(!human&&(this.learningMode==="both"||this.duel&&this.learningMode===(slot===0?"a":"b")))
+      t.learning=previousLearning?respawnLearning(previousLearning,this.adaptiveBuilds):
+        this.botMemorySession?.load(t.profileId,this.adaptiveBuilds,this.time)??newMemory(this.adaptiveBuilds);
     if(this.convoy&&!human)changeClass(t,t.goal,true);
     else if(force && C[goal]) changeClass(t,goal,true);
     if(!human) spendBot(t,this.time);
@@ -4625,7 +4649,7 @@ class Arena {
           this.tanks.splice(i,1);
           const level=Math.max(this.startLevel,RESPAWN[t.level-1]);
           const goal=t.goal==="Necromancer"||t.cls==="Factory"?"Overlord":t.goal;
-          this.spawnTank(t.name,false,t.slot,level,goal,null,null,false,t.nextTeam??t.team,t.autoBranch);
+          this.spawnTank(t.name,false,t.slot,level,goal,null,null,false,t.nextTeam??t.team,t.autoBranch,false,t.learning);
         }
       }
     }
@@ -6056,6 +6080,11 @@ function botThink(w,t){
   t.mood=MOOD[mode];t.detail=detail;
 }
 </script>
+<script src="memory-codec.js"></script>
+<script src="memory-store.js"></script>
+<script src="memory-idb.js"></script>
+<script src="memory-bridge.js"></script>
+<script src="memory-backup.js"></script>
 <script id="app">
 "use strict";
 const el=id=>document.getElementById(id);
@@ -6068,6 +6097,134 @@ let liteMode=false,lastDraw=-Infinity;
 try{liteMode=localStorage.getItem(LITE_PREF)==="on";}catch{}
 el("liteMode").value=liteMode?"on":"off";
 let world,mode="watch",pending=false,paused=false,rate=1,follow="leader",focusId=null,freeSelection=null;
+const MEMORY_PREF='diep-arena:bot-memory:reuse';
+let reuseBotMemory=false,preferenceFailure=null;
+try{reuseBotMemory=localStorage.getItem(MEMORY_PREF)==='on';}catch(error){preferenceFailure=error;}
+el('reuseBotMemory').value=reuseBotMemory?'on':'off';
+let botMemoryStore=null;
+let indexedMemoryBridge=null,arenaTransition=0,memoryRevision=0,transitionPending=false,transitionReady=null,memorySaveBarrier=null,memoryMutation=null,memoryDbPromise=null,memoryWarning='';
+function memoryMessage(message){
+  const result=el('memoryResult');if(result.textContent&&message.includes(result.textContent))result.hidden=true;
+  el('memoryStatus').textContent=message;result.hidden=!result.textContent||message.includes(result.textContent);
+}
+function memoryResult(message){
+  const result=el('memoryResult');result.hidden=!message||el('memoryStatus').textContent.includes(message);result.textContent=message;
+}
+function memoryFailure(error){console.warn('Memória dos bots indisponível:',error);memoryWarning='Falha no armazenamento de memória. O jogo continua disponível.';memoryMessage(memoryWarning);memoryResult(memoryWarning);}
+if(preferenceFailure)memoryFailure(preferenceFailure);
+function withMemoryLock(task){
+  if(!navigator.locks?.request)throw Error('Coordenação entre abas indisponível neste navegador.');
+  return navigator.locks.request('diep-arena-bot-memory-commit',{mode:'exclusive'},task);
+}
+function getMemoryBridge(){
+  if(indexedMemoryBridge)return indexedMemoryBridge;
+  try{
+    if(!navigator.locks?.request)throw Error('Coordenação entre abas indisponível neste navegador.');
+    if(typeof createMemoryCodec==='function'&&typeof createTransactionalMemoryStore==='function'&&typeof createIndexedMemoryBridge==='function')
+      indexedMemoryBridge=createIndexedMemoryBridge({indexedDB,codec:createMemoryCodec({classes:C,newMemory,ttl:MEMORY_TTL}),
+        createStore:createTransactionalMemoryStore,getLegacyStorage:()=>localStorage,
+        onMigration:result=>{if(result.invalid){memoryWarning=result.invalid+' perfil(is) legado(s) inválido(s), mantidos sem alterações.';memoryMessage(memoryWarning);}},
+        onError:memoryFailure});
+  }catch(error){memoryFailure(error);}
+  return indexedMemoryBridge;
+}
+function memoryDatabase(){
+  if(!memoryDbPromise){
+    try{memoryDbPromise=createTransactionalMemoryStore({indexedDB,codec:createMemoryCodec({classes:C,newMemory,ttl:MEMORY_TTL})}).open();}
+    catch(error){memoryDbPromise=Promise.reject(error);}
+    memoryDbPromise=memoryDbPromise.catch(error=>{memoryDbPromise=null;throw error;});
+  }
+  return memoryDbPromise;
+}
+async function refreshMemoryStatus(){
+  if(memoryMutation)return;
+  try{const db=await memoryDatabase(),snapshot=await db.export();if(!memoryMutation){const count=snapshot.profiles.length?snapshot.profiles.length+' perfil(is) de memória salvo(s).':'Nenhum perfil salvo no IndexedDB.';memoryMessage(count+(memoryWarning?' '+memoryWarning:''));}}
+  catch(error){memoryFailure(error);}
+}
+el('reuseBotMemory').onchange=()=>{
+  reuseBotMemory=el('reuseBotMemory').value==='on';
+  try{localStorage.setItem(MEMORY_PREF,reuseBotMemory?'on':'off');}
+  catch(error){memoryFailure(error);}
+};
+function saveBotMemory(arena){
+  const operation=arena?.botMemorySession?.save(arena);
+  if(operation?.then){
+    const previous=memorySaveBarrier;
+    const barrier=previous?Promise.allSettled([previous,operation]):operation;
+    memorySaveBarrier=barrier;
+    barrier.then(()=>{if(memorySaveBarrier===barrier)memorySaveBarrier=null;},()=>{if(memorySaveBarrier===barrier)memorySaveBarrier=null;});
+  }
+  return memorySaveBarrier;
+}
+window.addEventListener('pagehide',()=>saveBotMemory(world));
+let memoryChannel=null;
+try{if(typeof BroadcastChannel==='function')memoryChannel=new BroadcastChannel('diep-arena-bot-memory-v1');}catch(_){}
+function notifyMemoryChanged(){try{memoryChannel?.postMessage('changed');}catch(_){}}
+if(memoryChannel)memoryChannel.onmessage=event=>{
+  if(event.data!=='changed')return;
+  ++memoryRevision;
+  void refreshMemoryStatus();
+};
+function backupCodec(){return createMemoryBackup(createMemoryCodec({classes:C,newMemory,ttl:MEMORY_TTL}));}
+function memoryControlsBusy(busy){for(const id of ['exportMemory','importMemory','deleteMemory'])el(id).disabled=busy;}
+async function exportBotMemory(){
+  try{
+    memoryMessage('Preparando exportação…');
+    const db=await memoryDatabase(),text=backupCodec().stringify(await db.export());
+    const url=URL.createObjectURL(new Blob([text],{type:'application/json'}));
+    const link=document.createElement('a');link.href=url;link.download='diep-arena-memorias.json';
+    document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    memoryMessage('Backup preparado para download.');memoryResult('Backup preparado para download.');return true;
+  }catch(error){memoryFailure(error);return false;}
+}
+function mutateBotMemory(task){
+  if(memoryMutation)return Promise.resolve(false);
+  ++memoryRevision;
+  memoryControlsBusy(true);
+  const operation=(async()=>{try{return await withMemoryLock(task);}catch(error){memoryFailure(error);return false;}})();
+  memoryMutation=operation;
+  operation.then(()=>{
+    if(memoryMutation===operation)memoryMutation=null;
+    memoryControlsBusy(false);
+  });
+  return operation;
+}
+el('exportMemory').onclick=()=>{if(!memoryMutation)void exportBotMemory();};
+el('importMemory').onclick=()=>{if(!memoryMutation)el('memoryFile').click();};
+el('memoryFile').onchange=async()=>{
+  const input=el('memoryFile'),file=input.files?.[0];input.value='';if(!file)return;
+  memoryMessage('Validando arquivo de memória…');memoryResult('');
+  let profiles;
+  try{
+    const backup=backupCodec();if(file.size>backup.maxBytes)throw Error('Arquivo muito grande.');
+    profiles=backup.parse(await file.text());
+  }catch(error){memoryMessage('Importação recusada: '+error.message);memoryResult('Importação recusada: '+error.message);return;}
+  if(!confirm('Importar '+profiles.length+' perfil(is) e substituir as memórias salvas? A arena atual não será modificada.')){
+    memoryMessage('Importação cancelada; memórias preservadas.');memoryResult('Importação cancelada; memórias preservadas.');return;
+  }
+  void mutateBotMemory(async()=>{
+    memoryMessage('Importando memórias…');const db=await memoryDatabase();await db.replace(profiles);
+    notifyMemoryChanged();memoryMessage('Importação concluída: '+profiles.length+' perfil(is). Vale para próximas arenas.');memoryResult('Importação concluída: '+profiles.length+' perfil(is). Vale para próximas arenas.');return true;
+  });
+};
+el('deleteMemory').onclick=async()=>{
+  if(memoryMutation)return;
+  const backup=confirm('Deseja exportar um backup antes? OK exporta; Cancelar continua sem backup.');
+  if(backup&&!await exportBotMemory())return;
+  if(!confirm('Apagar permanentemente todas as memórias salvas dos bots? A arena atual não será modificada.')){
+    memoryMessage('Exclusão cancelada; memórias preservadas.');memoryResult('Exclusão cancelada; memórias preservadas.');return;
+  }
+  void mutateBotMemory(async()=>{
+    memoryMessage('Apagando memórias…');const db=await memoryDatabase();await db.clear();notifyMemoryChanged();
+    let failed=false;
+    try{
+      const keys=[];for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i);if(key?.startsWith('diep-arena:bot-memory:v1:'))keys.push(key);}
+      for(const key of keys){try{localStorage.removeItem(key);}catch(_){failed=true;}}
+    }catch(_){failed=true;}
+    const result=failed?'IndexedDB limpo; restaram dados legados bloqueados para migração.':'Memórias apagadas. A próxima arena começará sem elas.';
+    memoryMessage(result);memoryResult(result);return true;
+  });
+};
 let acc=0,last=0,lastHud=-1000, lastWatchChoice=-100;
 let playerName="Power",humanAuto=false,mouseFire=false,mouseAlt=false,buttonAlt=false;
 let optStats=false, iframeFull=false;
@@ -6278,9 +6435,64 @@ function restart(bossTrial=false){
   el("seed").value=seed;
   const l=Number(el("labLevel").value);
   const duel=mode==="lab"?[el("classA").value,el("classB").value,l,bossTrial]:null;
-  world=new Arena(seed,Number(el("botCount").value),duel,el("learningMode").value,el("buildMode").value==="adaptive",
-    el("arenaMap").value,el("bossSchedule").value,Number(el("shipStart").value),el("eventBosses").value==="on",
-    mode==="play"&&!pending?playerName:null);
+  const config={seed,bots:Number(el("botCount").value),duel,learning:el("learningMode").value,
+    adaptive:el("buildMode").value==="adaptive",map:el("arenaMap").value,boss:el("bossSchedule").value,
+    ship:Number(el("shipStart").value),events:el("eventBosses").value==="on",player:mode==="play"&&!pending?playerName:null};
+  const source=world,save=saveBotMemory(source),request=++arenaTransition;
+  const scope=duel?(duel[3]?"lab-boss":"lab"):config.map;
+  const eligible=["open","maze","maze-seed","lab"].includes(scope);
+  const useMemory=reuseBotMemory,bridge=useMemory&&eligible?getMemoryBridge():null,mutation=memoryMutation;
+  if(!save&&!mutation&&!bridge){
+    transitionPending=false;
+    finishRestart(config,bossTrial,botMemoryStore);
+    return;
+  }
+  transitionPending=true;paused=true;
+  if(bridge)memoryMessage('Preparando memória para a próxima arena…');
+  const ready=(async()=>{
+    try{await save;}catch(error){console.warn('Memória dos bots não foi salva:',error);}
+    while(request===arenaTransition){
+      const revision=memoryRevision;
+      try{await memoryMutation;}catch(_){}
+      if(request!==arenaTransition)return false;
+      if(revision!==memoryRevision)continue;
+      let prepared=null;
+      if(bridge){
+        try{
+          prepared=await bridge.prepare(scope);
+          if(request!==arenaTransition)return false;
+          if(revision!==memoryRevision)continue;
+          const result=await withMemoryLock(async()=>{
+            if(request!==arenaTransition)return false;
+            if(revision!==memoryRevision)return null;
+            for(let attempts=0;prepared?.isCurrent&&attempts<3;attempts++){
+              if(await prepared.isCurrent())break;
+              prepared=await bridge.prepare(scope);
+              if(request!==arenaTransition)return false;
+              if(revision!==memoryRevision)return null;
+              if(attempts===2)prepared=null;
+            }
+            if(request!==arenaTransition)return false;
+            if(revision!==memoryRevision)return null;
+            if(!prepared)memoryMessage('Memória indisponível para esta arena. O jogo continua.');
+            transitionPending=false;finishRestart(config,bossTrial,prepared);return true;
+          });
+          if(result===null)continue;
+          return result;
+        }catch(error){memoryFailure(error);prepared=null;}
+      }
+      if(request!==arenaTransition)return false;
+      if(revision!==memoryRevision)continue;
+      transitionPending=false;finishRestart(config,bossTrial,prepared);return true;
+    }
+    return false;
+  })();
+  transitionReady=ready;
+  return ready;
+}
+function finishRestart(config,bossTrial,memoryStore){
+  world=new Arena(config.seed,config.bots,config.duel,config.learning,config.adaptive,
+    config.map,config.boss,config.ship,config.events,config.player,null,memoryStore);
   world.history.lite=liteMode;lastDraw=-Infinity;
   towerUiSignature="";
   tagChartSignature="";
@@ -6298,9 +6510,11 @@ function restart(bossTrial=false){
     }else join();
   }
   updateInterface(true);
+  if(sidePanel==='config')void refreshMemoryStatus();
 }
 function setMode(next){
   if(room)closeRoom();
+  if(!world){mode=next;pending=next==="play";restart();return;}
   if(next===mode && !pending && (mode!=="play"||world.human?.alive)) return;
   closeReplay(false);
   const prior=mode;
@@ -6314,7 +6528,7 @@ function setMode(next){
   }
   if(mode!=="lab"&&["a","b"].includes(learning.value)) learning.value="both";
   learning.options[0].textContent=mode==="lab"?"Os dois tanques":"Todos os bots";
-  if(next==="lab"||prior==="lab"){
+  if(next==="lab"||prior==="lab"||transitionPending){
     if(next==="play")pending=true;
     restart();
   }
@@ -6355,8 +6569,9 @@ function join(){
     if(!pending)return;
     const setup=el("arenaMap"),next=setup.value;
     setup.value="survival";
-    pending=false;restart();setup.value=next;updateInterface(true);
-    canvas.focus({preventScroll:true});return;
+    pending=false;const nextArena=restart();setup.value=next;
+    if(nextArena?.then)nextArena.then(applied=>{if(applied){updateInterface(true);canvas.focus({preventScroll:true});}});
+    else{updateInterface(true);canvas.focus({preventScroll:true});}return;
   }
   if(world.human?.alive||world.duelEnded||world.closing) return;
   const level=Math.max(world.startLevel,world.human?RESPAWN[world.human.level-1]:1);
@@ -7284,6 +7499,7 @@ function setSidePanel(next){
   el("historyCard").hidden=sidePanel!=="history";
   el("configCard").hidden=sidePanel!=="config";
   if(sidePanel==="history")updateHistory();
+  if(sidePanel==="config")void refreshMemoryStatus();
 }
 function node(tag,text,className){
   const e=document.createElement(tag);
@@ -8419,6 +8635,7 @@ el("cameraMode").onclick=()=>{
   updateInterface(false);
 };
 function stepGame(){
+  if(transitionPending)return;
   const priorDead=world.duelEnded, priorHuman=world.human?.alive, priorClosing=world.closing;
   const priorPursuitEnded=world.closing?.tanksDone,priorConvoy=world.convoy?.round;
   const current=room?.role==="host"&&room.phase==="playing"?room:null;
@@ -8437,6 +8654,7 @@ function stepGame(){
       if(guestFell&&guestKiller?.human&&guestKiller.slot===0)current.points[0]++;
     }
   }
+  if(!priorDead&&world.duelEnded)saveBotMemory(world);
   if(world.survival&&priorHuman&&!world.human.alive&&follow!=="free"){
     const killer=world.human.killer;
     if(killer?.type==="tank"&&killer.alive){follow="chosen";focusId=killer.id;}
@@ -8449,7 +8667,7 @@ function stepGame(){
 function frame(now){
   const elapsed=last===0?0:Math.min(.07,(now-last)/1000);last=now;
   const networkMatch=room?.phase==="playing";
-  if(!paused&&!world.duelEnded&&!document.hidden&&!(networkMatch&&room.role==="guest")){
+  if(!transitionPending&&!paused&&!world.duelEnded&&!document.hidden&&!(networkMatch&&room.role==="guest")){
     acc+=elapsed*(networkMatch?1:rate);
     for(let turns=0;acc>=DT&&turns<18&&!world.duelEnded;turns++){
       stepGame();acc-=DT;
@@ -8622,12 +8840,14 @@ function attachRoomConnection(current,connection){
 function enterRoomWorld(current,seed,bots){
   clearTimeout(current.timer);
   closeReplay(false);
+  ++arenaTransition;transitionPending=false;
+  saveBotMemory(world);
   current.phase="playing";current.scene=null;current.units=new Map();
   current.snapshotAt=-Infinity;current.inputAt=-Infinity;current.lastInputAt=-Infinity;current.sentTick=-1;
   current.command=null;current.guestTank=null;
   current.restartAt=null;
   current.bots=bots;
-  world=new Arena(seed,bots,null,"both",true,"open","off");
+  world=new Arena(seed,bots,null,"both",true,"open","off",1,false,null,"multiplayer");
   world.history.lite=true;
   mode="play";pending=false;paused=false;acc=0;follow="leader";focusId=null;
   optStats=false;humanAuto=false;freeSelection=null;renderedTarget=null;highlightView=null;
@@ -8856,10 +9076,20 @@ document.addEventListener("visibilitychange",()=>{
 });
 
 el("seed").value=randomSeed();
-resize();restart();
-const first=followTarget();
-if(first){camera.x=first.x;camera.y=first.y;}
-requestAnimationFrame(frame);
+resize();
+function startFrames(){
+  if(!world){const wait=memoryMutation||transitionReady;if(wait)wait.then(()=>{if(world||transitionPending||memoryMutation)startFrames();});return;}
+  const first=followTarget();
+  if(first){camera.x=first.x;camera.y=first.y;}
+  requestAnimationFrame(frame);
+}
+const initialArena=restart();
+if(initialArena?.then)initialArena.then(startFrames);else startFrames();
 </script>
 </body>
 </html>
+
+
+
+
+
