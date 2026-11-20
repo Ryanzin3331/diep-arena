@@ -23,3 +23,5 @@ foreach ($variant in 'A','B') {
 ```
 
 Após completar, auditar instrumentação e resultados, rodar `node --test tests/*.test.js`, registrar resultados por seed e atualizar o PR #7 mantendo-o em rascunho. Não foi publicado resultado final do experimento longo.
+
+**Concluído:** Maze 7103 A/B e auditoria foram realizados. Consulte `docs/AUDITORIA-4A-LONGO.md` para resultados finais e limitações.
