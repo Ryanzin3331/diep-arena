@@ -1085,10 +1085,10 @@ function observeHeavyShot(w,t,p,nearby=w.sense.nearby(t.x,t.y,range(t))){
 }
 // A swarm episode stays active through short visibility or movement gaps.
 function observeDroneSwarm(w,t,risks,nearby){
-  if(!localDiscoveryArena(w)||!t.learning)return;
+  if(!localDiscoveryArena(w)||!t.learning)return new Set();
   const drones=risks.filter(p=>(p.kind==="drone"||p.kind===NECRO_DRONE)&&
     ((t.x-p.x)*p.vx+(t.y-p.y)*p.vy)>20*Math.hypot(t.x-p.x,t.y-p.y));
-  if(drones.length<3)return;
+  if(drones.length<3)return new Set();
   const credited=new Set();
   for(const anchor of drones){
     const group=drones.filter(p=>Math.hypot(p.x-anchor.x,p.y-anchor.y)<=180);
@@ -1106,6 +1106,7 @@ function observeDroneSwarm(w,t,risks,nearby){
     if(last===undefined||w.time-last>2)m.swarmThreats.set(key,Math.min(3,(m.swarmThreats.get(key)||0)+1));
     m.swarmEpisodes.set(key,w.time);
   }
+  return credited;
 }
 function threatDistance(heavy,swarm){return Math.min(140,(heavy?110:0)+(swarm?80:0));}
 // Idle windows never create a reward; defensive credit is small and capped.
@@ -1133,6 +1134,16 @@ function chooseHeavyResponse(m){
   const score=r=>r?.count?r.sum/Math.min(r.count,5):0;
   return score(rows[0])>score(rows[1])?0:1;
 }
+// Swarm results are individual and independent of heavy-shot results.
+function chooseSwarmResponse(m){
+  return chooseHeavyResponse({heavyAttempt:m.swarmAttempt,heavyTrials:m.swarmTrials,heavyResults:m.swarmResults});
+}
+function finishSwarmAttempt(m){
+  const a=m?.swarmAttempt;if(!a)return;m.swarmAttempt=null;
+  if(!a.threat||!(a.dealt>0||a.taken>0))return;
+  m.swarmResults??=[{sum:0,count:0},{sum:0,count:0}];
+  const row=m.swarmResults[a.choice];row.sum=row.sum*.8+clamp((a.dealt-a.taken)/100,-1,1);row.count++;
+}
 function newMemory(adaptiveBuilds){
   return {foes:new Map(), classes:new Map(), samples:0, escapes:0, changes:0, tactic:0, foeId:null, until:0, note:"", retreat:null,
     buildChanges:0,lastPoint:null,lastAdaptivePoint:null,
@@ -1150,6 +1161,8 @@ function respawnLearning(previous,adaptiveBuilds){
   }
   if(previous.heavyResults)memory.heavyResults=previous.heavyResults.map(r=>({...r}));
   if(previous.heavyTrials!==undefined)memory.heavyTrials=previous.heavyTrials;
+  if(previous.swarmResults)memory.swarmResults=previous.swarmResults.map(r=>({...r}));
+  if(previous.swarmTrials!==undefined)memory.swarmTrials=previous.swarmTrials;
   if(previous.threats)memory.threats=new Map(previous.threats);
   if(previous.swarmThreats)memory.swarmThreats=new Map(previous.swarmThreats);
   if(previous.swarmEpisodes)memory.swarmEpisodes=new Map(previous.swarmEpisodes);
@@ -3797,7 +3810,7 @@ class Arena {
       x=t.x+(x-t.x)*Math.max(0,wall-.01);
       y=t.y+(y-t.y)*Math.max(0,wall-.01);
     }
-    const child={type:"shot",kind:g.kind,owner:t,sourceClass:t.cls,heavyAttempt:localDiscoveryArena(this)?t.learning?.heavyAttempt:undefined,learningTarget:t.learning?.foeId,sourceTactic:t.learning?.tactic,alive:true,x,y,px:x,py:y,angle:a,
+    const child={type:"shot",kind:g.kind,owner:t,sourceClass:t.cls,heavyAttempt:localDiscoveryArena(this)?t.learning?.heavyAttempt:undefined,swarmAttempt:localDiscoveryArena(this)?t.learning?.swarmAttempt:undefined,learningTarget:t.learning?.foeId,sourceTactic:t.learning?.tactic,alive:true,x,y,px:x,py:y,angle:a,
       r,
       life:g.kind===FACTORY_MINION?Infinity:g.battleshipWing!=null?g.life:isDrone?90:1.35*g.life,
       damage:(7+3*t.stats[5])*g.damage,dur:(2+1.5*t.stats[4])*g.pen,age:0,speed};
@@ -4542,6 +4555,14 @@ class Arena {
     if(bDamage>0&&seeB&&a.cls==="Factory")a.factoryThreat={tank:b,until:this.time+2.2};
     if(!(a.learning||b.learning))return;
     const dealt=Math.min(aDamage,b.hp),taken=Math.min(bDamage,a.hp);
+    if(localDiscoveryArena(this)){
+      const victim=b.learning?.swarmAttempt,attacker=a.learning?.swarmAttempt;
+      if(dealt>0&&seeA&&victim?.rivalId===a.id&&this.time<=victim.until)victim.taken+=dealt;
+      if(dealt>0&&seeB&&attacker&&shot?.swarmAttempt===attacker&&attacker.rivalId===b.id&&this.time<=attacker.until){
+        attacker.creditedShots??=new WeakSet();if(!attacker.creditedShots.has(shot)){attacker.creditedShots.add(shot);attacker.dealt+=dealt;}
+      }
+      if(taken>0&&seeB&&attacker?.rivalId===b.id&&this.time<=attacker.until)attacker.taken+=taken;
+    }
     if(dealt>0){
       if(localDiscoveryArena(this)&&seeA&&b.learning?.heavyAttempt?.rivalId===a.id&&this.time<=(b.learning.heavyAttempt.until??Infinity))
         b.learning.heavyAttempt.taken=(b.learning.heavyAttempt.taken||0)+dealt;
@@ -5292,7 +5313,7 @@ function botThink(w,t){
   let boss=null, bossDrones=0, incoming=null, droneGap=Infinity;
   let defenderTraps=0;
   const risks=[], forms=[];
-  let heavyPlan=null,heavyCandidate=null;
+  let heavyPlan=null,heavyCandidate=null,swarmPlan=null,swarmCandidate=null;
   const ownShip=w.ships[t.team],rivalShip=w.ships[1-t.team];
   const zone=w.survival;
   const overseer=w.duel||t.cls!=="Overseer"?null:t.overseerAttack;
@@ -5380,12 +5401,13 @@ function botThink(w,t){
       if(d<430) risks.push(e);
     }
   }
-  observeDroneSwarm(w,t,risks,nearby);
+  const observedSwarms=observeDroneSwarm(w,t,risks,nearby);
   const shipTarget=t.shipIntercept;
   if(shipTarget?.alive&&shipTarget.team!==t.team&&shipTarget.protect<=0&&
     sq(t.x-shipTarget.x)+sq(t.y-shipTarget.y)<Math.min(vision,575)**2&&
     (!enemy||enemy===shipTarget||sq(t.x-enemy.x)+sq(t.y-enemy.y)>185**2))enemy=shipTarget;
   if(t.learning?.heavyAttempt&&(!enemy||t.learning.heavyAttempt.rivalId!==enemy.id||!perceived(w,t,enemy)))finishHeavyAttempt(t.learning,w.time);
+  if(t.learning?.swarmAttempt&&(!enemy||t.learning.swarmAttempt.rivalId!==enemy.id||!perceived(w,t,enemy)))finishSwarmAttempt(t.learning);
   t.enemy=enemy;t.food=food;
   t.crasherThreat=crasher;
   t.bossTarget=null;
@@ -5663,10 +5685,14 @@ function botThink(w,t){
     let radial=clamp((eDist-preferred)/108,-1,1);
     if(c.ram&&cautious&&eDist<210&&risks.some(p=>p.type==="shot"&&p.owner===enemy&&p.age<.16))radial=1;
     let strafe=((c.ram&&tactic===0?0:(tactic===1?.85:c.ram?.58:.52)+.23*Math.sin(w.time*2.2+t.id))+(swarmExperience?.35:0))*flank;
-    if(heavyExperience&&tankCombat&&t.learning&&opening==null){
+    if(heavyExperience&&!swarmExperience&&tankCombat&&t.learning&&opening==null){
       if(t.learning.heavyAttempt&&w.time>=t.learning.heavyAttempt.until)finishHeavyAttempt(t.learning,w.time);
       const choice=chooseHeavyResponse(t.learning);
       heavyPlan={choice,baseRadial:radial,baseStrafe:strafe};
+    }
+    if(swarmExperience&&tankCombat&&t.learning&&opening==null){
+      if(t.learning.swarmAttempt&&w.time>=t.learning.swarmAttempt.until)finishSwarmAttempt(t.learning);
+      swarmPlan={choice:chooseSwarmResponse(t.learning),baseRadial:radial,baseStrafe:strafe};
     }
     [aimX,aimY]=lead(t,enemy,bulletSpeed(t,weapon||gun()),1.25);
     const shotRange=weapon?bulletSpeed(t,weapon)*1.35*weapon.life:0;
@@ -5729,10 +5755,13 @@ function botThink(w,t){
         radial=eDist<reach*.50?-.55:eDist>reach*.80?.55:0;
       }
     }
+    if(swarmPlan&&(radial!==swarmPlan.baseRadial||strafe!==swarmPlan.baseStrafe))swarmPlan=null;
+    if(swarmPlan){if(swarmPlan.choice===0){radial=-.85;strafe=.2*flank;}else{radial=0;strafe=1.15*flank;}}
     targetX=t.x+(Math.cos(a)*radial-Math.sin(a)*strafe)*150;
     targetY=t.y+(Math.sin(a)*radial+Math.cos(a)*strafe)*150;
     if(heavyPlan)
       heavyCandidate={...heavyPlan,x:targetX,y:targetY,rivalId:enemy.id,cls:t.cls};
+    if(swarmPlan)swarmCandidate={...swarmPlan,x:targetX,y:targetY,rivalId:enemy.id,cls:t.cls};
     if(c.style==="drone"){
       fire=sustainsAttack||(t.drones>=2&&hp>.30&&eDist<vision*.88)||eDist<180;
       if(eDist>260&&t.drones<2){
@@ -6205,6 +6234,15 @@ function botThink(w,t){
     else if(!m.heavyAttempt){
       m.heavyTrials=(m.heavyTrials??0)+1;
       m.heavyAttempt={id:m.heavyTrials,rivalId:enemy.id,choice:heavyCandidate.choice,dealt:0,taken:0,until:w.time+2};
+    }
+  }
+  if(t.learning&&localDiscoveryArena(w)){
+    const m=t.learning,valid=swarmCandidate&&enemy?.id===swarmCandidate.rivalId&&targetEntity===enemy&&t.cls===swarmCandidate.cls&&
+      Math.abs(targetX-swarmCandidate.x)<1e-6&&Math.abs(targetY-swarmCandidate.y)<1e-6&&Math.abs(bestOffset)<1e-9&&Math.hypot(bestX,bestY)>.4;
+    if(!valid)finishSwarmAttempt(m);
+    else{
+      if(!m.swarmAttempt){m.swarmTrials=(m.swarmTrials??0)+1;m.swarmAttempt={id:m.swarmTrials,rivalId:enemy.id,choice:swarmCandidate.choice,dealt:0,taken:0,threat:false,until:w.time+2};}
+      if(observedSwarms.has(enemy.profileId))m.swarmAttempt.threat=true;
     }
   }
   t.intent={x:bestX,y:bestY,aim,aimX,aimY,fire,alt,guardDrones,droneCover,droneCutoff};

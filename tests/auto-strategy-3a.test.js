@@ -73,15 +73,15 @@ test('crédito defensivo é único por tiro hostil e limitado por tentativa',()=
 });
 test('duelo FFA reproduzível mantém descoberta no controle e tenta 3A somente no tratamento',()=>{
  const {spawnSync}=require('node:child_process');
- function run(control){const r=spawnSync(process.execPath,['tests/measure-3a-duel.js'],{encoding:'utf8',env:{...process.env,SEED:'7102',DISTANCE:'300',TICKS:'900',CONTROL:String(control)}});assert.equal(r.status,0,r.stderr);return JSON.parse(r.stdout);}
+ function run(control){const r=spawnSync(process.execPath,['tests/measure-3a-duel.js'],{encoding:'utf8',env:{...process.env,DISABLE_3B:'1',SEED:'7102',DISTANCE:'300',TICKS:'900',CONTROL:String(control)}});assert.equal(r.status,0,r.stderr);return JSON.parse(r.stdout);}
  const control=run(1),active=run(0);assert.deepEqual(active,run(0));
  for(const r of [control,active]){assert.deepEqual(r.finalClasses,['Tank','Destroyer']);assert.ok(r.threat>=2);assert.ok(r.fired.tank>0&&r.fired.destroyer>0);}
  assert.equal(control.attempts.length,0);assert.ok(active.attempts.length>0);
 });
 
 test('medidor preserva física e credita tiro autônomo tardio à tentativa original',()=>{
- const {spawnSync}=require('node:child_process');const r=spawnSync(process.execPath,['tests/measure-3a-duel.js'],{encoding:'utf8',env:{...process.env,SEED:'7103',DISTANCE:'200',TICKS:'100',CONTROL:'0'}});assert.equal(r.status,0,r.stderr);const x=JSON.parse(r.stdout);const shot=x.associatedShots.find(s=>s.tick===67);assert.ok(shot);const a=x.attempts.find(t=>t.id===shot.attempt);assert.equal(a.end,76);assert.equal(a.reason,'desvio');assert.ok(x.hits.some(h=>h.tick===89&&h.origin===a.id));assert.ok(a.dealt>0);assert.equal(x.results[a.choice].count,1);
+ const {spawnSync}=require('node:child_process');const r=spawnSync(process.execPath,['tests/measure-3a-duel.js'],{encoding:'utf8',env:{...process.env,DISABLE_3B:'1',SEED:'7103',DISTANCE:'200',TICKS:'100',CONTROL:'0'}});assert.equal(r.status,0,r.stderr);const x=JSON.parse(r.stdout);const shot=x.associatedShots.find(s=>s.tick===67);assert.ok(shot);const a=x.attempts.find(t=>t.id===shot.attempt);assert.equal(a.end,76);assert.equal(a.reason,'desvio');assert.ok(x.hits.some(h=>h.tick===89&&h.origin===a.id));assert.ok(a.dealt>0);assert.equal(x.results[a.choice].count,1);
 });
 test('medidor FFA mantém impacto físico e registra acerto autônomo',()=>{
- const {spawnSync}=require('node:child_process');const r=spawnSync(process.execPath,['tests/measure-3a-autonomous.js'],{encoding:'utf8',env:{...process.env,SEED:'7102',TICKS:'470',CORE:'index.html'}});assert.equal(r.status,0,r.stderr);const x=JSON.parse(r.stdout);assert.ok(x.destinations.rival_ativa_perceptivel>0);assert.ok(x.attemptRecords.some(a=>a.dealt>0));
+ const {spawnSync}=require('node:child_process');const r=spawnSync(process.execPath,['tests/measure-3a-autonomous.js'],{encoding:'utf8',env:{...process.env,DISABLE_3B:'1',SEED:'7102',TICKS:'470',CORE:'index.html'}});assert.equal(r.status,0,r.stderr);const x=JSON.parse(r.stdout);assert.ok(x.destinations.rival_ativa_perceptivel>0);assert.ok(x.attemptRecords.some(a=>a.dealt>0));
 });
