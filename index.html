@@ -6104,7 +6104,16 @@ function botThink(w,t){
     for(const p of threatening){
       const dx=p.x-t.x,dy=p.y-t.y;
       const px=p.vx+(p.kx||0)-vx*max,py=p.vy+(p.ky||0)-vy*max;
-      const horizon=clamp(-(dx*px+dy*py)/Math.max(1,px*px+py*py),0,.61);
+      // Local novice reaction: shorten prediction for visible heavy bullets.
+      // At emergency range keep the existing prediction and scoring untouched.
+      let riskWindow=.61;
+      if(localDiscoveryArena(w)&&t.learning&&p.kind==="bullet"&&p.owner?.type==="tank"&&p.r>=p.owner.r*.75){
+        const pvx=p.vx+(p.kx||0),pvy=p.vy+(p.ky||0);
+        const toward=-(dx*pvx+dy*pvy)/Math.max(1,pvx*pvx+pvy*pvy);
+        const earliest=(Math.hypot(dx,dy)-(t.r+p.r+10+t.trait*1.4))/(Math.hypot(pvx,pvy)+max);
+        if(toward>.22&&earliest>.22)riskWindow=.32;
+      }
+      const horizon=clamp(-(dx*px+dy*py)/Math.max(1,px*px+py*py),0,riskWindow);
       const r=t.r+p.r+10+t.trait*1.4;
       const gap=Math.hypot(dx+px*horizon,dy+py*horizon)-r;
       if(gap<32){
