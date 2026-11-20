@@ -1,6 +1,7 @@
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm');
 let code=fs.readFileSync(process.env.CORE||'index.html','utf8').split('<script id="core">')[1].split('</script>')[0].replace(/\r\n/g,'\n');
+if(process.env.DISABLE_3B==='1')code=code.replace('if(swarmExperience&&tankCombat&&t.learning&&opening==null){','if(false&&swarmExperience&&tankCombat&&t.learning&&opening==null){').replace('if(heavyExperience&&!swarmExperience&&tankCombat&&t.learning&&opening==null){','if(heavyExperience&&tankCombat&&t.learning&&opening==null){');
 function replaceOnce(from,to){if(!code.includes(from))throw Error('instrumentação não encontrada: '+from);code=code.replace(from,to);}
 replaceOnce('combatHit(a,b,aClass,bClass,aDamage,bDamage=0,shotTactic,shotAttempt,shot){','combatHit(a,b,aClass,bClass,aDamage,bDamage=0,shotTactic,shotAttempt,shot){globalThis.hitEvent(this,a,b,aDamage,bDamage,shotAttempt);');
 replaceOnce('function finishHeavyAttempt(m,now=0){','function finishHeavyAttempt(m,now=0,reason){');
@@ -13,7 +14,7 @@ replaceOnce('      this.shots.push(projectile);','      this.shots.push(projecti
 replaceOnce('        e.hp-=p.damage*load;e.damaged=e.hit=this.time;','        if(p.heavyAttempt)globalThis.measureImpact(p,e,this);\n        e.hp-=p.damage*load;e.damaged=e.hit=this.time;');
 replaceOnce('    p.alive=false;\n    const approach=', '    if(p.heavyAttempt)globalThis.removed(p,this.tick,by);\n    p.alive=false;\n    const approach=');
 replaceOnce('    e.alive=false;\n    e.hp=0;',"    if(e.learning?.heavyAttempt)globalThis.ended(e.learning.heavyAttempt,'morte');\n    e.alive=false;\n    e.hp=0;");
-if(process.env.CONTROL==='1')replaceOnce('if(heavyExperience&&tankCombat&&t.learning&&opening==null){','if(false&&heavyExperience&&tankCombat&&t.learning&&opening==null){');
+if(process.env.CONTROL==='1'){const modern='if(heavyExperience&&!swarmExperience&&tankCombat&&t.learning&&opening==null){',condition=code.includes(modern)?modern:'if(heavyExperience&&tankCombat&&t.learning&&opening==null){';replaceOnce(condition,condition.replace('if(','if(false&&'));}
 replaceOnce('      this.shots.push(projectile);if(projectile.heavyAttempt)globalThis.spawned(projectile,this.tick);','      this.shots.push(projectile);globalThis.allSpawned(projectile,this.tick);if(projectile.heavyAttempt)globalThis.spawned(projectile,this.tick);');
 replaceOnce('        if(p.owner.type==="boss")this.provokeBossProjectile(p,q.owner);','        globalThis.shotCollision(p,q,this.tick);if(p.owner.type==="boss")this.provokeBossProjectile(p,q.owner);');
 const c=vm.createContext({console,TextEncoder});vm.runInContext(code+';globalThis.api={Arena,changeClass,hull,XP,perceived,spendBot,C,range,bulletSpeed,chooseHeavyResponse}',c);

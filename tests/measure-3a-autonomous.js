@@ -1,6 +1,7 @@
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm');
 let code=fs.readFileSync(process.env.CORE||'index.html','utf8').split('<script id="core">')[1].split('</script>')[0].replace(/\r\n/g,'\n');
+if(process.env.DISABLE_3B==='1')code=code.replace('if(swarmExperience&&tankCombat&&t.learning&&opening==null){','if(false&&swarmExperience&&tankCombat&&t.learning&&opening==null){').replace('if(heavyExperience&&!swarmExperience&&tankCombat&&t.learning&&opening==null){','if(heavyExperience&&tankCombat&&t.learning&&opening==null){');
 function replaceOnce(from,to){if(!code.includes(from))throw Error('instrumentação não encontrada: '+from);code=code.replace(from,to);}
 replaceOnce('combatHit(a,b,aClass,bClass,aDamage,bDamage=0,shotTactic,shotAttempt,shot){','combatHit(a,b,aClass,bClass,aDamage,bDamage=0,shotTactic,shotAttempt,shot){globalThis.hitEvent(this,a,b,aDamage,bDamage,shotAttempt);');
 replaceOnce('function finishHeavyAttempt(m,now=0){','function finishHeavyAttempt(m,now=0,reason){');
