@@ -1069,6 +1069,7 @@ function pruneThreatShots(memory,time){
   for(const [id,until] of memory.seenThreatShots)if(time>until)memory.seenThreatShots.delete(id);
 }
 // Evidence belongs to an opponent and a visible threat, not its internal class.
+function tacticalEvent(m,time,text){if(!m)return;m.tacticalEvents??=[];m.tacticalEvents.push({time,text});if(m.tacticalEvents.length>12)m.tacticalEvents.shift();}
 function observeHeavyShot(w,t,p,nearby=w.sense.nearby(t.x,t.y,range(t))){
   if(!localDiscoveryArena(w)||!t.learning||p.kind!=="bullet"||!p.owner?.profileId||p.owner===t||!perceived(w,t,p)||!perceived(w,t,p.owner))return;
   if(p.age>.25||Math.hypot(p.x-p.owner.x,p.y-p.owner.y)>p.owner.r*3.5||p.r<p.owner.r*.75)return;
@@ -1081,7 +1082,7 @@ function observeHeavyShot(w,t,p,nearby=w.sense.nearby(t.x,t.y,range(t))){
   pruneThreatShots(memory,w.time);
   if(memory.seenThreatShots.has(p.id))return;
   memory.seenThreatShots.set(p.id,w.time+Math.max(0,.25-p.age)+DT);
-  const key=p.owner.profileId;memory.threats.set(key,Math.min(3,(memory.threats.get(key)||0)+1));
+  const key=p.owner.profileId;memory.threats.set(key,Math.min(3,(memory.threats.get(key)||0)+1));tacticalEvent(memory,w.time,"Reconheceu tiro pesado de "+p.owner.name);
 }
 // A swarm episode stays active through short visibility or movement gaps.
 function observeDroneSwarm(w,t,risks,nearby){
@@ -1103,7 +1104,7 @@ function observeDroneSwarm(w,t,risks,nearby){
     const key=candidates[0].profileId;if(credited.has(key))continue;credited.add(key);
     const m=t.learning;m.swarmEpisodes??=new Map();m.swarmThreats??=new Map();
     const last=m.swarmEpisodes.get(key);
-    if(last===undefined||w.time-last>2)m.swarmThreats.set(key,Math.min(3,(m.swarmThreats.get(key)||0)+1));
+    if(last===undefined||w.time-last>2){m.swarmThreats.set(key,Math.min(3,(m.swarmThreats.get(key)||0)+1));tacticalEvent(m,w.time,"Reconheceu enxame de "+candidates[0].name);}
     m.swarmEpisodes.set(key,w.time);
   }
   return credited;
@@ -1112,19 +1113,19 @@ function threatDistance(heavy,swarm){return Math.min(140,(heavy?110:0)+(swarm?80
 // Idle windows never create a reward; defensive credit is small and capped.
 // Closed maneuvers retain only a short window for projectiles already fired.
 const HEAVY_SHOT_GRACE=1.5;
-function updateHeavyResult(m,a){
+function updateHeavyResult(m,a,time=0){
   if(!(a.dealt>0||a.taken>0||a.defensive>0))return;
   m.heavyResults??=[{sum:0,count:0},{sum:0,count:0}];
   const row=m.heavyResults[a.choice],score=clamp((a.dealt-a.taken)/100+Math.min(.06,(a.defensive||0)*.02),-1,1);
   if(a.resultVersion===undefined){row.sum=row.sum*.8+score;row.count++;a.resultVersion=row.count;}
   else row.sum+=(score-a.resultScore)*Math.pow(.8,row.count-a.resultVersion);
   a.resultScore=score;
-  m.lastTacticalResult={kind:"heavy",choice:a.choice,score};
+  m.lastTacticalResult={kind:"heavy",choice:a.choice,score};tacticalEvent(m,time,"Avaliou tiro pesado · "+(a.choice===0?"flanco":"distância")+" · "+score.toFixed(2));
 }
 function finishHeavyAttempt(m,now=0){
   const a=m?.heavyAttempt;if(!a)return;
   m.heavyAttempt=null;a.closedAt=now;a.resolveUntil=now+HEAVY_SHOT_GRACE;a.resultMemory=m;
-  updateHeavyResult(m,a);
+  updateHeavyResult(m,a,now);
 }
 function tacticalBasis(n,rows){
   if(n<2||n%6===5)return "exploração";
@@ -1150,11 +1151,11 @@ function chooseHeavyResponse(m){
 function chooseSwarmResponse(m){
   return chooseHeavyResponse({heavyAttempt:m.swarmAttempt,heavyTrials:m.swarmTrials,heavyResults:m.swarmResults});
 }
-function finishSwarmAttempt(m){
+function finishSwarmAttempt(m,time=0){
   const a=m?.swarmAttempt;if(!a)return;m.swarmAttempt=null;
   if(!a.threat||!(a.dealt>0||a.taken>0))return;
   m.swarmResults??=[{sum:0,count:0},{sum:0,count:0}];
-  const row=m.swarmResults[a.choice],score=clamp((a.dealt-a.taken)/100,-1,1);row.sum=row.sum*.8+score;row.count++;m.lastTacticalResult={kind:"swarm",choice:a.choice,score};
+  const row=m.swarmResults[a.choice],score=clamp((a.dealt-a.taken)/100,-1,1);row.sum=row.sum*.8+score;row.count++;m.lastTacticalResult={kind:"swarm",choice:a.choice,score};tacticalEvent(m,time,"Avaliou enxame · "+(a.choice===0?"afastamento":"lateral")+" · "+score.toFixed(2));
 }
 function newMemory(adaptiveBuilds){
   return {foes:new Map(), classes:new Map(), samples:0, escapes:0, changes:0, tactic:0, foeId:null, until:0, note:"", retreat:null,
@@ -1176,6 +1177,7 @@ function respawnLearning(previous,adaptiveBuilds){
   if(previous.swarmResults)memory.swarmResults=previous.swarmResults.map(r=>({...r}));
   if(previous.swarmTrials!==undefined)memory.swarmTrials=previous.swarmTrials;
   if(previous.lastTacticalResult)memory.lastTacticalResult={...previous.lastTacticalResult};
+  if(previous.tacticalEvents)memory.tacticalEvents=previous.tacticalEvents.map(e=>({...e}));
   if(previous.threats)memory.threats=new Map(previous.threats);
   if(previous.swarmThreats)memory.swarmThreats=new Map(previous.swarmThreats);
   if(previous.swarmEpisodes)memory.swarmEpisodes=new Map(previous.swarmEpisodes);
@@ -4586,7 +4588,7 @@ class Arena {
         if(!shot||!shotAttempt.creditedShots.has(shot)){
           if(shot)shotAttempt.creditedShots.add(shot);
           shotAttempt.dealt+=dealt;
-          if(shotAttempt.resultMemory===a.learning)updateHeavyResult(a.learning,shotAttempt);
+          if(shotAttempt.resultMemory===a.learning)updateHeavyResult(a.learning,shotAttempt,this.time);
         }
       }
       if(seeB&&aClass===a.cls) observeHit(a,b,bClass,dealt,false,this.time,shotTactic);
@@ -5420,7 +5422,7 @@ function botThink(w,t){
     sq(t.x-shipTarget.x)+sq(t.y-shipTarget.y)<Math.min(vision,575)**2&&
     (!enemy||enemy===shipTarget||sq(t.x-enemy.x)+sq(t.y-enemy.y)>185**2))enemy=shipTarget;
   if(t.learning?.heavyAttempt&&(!enemy||t.learning.heavyAttempt.rivalId!==enemy.id||!perceived(w,t,enemy)))finishHeavyAttempt(t.learning,w.time);
-  if(t.learning?.swarmAttempt&&(!enemy||t.learning.swarmAttempt.rivalId!==enemy.id||!perceived(w,t,enemy)))finishSwarmAttempt(t.learning);
+  if(t.learning?.swarmAttempt&&(!enemy||t.learning.swarmAttempt.rivalId!==enemy.id||!perceived(w,t,enemy)))finishSwarmAttempt(t.learning,w.time);
   t.enemy=enemy;t.food=food;
   t.crasherThreat=crasher;
   t.bossTarget=null;
@@ -5704,7 +5706,7 @@ function botThink(w,t){
       heavyPlan={choice,baseRadial:radial,baseStrafe:strafe};
     }
     if(swarmExperience&&tankCombat&&t.learning&&opening==null){
-      if(t.learning.swarmAttempt&&w.time>=t.learning.swarmAttempt.until)finishSwarmAttempt(t.learning);
+      if(t.learning.swarmAttempt&&w.time>=t.learning.swarmAttempt.until)finishSwarmAttempt(t.learning,w.time);
       swarmPlan={choice:chooseSwarmResponse(t.learning),baseRadial:radial,baseStrafe:strafe};
     }
     [aimX,aimY]=lead(t,enemy,bulletSpeed(t,weapon||gun()),1.25);
@@ -6246,15 +6248,15 @@ function botThink(w,t){
     if(!valid)finishHeavyAttempt(m,w.time);
     else if(!m.heavyAttempt){
       m.heavyTrials=(m.heavyTrials??0)+1;
-      m.heavyAttempt={id:m.heavyTrials,rivalId:enemy.id,choice:heavyCandidate.choice,basis:tacticalBasis(m.heavyTrials-1,m.heavyResults),dealt:0,taken:0,until:w.time+2};
+      m.heavyAttempt={id:m.heavyTrials,rivalId:enemy.id,choice:heavyCandidate.choice,basis:tacticalBasis(m.heavyTrials-1,m.heavyResults),dealt:0,taken:0,until:w.time+2};tacticalEvent(m,w.time,"Iniciou tiro pesado · "+(heavyCandidate.choice===0?"flanco":"distância")+" · "+m.heavyAttempt.basis);
     }
   }
   if(t.learning&&localDiscoveryArena(w)){
     const m=t.learning,valid=swarmCandidate&&enemy?.id===swarmCandidate.rivalId&&targetEntity===enemy&&t.cls===swarmCandidate.cls&&
       Math.abs(targetX-swarmCandidate.x)<1e-6&&Math.abs(targetY-swarmCandidate.y)<1e-6&&Math.abs(bestOffset)<1e-9&&Math.hypot(bestX,bestY)>.4;
-    if(!valid)finishSwarmAttempt(m);
+    if(!valid)finishSwarmAttempt(m,w.time);
     else{
-      if(!m.swarmAttempt){m.swarmTrials=(m.swarmTrials??0)+1;m.swarmAttempt={id:m.swarmTrials,rivalId:enemy.id,choice:swarmCandidate.choice,basis:tacticalBasis(m.swarmTrials-1,m.swarmResults),dealt:0,taken:0,threat:false,until:w.time+2};}
+      if(!m.swarmAttempt){m.swarmTrials=(m.swarmTrials??0)+1;m.swarmAttempt={id:m.swarmTrials,rivalId:enemy.id,choice:swarmCandidate.choice,basis:tacticalBasis(m.swarmTrials-1,m.swarmResults),dealt:0,taken:0,threat:false,until:w.time+2};tacticalEvent(m,w.time,"Iniciou enxame · "+(swarmCandidate.choice===0?"afastamento":"lateral")+" · "+m.swarmAttempt.basis);}
       if(observedSwarms.has(enemy.profileId))m.swarmAttempt.threat=true;
     }
   }
@@ -8054,7 +8056,7 @@ function updateInspector(focus){
     focus.type==="tower"?[focus.team,Math.ceil(focus.hp)]:null,
     focus.type==="ship"?[Math.ceil(focus.hp),focus.retreating,focus.escort,focus.threats]:null,
     focus.learning?.changes,focus.learning?.tactic,focus.learning?.note,focus.learning?.escapes,
-    focus.learning?.buildChanges,focus.learning?.lastPoint?.index,focus.learning?.lastPoint?.reason, mode==="watch"&&localDiscoveryArena(world)?tacticalPanel(focus.learning):null
+    focus.learning?.buildChanges,focus.learning?.lastPoint?.index,focus.learning?.lastPoint?.reason, mode==="watch"&&localDiscoveryArena(world)?[tacticalPanel(focus.learning),focus.learning?.tacticalEvents]:null
   ]:[isFree]);
   if(signature===inspectSignature)return;
   inspectSignature=signature;
@@ -8135,7 +8137,7 @@ function updateInspector(focus){
       learning.append(header,node("p",summary+" · "+TACTIC_NAMES[memory.tactic]));
       if(memory.escapes)learning.append(node("p",memory.escapes+(memory.escapes===1?" fuga avaliada":" fugas avaliadas")));
       if(memory.note)learning.append(node("p",memory.note));
-      if(mode==="watch"&&localDiscoveryArena(world))for(const line of tacticalPanel(memory))learning.append(node("p",line));
+      if(mode==="watch"&&localDiscoveryArena(world)){for(const line of tacticalPanel(memory))learning.append(node("p",line));if(memory.tacticalEvents?.length){learning.append(node("h3","Histórico tático"));for(const e of memory.tacticalEvents){const seconds=Math.floor(e.time),stamp=String(Math.floor(seconds/60)).padStart(2,"0")+":"+String(seconds%60).padStart(2,"0");learning.append(node("p",stamp+" · "+e.text));}}}
     }else learning.append(header,node("p","Desligado nesta partida."));
     rows.push(learning);
     const build=node("section",null,"build"), buildHeader=node("div",null,"sidebar-title"), list=node("dl");

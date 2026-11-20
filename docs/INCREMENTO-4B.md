@@ -1,0 +1,7 @@
+# 4B — histórico tático em Assistir
+
+O inspetor apresenta até 12 eventos por bot, em ordem de ocorrência e com relógio da arena: reconhecimento de tiro pesado ou enxame, início efetivo da manobra com exploração/padrão/histórico e avaliação. Atualizações tardias de pontuação geram evento no instante da atualização. O histórico é copiado no renascimento, inicia vazio em outra arena e não é serializado no backup. Os eventos são limitados às arenas locais de descoberta; não mudam decisões, física ou multiplayer.
+
+Para reproduzir no navegador, execute `node tests/generate-3c-fixture.js` e `node tests/serve-3c-fixture.js`; abra `http://127.0.0.1:8766/3c-fixture.html`. O cenário preparado simula a Arena até o tick 901 e pausa. Em Assistir, selecione Pixel: o histórico inclui reconhecimento de enxame, início de afastamento e lateral por exploração, avaliação lateral −0,19 e início de afastamento por histórico. Selecione Nix para ver sua própria lista, vazia nesse instante. Para uma arena nova normal, abra `http://127.0.0.1:8766/index.html`; o histórico começa vazio. Pare o servidor com Ctrl+C e apague `3c-fixture.html` ao terminar. O cenário preparado usa 5000 HP iniciais e não é uma partida normal.
+
+Validação no navegador integrado confirmou Pixel, Nix e arena nova. `node --test tests/*.test.js` passou 88 testes, incluindo limite de 12 eventos, cópia independente no renascimento, arena nova e exclusão do backup. Não houve teste em celular físico.
