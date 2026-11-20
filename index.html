@@ -20,6 +20,7 @@ button,select,input{font:inherit}button,select,input{border:1px solid var(--line
 .inspect-row{margin-top:8px;font-size:12px}.inspect-row b{max-width:65%;text-align:right}.detail{margin:8px 0 0;color:var(--green);font-size:12px;line-height:1.4;min-height:17px}.choices{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:8px}.choices button{padding:7px 4px;font-size:11px;min-height:31px}.stat-grid{display:grid;gap:4px;margin-top:8px}.stat-grid button{display:grid;grid-template-columns:15px minmax(0,1fr) auto;gap:5px;padding:5px 6px;text-align:left;font-size:11px;min-height:25px}.stat-grid span:first-child{color:var(--muted)}.stat-grid b{color:var(--green);font-variant-numeric:tabular-nums}
 .config{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}.config label{font-size:11px;display:grid;gap:5px;color:var(--muted);min-width:0}.config .wide{grid-column:1/-1}.config select,.config input{width:100%;min-width:0;padding:6px;font-size:12px}.config button{padding:7px 5px;font-size:11px}.help{margin:10px 0 0;color:var(--muted);font-size:11px;line-height:1.55}.help kbd{font:inherit;color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:1px 4px;white-space:nowrap}.touch-tools,.touch-upgrade{display:none}.arena #upgradeCard{display:none}.arena.show-stats #upgradeCard{display:block;position:absolute;z-index:5;left:10px;right:10px;bottom:9px;max-width:405px;max-height:82%;overflow:auto;touch-action:pan-y;box-shadow:0 8px 35px #10161185}.arena #closeStats{margin-top:9px;padding:6px 9px;font-size:12px}.footer{margin:11px 1px 0;font-size:11px;color:var(--muted);display:flex;justify-content:space-between;gap:8px;line-height:1.4}
 @media (max-width:900px){.shell{padding:15px}.layout{grid-template-columns:minmax(0,1fr) 224px;gap:10px}.side{gap:8px}.card{padding:10px}.arena{height:clamp(400px,calc(100dvh - 153px),770px)}}
+.tank-color-controls{display:flex;align-items:center;flex-wrap:wrap;gap:6px}.tank-color-controls label{flex:1 1 78px}.tank-color-controls input[type=color]{height:36px;padding:4px}.tank-color-controls button{min-height:36px;padding-inline:8px}
 @media (max-width:680px){.shell{padding:10px}.mast{gap:6px;margin-bottom:11px}.mast h1{font-size:21px}.mast p{font-size:10px}.mark{width:34px;height:34px;border-radius:8px}.mark svg{width:24px;height:24px}.brand{gap:6px}.nav{gap:1px;padding:3px}.nav button{padding:7px 6px;font-size:11px}.layout{display:block}.toolbar{min-height:42px;padding:5px 6px}.live{font-size:10px;gap:5px}.live strong{font-size:10px}.transport{gap:3px}.transport button,.transport select{padding:5px;min-height:28px;font-size:11px}.arena{height:clamp(330px,67dvh,650px)}.side{margin-top:9px;display:grid;grid-template-columns:1fr 1fr}.side .upgrade-card{grid-column:1/-1}.stat-grid{grid-template-columns:1fr 1fr}.minimap{width:83px;height:83px}.top-left{top:9px;left:8px}.fullscreen{top:8px;right:8px}.footer{margin-bottom:8px}.player-hud{width:48%;bottom:8px}.view-tag{font-size:10px}.play .minimap{bottom:auto;top:42px}}
 @media (pointer:coarse){.play .touch-tools{display:flex;position:absolute;right:9px;bottom:78px;gap:5px;z-index:3}.touch-tools button,.touch-upgrade{font-size:11px;min-height:34px;background:#17241ce8;border-color:#e0ebdc65;padding:5px 8px;touch-action:none}.play .touch-upgrade{display:block;position:absolute;z-index:3;left:8px;top:84px}.play .minimap{bottom:auto;top:43px}.play .player-hud{bottom:8px}}
 @media(max-height:510px) and (orientation:landscape){.arena{height:calc(100dvh - 110px);min-height:220px}.mast{margin-bottom:7px}.shell{padding-top:7px}.play .touch-tools{bottom:45px}}
@@ -622,6 +623,11 @@ button{-webkit-tap-highlight-color:transparent}
         <div class="config">
           <label class="wide">Modo leve<select id="liteMode" aria-describedby="liteHelp"><option value="off">Desligado</option><option value="on">Ligado</option></select></label>
           <p class="lite-help wide" id="liteHelp">Reduz o custo gráfico e a frequência dos replays. Vale na hora.</p>
+          <div class="tank-color-controls wide" id="tankColorControls" hidden>
+            <label>Cor do seu tanque<input id="tankColor" type="color" value="#39b7ed"></label>
+            <button id="tankMonochrome" type="button">Monocromático</button>
+            <button id="tankColorDefault" type="button">Padrão</button>
+          </div>
           <label>Seed<input id="seed" inputmode="numeric" type="number" step="1" min="1" max="4294967295"></label>
           <label id="botsField">Bots<select id="botCount"><option>8</option><option>12</option><option selected>24</option><option>36</option></select></label>
           <label id="mapField" class="wide">Modo da próxima partida<select id="arenaMap"><option value="open">FFA aberto</option><option value="survival">Survival · 12 tanques</option><option value="teams">2 Teams · Azul × Vermelho</option><option value="four-teams">4 Teams</option><option value="domination">Dominação</option><option value="convoy">Comboio · Dois times</option><option value="mothership">Mothership</option><option value="tag">Tag</option><option value="maze">Maze fixo</option><option value="maze-seed">Maze por seed</option></select></label>
@@ -1712,20 +1718,24 @@ const ACTOR_KEY={tank:e=>(e.human?"jogador:":"bot:")+e.name,boss:e=>"chefe:"+e.n
 const FORM_ART={...FORMS,...Object.fromEntries(SURVIVAL_MINIS.map(f=>[f.key,f]))};
 const FORM_KEYS=Object.keys(FORM_ART), SHOT_KINDS=["bullet","drone","autoDrone","trap","firework","squareDrone","eventMissile",SKIMMER_MISSILE,ROCKETEER_MISSILE,...DECADE_MINIONS.map(m=>m.appearance),"decadeEscort","decadeBullet",NECRO_DRONE,FACTORY_MINION];
 const FORM_INDEX=new Map(FORM_KEYS.map((name,i)=>[name,i]));
+const DEFAULT_PLAYER_COLOR="#39b7ed";
+function customTankColor(t){return t.human?t.playerColor:undefined;}
 function unitColor(t,time=0){
   if(t.type==="tower"&&t.team==null)return DOM_NEUTRAL;
   if(t.type==="boss")return t.spec.color;
   if(t.type==="closer")return CLOSER.color;
   if(FOUR_TEAMS[t.team])return FOUR_TEAMS[t.team].color;
+  const custom=customTankColor(t);
+  if(custom)return custom;
   if(t.cls==="Necromancer")return "#20b6df";
-  if(t.human)return t.roomColor??"#39b7ed";
+  if(t.human)return t.roomColor??DEFAULT_PLAYER_COLOR;
   const skin=t.skin??t.slot%COLORS.length;
   if(skin<COLORS.length)return COLORS[skin];
   const index=(skin-COLORS.length+Math.floor(time*14))%RAINBOW_COLORS.length;
   return RAINBOW_COLORS[index];
 }
 function shotColor(p,time){
-  if(p.kind===NECRO_DRONE&&p.owner.team==null)return "#edaa80";
+  if(p.kind===NECRO_DRONE&&p.owner.team==null)return customTankColor(p.owner)??"#edaa80";
   return p.owner.spec?.ammo??(p.owner.mini?p.owner.f.color:unitColor(p.owner,time));}
 function shotAppearance(p){return p.minion?.appearance??(p.owner.spec===SUMMONER&&p.kind==="drone"?"squareDrone":p.kind);}
 function snapshotUnit(t){
@@ -1733,6 +1743,7 @@ function snapshotUnit(t){
   if(type==="boss")return {type,id,name,cls,x,y,r,aim,hp,hit,alive:true,spec:t.spec,phase:t.phase,nextVolley:t.nextVolley,
     turretAngles:t.turrets?.map(turret=>turret.aim)};
   return {type,id,name,cls,x,y,r,aim,hp,hit,team,slot,human,protect,skin:t.skin,alive:true,
+    ...(customTankColor(t)?{playerColor:t.playerColor}:{}),
     maxHp:hull(t),stats:t.stats.slice(),cool:t.cool.slice(),
     ...(t.autoTurrets?{turretAngles:t.autoTurrets.map(m=>m.aim)}:{})};
 }
@@ -6292,6 +6303,24 @@ let liteMode=false,lastDraw=-Infinity;
 try{liteMode=localStorage.getItem(LITE_PREF)==="on";}catch{}
 el("liteMode").value=liteMode?"on":"off";
 let world,mode="watch",pending=false,paused=false,rate=1,follow="leader",focusId=null,freeSelection=null;
+const TANK_COLOR_PREF="diep-arena:player-color";
+let playerTankColor;
+try{
+  const saved=localStorage.getItem(TANK_COLOR_PREF);
+  if(/^#[0-9a-f]{6}$/i.test(saved??""))playerTankColor=saved;
+}catch{}
+el("tankColor").value=playerTankColor??DEFAULT_PLAYER_COLOR;
+function applyTankColor(color,save){
+  playerTankColor=color;
+  if(mode==="play"&&!room&&world?.human)world.human.playerColor=color;
+  if(save){
+    try{
+      if(color)localStorage.setItem(TANK_COLOR_PREF,color);
+      else localStorage.removeItem(TANK_COLOR_PREF);
+    }catch{}
+  }
+  lastDraw=-Infinity;
+}
 const MEMORY_PREF='diep-arena:bot-memory:reuse';
 let reuseBotMemory=false,preferenceFailure=null;
 try{reuseBotMemory=localStorage.getItem(MEMORY_PREF)==='on';}catch(error){preferenceFailure=error;}
@@ -6939,7 +6968,7 @@ function paintEventBoss(b,time){
   }
 }
 function paintTankBody(ctx,t,x,y,selected,time,spinTime,color){
-  const r=t.r,col=color??unitColor(t,time);
+  const custom=customTankColor(t),r=t.r,col=color??custom??unitColor(t,time);
   ctx.save();ctx.translate(x,y);
   const spike=t.cls==="Spike";
   ctx.rotate(spike?spinTime*4.4:t.aim);
@@ -7017,7 +7046,8 @@ function paintTankBody(ctx,t,x,y,selected,time,spinTime,color){
       if(spec.opposed||g.battleshipWing!=null){
         ctx.lineJoin="round";
         paint("#999999","#666666",r*.105,ctx);
-      }else paint("#82948e","#435851",3.2,ctx);
+      }else if(custom)paint("#999999","#737373",3.2,ctx);
+      else paint("#82948e","#435851",3.2,ctx);
     }
     ctx.restore();
   }
@@ -7032,7 +7062,7 @@ function paintTankBody(ctx,t,x,y,selected,time,spinTime,color){
     ctx.lineJoin="round";
     paint("#393939","#222222",2.4,ctx);
   }else if(spec.ram){
-    poly(0,0,r+4,6,0,ctx);paint("#617269","#2a4037",3,ctx);
+    poly(0,0,r+4,6,0,ctx);paint(custom?"#676767":"#617269",custom?"#303030":"#2a4037",3,ctx);
   }
   if(t.cls==="Necromancer"||t.cls==="Factory"){
     const half=r*.79;
@@ -7040,7 +7070,8 @@ function paintTankBody(ctx,t,x,y,selected,time,spinTime,color){
     ctx.lineJoin="round";
   }else if(t.cls==="Mothership")poly(0,0,r,16,Math.PI/16,ctx);
   else circle(0,0,spec.ram?r*.67:r,ctx);
-  paint(time-t.hit<.065?"#f6eaca":col,t.cls==="Necromancer"&&t.team==null?"#1683a1":"#38574e",3.3,ctx);
+  const outline=custom?FOUR_TEAMS[t.team]?.color??"#252525":t.cls==="Necromancer"&&t.team==null?"#1683a1":"#38574e";
+  paint(time-t.hit<.065?"#f6eaca":col,outline,3.3,ctx);
   if(spec.centerTurret){
     const g=spec.centerTurret, radius=r*CENTER_TURRET_RADIUS;
     const aim=t.turretAngles?.[0]??t.autoTurrets?.[0]?.aim??t.aim+Math.PI;
@@ -7859,6 +7890,9 @@ function dockStats(alive=mode==="play"&&world.human?.alive&&!pending&&!world.due
 function updateInterface(force=false){
   syncPhoneControls();
   const human=world.human;
+  const localPlay=mode==="play"&&!room;
+  el("tankColorControls").hidden=!localPlay;
+  if(localPlay&&human)human.playerColor=playerTankColor;
   if(world.duelEnded||world.closing)pending=false;
   const alive=mode==="play"&&human?.alive&&!pending&&!world.duelEnded&&!world.closing?.tanksDone;
   const dead=mode==="play"&&human&&!human.alive&&!pending&&!world.duelEnded&&!world.closing&&!world.survival;
@@ -8719,6 +8753,17 @@ el("enter").onclick=()=>{
 };
 el("playerName").addEventListener("keydown",e=>{if(e.key==="Enter")el("enter").click();});
 el("spectate").onclick=()=>setMode("watch");
+const tankColorInput=el("tankColor");
+tankColorInput.oninput=()=>applyTankColor(tankColorInput.value,false);
+tankColorInput.onchange=()=>applyTankColor(tankColorInput.value,true);
+el("tankMonochrome").onclick=()=>{
+  tankColorInput.value="#454545";
+  applyTankColor(tankColorInput.value,true);
+};
+el("tankColorDefault").onclick=()=>{
+  tankColorInput.value=DEFAULT_PLAYER_COLOR;
+  applyTankColor(undefined,true);
+};
 el("restart").onclick=()=>restart();
 el("nextClosingRound").onclick=()=>{
   el("arenaMap").value=world.mapKind;el("seed").value=randomSeed();restart();
