@@ -488,7 +488,7 @@ button{-webkit-tap-highlight-color:transparent}
           <div class="bot-summary" id="botSummary" role="group" aria-label="Status do bot selecionado" hidden>
             <strong id="summaryBotName"></strong>
             <span class="bot-summary-meta" id="summaryBotClass"></span>
-            <div class="bot-summary-stats"><span class="bot-summary-health" id="summaryBotHp"></span><span id="summaryBotScore"></span><span id="summaryBotKills"></span></div>
+            <div class="bot-summary-stats"><span class="bot-summary-health" id="summaryBotHp"></span><span id="summaryBotScore"></span><span id="summaryBotKills"></span></div><span id="summaryBotTactics"></span>
           </div>
           <section class="class-evolution" id="classEvolution" aria-label="Evoluções de classe" hidden>
             <div class="class-evolution-grid" id="classEvolutionGrid"></div>
@@ -1119,11 +1119,23 @@ function updateHeavyResult(m,a){
   if(a.resultVersion===undefined){row.sum=row.sum*.8+score;row.count++;a.resultVersion=row.count;}
   else row.sum+=(score-a.resultScore)*Math.pow(.8,row.count-a.resultVersion);
   a.resultScore=score;
+  m.lastTacticalResult={kind:"heavy",choice:a.choice,score};
 }
 function finishHeavyAttempt(m,now=0){
   const a=m?.heavyAttempt;if(!a)return;
   m.heavyAttempt=null;a.closedAt=now;a.resolveUntil=now+HEAVY_SHOT_GRACE;a.resultMemory=m;
   updateHeavyResult(m,a);
+}
+function tacticalBasis(n,rows){
+  if(n<2||n%6===5)return "exploração";
+  return rows?.some(r=>r.count)?"histórico":"padrão";
+}
+function tacticalPanel(memory){
+  const a=memory?.swarmAttempt||memory?.heavyAttempt,kind=memory?.swarmAttempt?"swarm":"heavy";
+  const name=(k,c)=>k==="heavy"?(c===0?"Flanco":"Distância"):(c===0?"Afastamento":"Lateral");
+  const current=a?(kind==="heavy"?"Tiro pesado: ":"Enxame: ")+name(kind,a.choice)+(a.basis?" · "+a.basis:""):"Resposta: nenhuma ativa";
+  const last=memory?.lastTacticalResult;
+  return [current,last?"Última avaliação: "+(last.kind==="heavy"?"tiro pesado · ":"enxame · ")+name(last.kind,last.choice)+" · "+(last.score>=0?"+":"")+last.score.toFixed(2):"Última avaliação: nenhuma"];
 }
 function chooseHeavyResponse(m){
   if(m.heavyAttempt)return m.heavyAttempt.choice;
@@ -1142,7 +1154,7 @@ function finishSwarmAttempt(m){
   const a=m?.swarmAttempt;if(!a)return;m.swarmAttempt=null;
   if(!a.threat||!(a.dealt>0||a.taken>0))return;
   m.swarmResults??=[{sum:0,count:0},{sum:0,count:0}];
-  const row=m.swarmResults[a.choice];row.sum=row.sum*.8+clamp((a.dealt-a.taken)/100,-1,1);row.count++;
+  const row=m.swarmResults[a.choice],score=clamp((a.dealt-a.taken)/100,-1,1);row.sum=row.sum*.8+score;row.count++;m.lastTacticalResult={kind:"swarm",choice:a.choice,score};
 }
 function newMemory(adaptiveBuilds){
   return {foes:new Map(), classes:new Map(), samples:0, escapes:0, changes:0, tactic:0, foeId:null, until:0, note:"", retreat:null,
@@ -1163,6 +1175,7 @@ function respawnLearning(previous,adaptiveBuilds){
   if(previous.heavyTrials!==undefined)memory.heavyTrials=previous.heavyTrials;
   if(previous.swarmResults)memory.swarmResults=previous.swarmResults.map(r=>({...r}));
   if(previous.swarmTrials!==undefined)memory.swarmTrials=previous.swarmTrials;
+  if(previous.lastTacticalResult)memory.lastTacticalResult={...previous.lastTacticalResult};
   if(previous.threats)memory.threats=new Map(previous.threats);
   if(previous.swarmThreats)memory.swarmThreats=new Map(previous.swarmThreats);
   if(previous.swarmEpisodes)memory.swarmEpisodes=new Map(previous.swarmEpisodes);
@@ -6233,7 +6246,7 @@ function botThink(w,t){
     if(!valid)finishHeavyAttempt(m,w.time);
     else if(!m.heavyAttempt){
       m.heavyTrials=(m.heavyTrials??0)+1;
-      m.heavyAttempt={id:m.heavyTrials,rivalId:enemy.id,choice:heavyCandidate.choice,dealt:0,taken:0,until:w.time+2};
+      m.heavyAttempt={id:m.heavyTrials,rivalId:enemy.id,choice:heavyCandidate.choice,basis:tacticalBasis(m.heavyTrials-1,m.heavyResults),dealt:0,taken:0,until:w.time+2};
     }
   }
   if(t.learning&&localDiscoveryArena(w)){
@@ -6241,7 +6254,7 @@ function botThink(w,t){
       Math.abs(targetX-swarmCandidate.x)<1e-6&&Math.abs(targetY-swarmCandidate.y)<1e-6&&Math.abs(bestOffset)<1e-9&&Math.hypot(bestX,bestY)>.4;
     if(!valid)finishSwarmAttempt(m);
     else{
-      if(!m.swarmAttempt){m.swarmTrials=(m.swarmTrials??0)+1;m.swarmAttempt={id:m.swarmTrials,rivalId:enemy.id,choice:swarmCandidate.choice,dealt:0,taken:0,threat:false,until:w.time+2};}
+      if(!m.swarmAttempt){m.swarmTrials=(m.swarmTrials??0)+1;m.swarmAttempt={id:m.swarmTrials,rivalId:enemy.id,choice:swarmCandidate.choice,basis:tacticalBasis(m.swarmTrials-1,m.swarmResults),dealt:0,taken:0,threat:false,until:w.time+2};}
       if(observedSwarms.has(enemy.profileId))m.swarmAttempt.threat=true;
     }
   }
@@ -8041,7 +8054,7 @@ function updateInspector(focus){
     focus.type==="tower"?[focus.team,Math.ceil(focus.hp)]:null,
     focus.type==="ship"?[Math.ceil(focus.hp),focus.retreating,focus.escort,focus.threats]:null,
     focus.learning?.changes,focus.learning?.tactic,focus.learning?.note,focus.learning?.escapes,
-    focus.learning?.buildChanges,focus.learning?.lastPoint?.index,focus.learning?.lastPoint?.reason
+    focus.learning?.buildChanges,focus.learning?.lastPoint?.index,focus.learning?.lastPoint?.reason, mode==="watch"&&localDiscoveryArena(world)?tacticalPanel(focus.learning):null
   ]:[isFree]);
   if(signature===inspectSignature)return;
   inspectSignature=signature;
@@ -8122,6 +8135,7 @@ function updateInspector(focus){
       learning.append(header,node("p",summary+" · "+TACTIC_NAMES[memory.tactic]));
       if(memory.escapes)learning.append(node("p",memory.escapes+(memory.escapes===1?" fuga avaliada":" fugas avaliadas")));
       if(memory.note)learning.append(node("p",memory.note));
+      if(mode==="watch"&&localDiscoveryArena(world))for(const line of tacticalPanel(memory))learning.append(node("p",line));
     }else learning.append(header,node("p","Desligado nesta partida."));
     rows.push(learning);
     const build=node("section",null,"build"), buildHeader=node("div",null,"sidebar-title"), list=node("dl");
@@ -8350,6 +8364,7 @@ function updateBotSummary(bot){
   el("summaryBotHp").textContent=fmt.format(Math.ceil(Math.max(0,bot.hp)))+" / "+fmt.format(hull(bot))+" HP";
   el("summaryBotScore").textContent=fmt.format(bot.score)+" pts";
   el("summaryBotKills").textContent=fmt.format(bot.kills)+(bot.kills===1?" eliminação":" eliminações");
+  el("summaryBotTactics").textContent=mode==="watch"&&localDiscoveryArena(world)?tacticalPanel(bot.learning).join(" · "):"";
 }
 const evolutionColors=["#7ebafa","#86d078","#ef8886","#edcd72","#668cc9","#ae85c9"];
 let evolutionTank=null,evolutionSignature="",evolutionFolded=false;
