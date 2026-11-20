@@ -5326,7 +5326,7 @@ function botThink(w,t){
   let boss=null, bossDrones=0, incoming=null, droneGap=Infinity;
   let defenderTraps=0;
   const risks=[], forms=[];
-  let heavyPlan=null,heavyCandidate=null,swarmPlan=null,swarmCandidate=null;
+  let heavyPlan=null,heavyCandidate=null,swarmPlan=null,swarmCandidate=null,sniperRetreat=false;
   const ownShip=w.ships[t.team],rivalShip=w.ships[1-t.team];
   const zone=w.survival;
   const overseer=w.duel||t.cls!=="Overseer"?null:t.overseerAttack;
@@ -5747,7 +5747,7 @@ function botThink(w,t){
       }else if(c.style==="sniper"){
         const reloading=t.cool[0]>.20;
         if(eDist<325&&(reloading||C[enemy.cls].ram||eDist<240)){
-          radial=-1;strafe=.83*flank;
+          radial=-1;strafe=.83*flank;sniperRetreat=true;
           detail="Recuando na diagonal de olho no alvo";
         }else if(fire){
           const cover=Array.from(nearby).filter(form=>form.alive&&form.type==="form"&&!form.f.chase&&form.r>=19&&
@@ -5760,7 +5760,9 @@ function botThink(w,t){
         }
       }
     }
-    if(heavyPlan&&(radial!==heavyPlan.baseRadial||strafe!==heavyPlan.baseStrafe))heavyPlan=null;
+    // Keep the Sniper's existing retreat; only its lateral component may flank.
+    const compatibleSniperFlank=sniperRetreat&&!escapingPursuer&&heavyPlan?.choice===0&&radial===heavyPlan.baseRadial;
+    if(heavyPlan&&(radial!==heavyPlan.baseRadial||strafe!==heavyPlan.baseStrafe)&&!compatibleSniperFlank)heavyPlan=null;
     if(heavyPlan){
       if(heavyPlan.choice===0)strafe=1.15*flank;
       else if(weapon&&shotRange>0){
