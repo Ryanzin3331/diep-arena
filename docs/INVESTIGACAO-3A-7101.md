@@ -1,3 +1,5 @@
+> **Medição histórica inválida:** o callback do medidor sobrescrevia a função física de colisão. Os números autônomos deste documento e os JSONs antigos não são comparáveis à física correta; não foram remedidos para a seed 7101. Consulte `docs/DEFESA-3A.md` e `docs/DUELO-3A.md` para as medições corrigidas.
+
 # Investigação 3A — FFA, seed 7101
 
 Na base `9ffc0ffe52c7efb954e06bd9a74346665b441ff2`, `node tests/measure-3a-autonomous.js` executa 2400 ticks com 36 bots, aprendizado ligado, sem persistência: todos são preparados no nível 30 com score `XP[29]`, raio atualizado por `changeClass` e pontos distribuídos por `spendBot`; slots 0–5 começam Destroyer e 6–11 Overseer. Depois da preparação, decisões, disparos e colisões são da Arena, sem interferência. Instrumentação é inserida apenas no código carregado pelo teste. Node 24.22.1, Linux x86_64. Duas execuções produziram JSON idêntico. A preparação de atributos e score é uma escolha explícita; o resultado (55 tentativas e 84 projéteis) não reproduz os números 82 e 56 informados no ensaio inicial, cujos detalhes de preparação não foram fornecidos.

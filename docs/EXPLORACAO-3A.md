@@ -1,3 +1,5 @@
+> **Medição histórica inválida:** o callback do medidor sobrescrevia a função física de colisão. Os números autônomos deste documento e os JSONs antigos não são comparáveis à física correta; não foram remedidos para a seed 7101. Consulte `docs/DEFESA-3A.md` e `docs/DUELO-3A.md` para as medições corrigidas.
+
 # 3A — exploração após janelas vazias
 
 Na base `c98efc8dbbd8c17709809887a189dbabe8464306`, `chooseHeavyResponse` retornava distância assim que não havia resultados, antes de avaliar a exploração periódica. Depois das duas primeiras tentativas vazias, flanco não voltava a ser selecionado. A correção verifica primeiro a exploração existente: na sexta oportunidade escolhe flanco, na décima segunda distância, alternando a cada seis. Fora dessas oportunidades, mantém a escolha pela pontuação quando existem resultados e distância como padrão quando não existem. Uma janela sem dano continua sem criar pontuação; a esquiva e a identidade de tentativa não foram alteradas.

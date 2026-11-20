@@ -1,3 +1,5 @@
+> **Medição histórica inválida:** o callback do medidor sobrescrevia a função física de colisão. Os números autônomos deste documento e os JSONs antigos não são comparáveis à física correta; não foram remedidos para a seed 7101. Consulte `docs/DEFESA-3A.md` e `docs/DUELO-3A.md` para as medições corrigidas.
+
 # 3A — faixa de combate da resposta de distância
 
 Na base `8a6fc30307de1329e48c661a57e85ff66dc7d466`, `Math.min(radial,-.55)` forçava recuo independentemente da distância. Em FFA controlado, Tank contra Destroyer a 520 unidades, com duas evidências de tiro pesado e o mesmo estado inicial, a intenção da Fase 2 tinha componente radial `+0,8894`, e a resposta de distância do 3A `-0,7307`; ambos atiravam.
