@@ -625,7 +625,6 @@ button{-webkit-tap-highlight-color:transparent}
           <p class="lite-help wide" id="liteHelp">Reduz o custo gráfico e a frequência dos replays. Vale na hora.</p>
           <div class="tank-color-controls wide" id="tankColorControls" hidden>
             <label>Cor do seu tanque<input id="tankColor" type="color" value="#39b7ed"></label>
-            <button id="tankMonochrome" type="button">Monocromático</button>
             <button id="tankColorDefault" type="button">Padrão</button>
           </div>
           <label>Seed<input id="seed" inputmode="numeric" type="number" step="1" min="1" max="4294967295"></label>
@@ -8756,10 +8755,6 @@ el("spectate").onclick=()=>setMode("watch");
 const tankColorInput=el("tankColor");
 tankColorInput.oninput=()=>applyTankColor(tankColorInput.value,false);
 tankColorInput.onchange=()=>applyTankColor(tankColorInput.value,true);
-el("tankMonochrome").onclick=()=>{
-  tankColorInput.value="#454545";
-  applyTankColor(tankColorInput.value,true);
-};
 el("tankColorDefault").onclick=()=>{
   tankColorInput.value=DEFAULT_PLAYER_COLOR;
   applyTankColor(undefined,true);
