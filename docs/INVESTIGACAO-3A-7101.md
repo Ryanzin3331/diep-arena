@@ -1,0 +1,19 @@
+> **Medição histórica inválida:** o callback do medidor sobrescrevia a função física de colisão. Os números autônomos deste documento e os JSONs antigos não são comparáveis à física correta; não foram remedidos para a seed 7101. Consulte `docs/DEFESA-3A.md` e `docs/DUELO-3A.md` para as medições corrigidas.
+
+# Investigação 3A — FFA, seed 7101
+
+Na base `9ffc0ffe52c7efb954e06bd9a74346665b441ff2`, `node tests/measure-3a-autonomous.js` executa 2400 ticks com 36 bots, aprendizado ligado, sem persistência: todos são preparados no nível 30 com score `XP[29]`, raio atualizado por `changeClass` e pontos distribuídos por `spendBot`; slots 0–5 começam Destroyer e 6–11 Overseer. Depois da preparação, decisões, disparos e colisões são da Arena, sem interferência. Instrumentação é inserida apenas no código carregado pelo teste. Node 24.22.1, Linux x86_64. Duas execuções produziram JSON idêntico. A preparação de atributos e score é uma escolha explícita; o resultado (55 tentativas e 84 projéteis) não reproduz os números 82 e 56 informados no ensaio inicial, cujos detalhes de preparação não foram fornecidos.
+
+## Resultados até o tick 2400
+
+- 55 tentativas abertas por 7 slots. Todas foram encerradas: 28 com mudança de direção (`bestOffset` não zero), 7 por alvo, 18 sem plano válido ou por regra de classe, 1 sem movimento e 1 pelo prazo. `bestOffset` não zero pode incluir obstáculos, rota ou esquiva: não identifica por si só uma esquiva defensiva.
+- 84 projéteis associados, todos `bullet`: 29 interceptados por outros projéteis; 55 removidos sem contato de dano registrado (o instrumento não distingue expiração, parede e outras remoções). Zero atingiram outro alvo, zero atingiram o rival com tentativa ativa e zero atingiram o rival após encerramento. Nenhum permaneceu em voo no tick 2400. A classificação usa o primeiro contato de dano registrado por projétil.
+- Em 64 disparos a tentativa havia encerrado antes da remoção do projétil. Isso indica uma janela curta, mas não demonstra dano perdido: nenhum desses disparos atingiu um tanque ou forma no período. Nenhum bot recebeu dano de rival ou terceiro enquanto estava em tentativa registrada. Zero bots registraram trocas e zero aprenderam com ambas as respostas.
+
+`docs/3a-investigacao-7101.json` contém as tentativas e projéteis individuais, incluindo tick de criação, encerramento e destino. A contagem de bots usa slots, inclusive após renascimento. Projéteis existentes no último tick seriam informados como `em_voo`; o teste não os chama de erro. O valor de dano já é limitado pelo HP real no caminho de colisão. Fontes ocultas não dão crédito, conforme as regras de percepção existentes.
+
+## Conclusão e limites
+
+O resultado zero é coerente com a ausência de interações de dano nas janelas observadas. Mudanças de direção frequentemente encerram a tentativa e muitos projéteis sobrevivem ao encerramento, mas este ensaio não contém impacto tardio que permita atribuir a ausência de aprendizado à interrupção. Portanto não foi alterada a esquiva, a regra de crédito ou a duração: manter tentativas abertas com base apenas nesses números poderia creditar períodos em que a resposta não foi executada. A regressão existente protege o tiro de A contra crédito em B. É necessário encontrar uma seed ou cenário autônomo com impacto após uma interrupção e medir o mesmo cenário antes/depois para avaliar uma correção sem transferir crédito indevidamente.
+
+`node --test tests/*.test.js` passou (oito arquivos reportados, sem falhas). Não foram feitos teste em celular ou novas suítes de navegador nesta investigação. Não há comparação antes/depois de correção porque nenhum impacto perdido por encerramento foi confirmado e nenhum código de produto foi alterado.
