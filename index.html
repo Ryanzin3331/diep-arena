@@ -1715,12 +1715,7 @@ class Maze {
         ??this.center(this.nearestOpen(startX,startY,e.r));
       x+=startX-originX;y+=startY-originY;
     }
-    const dx=x-startX,dy=y-startY, across=this.hit(startX,startY,x,startY,e.r);
-    e.x=across===null?x:startX+dx*Math.max(0,across-.02/Math.max(.02,Math.abs(dx)));
-    if(across!==null){e.vx=0;if(e.kx!==undefined)e.kx=0;}
-    const down=this.hit(e.x,startY,e.x,y,e.r);
-    e.y=down===null?y:startY+dy*Math.max(0,down-.02/Math.max(.02,Math.abs(dy)));
-    if(down!==null){e.vy=0;if(e.ky!==undefined)e.ky=0;}
+    slideAlongWalls(this,e,x,y,startX,startY);
   }
   waypoint(e,x,y,time){
     const r=e.r+.005, size=MAZE_SIZE*MAZE_CELL;
@@ -1744,6 +1739,84 @@ class Maze {
       if(this.hit(e.x,e.y,cx,cy,r)===null)return [cx,cy];
     }
     return this.center(start);
+  }
+}
+function slideAlongWalls(field,e,x,y,startX,startY){
+  const dx=x-startX,dy=y-startY,across=field.hit(startX,startY,x,startY,e.r);
+  e.x=across===null?x:startX+dx*Math.max(0,across-.02/Math.max(.02,Math.abs(dx)));
+  if(across!==null){e.vx=0;if(e.kx!==undefined)e.kx=0;}
+  const down=field.hit(e.x,startY,e.x,y,e.r);
+  e.y=down===null?y:startY+dy*Math.max(0,down-.02/Math.max(.02,Math.abs(dy)));
+  if(down!==null){e.vy=0;if(e.ky!==undefined)e.ky=0;}
+}
+
+const CARTOGRAPHER_PILLAR_HP=135, CARTOGRAPHER_WARNING=1.5, CARTOGRAPHER_WALL_TIME=7;
+class CartographerBarrier {
+  constructor(boss,size,time){
+    this.y=boss.y-190;
+    this.size=size;
+    this.rects=[]; // Static Maze tiles are rendered separately from this pattern.
+    this.mirrored=boss.hp<boss.spec.hp/2;
+    this.gapX=boss.x+(this.mirrored?105:-105);
+    this.gates=[boss.x-425,this.gapX,boss.x+425];
+    this.starts=time+CARTOGRAPHER_WARNING;
+    this.ends=null;
+    this.revision=0;
+    const spans=this.mirrored?[[-340,30],[180,340]]:[[-340,-180],[-30,340]];
+    this.segments=spans.map(([from,to])=>{
+      const left=boss.x+from,right=boss.x+to,center=(left+right)/2;
+      return {hp:CARTOGRAPHER_PILLAR_HP,center,
+        pillar:{x:center-34,y:this.y-34,w:68,h:68},
+        walls:[{x:left,y:this.y-16,w:center-34-left,h:32},{x:center+34,y:this.y-16,w:right-center-34,h:32}]};
+    });
+  }
+  firstContact(x,y,tx,ty,r=0){
+    let nearest=null;
+    for(const segment of this.segments){
+      if(segment.hp<=0)continue;
+      const pillar=rectImpact(segment.pillar,x,y,tx,ty,r);
+      if(pillar&&(!nearest||pillar.time<nearest.time))nearest={time:pillar.time,pillar:segment};
+      for(const wall of segment.walls){
+        const hit=rectImpact(wall,x,y,tx,ty,r);
+        if(hit&&(!nearest||hit.time<nearest.time))nearest={time:hit.time,pillar:null};
+      }
+    }
+    return nearest;
+  }
+  hit(x,y,tx,ty,r=0){return this.firstContact(x,y,tx,ty,r)?.time??null;}
+  move(e,x,y){
+    let {x:startX,y:startY}=e;
+    if(this.hit(startX,startY,startX,startY,e.r)!==null){
+      // A spawning form, knockback or a change in hull size can overlap a wall.
+      const above=this.y-34-e.r-.02,below=this.y+34+e.r+.02;
+      const outside=startY<=this.y?above:below;
+      y+=outside-startY;startY=outside;
+    }
+    slideAlongWalls(this,e,clamp(x,e.r,this.size-e.r),clamp(y,e.r,this.size-e.r),startX,startY);
+  }
+  damage(segment,amount){
+    if(!segment||segment.hp<=0)return;
+    segment.hp=Math.max(0,segment.hp-amount);
+    if(segment.hp===0){this.gates.push(segment.center);this.revision++;}
+  }
+  waypoint(e,x,y,time){
+    const r=e.r+.005;
+    x=clamp(x,r,this.size-r);y=clamp(y,r,this.size-r);
+    if(this.hit(e.x,e.y,x,y,r)===null)return [x,y];
+    const side=e.y<=this.y?-1:1,goalSide=y<=this.y?-1:1,clear=34+r+12;
+    const near=this.y+side*clear,far=this.y-side*clear;
+    let route=e.cartographerRoute;
+    if(route?.field!==this||route.revision!==this.revision||route.goalSide!==goalSide||time>=route.until){
+      let gate=null,cost=Infinity;
+      for(const candidate of this.gates){
+        if(this.hit(e.x,e.y,candidate,near,r)!==null||this.hit(candidate,near,candidate,far,r)!==null)continue;
+        const distance=Math.hypot(e.x-candidate,e.y-near)+Math.hypot(x-candidate,y-far);
+        if(distance<cost){cost=distance;gate=candidate;}
+      }
+      route=e.cartographerRoute={field:this,revision:this.revision,goalSide,gate,until:time+.65};
+    }
+    if(route.gate===null)return [e.x,near];
+    return this.hit(e.x,e.y,route.gate,far,r)===null?[route.gate,far]:[route.gate,near];
   }
 }
 const GUARDIAN={
@@ -1809,9 +1882,12 @@ const DECADE_MINIONS=[
 }));
 const DECADE_APPEARANCES=new Map(DECADE_MINIONS.map(m=>[m.appearance,m]));
 const CLASSIC_BOSSES={guardian:GUARDIAN,fallen:FALLEN_BOOSTER,defender:DEFENDER,summoner:SUMMONER,fallenOverlord:FALLEN_OVERLORD};
-const BOSS_SPECS={...CLASSIC_BOSSES,treeTopper:TREE_TOPPER,decade:DECADE};
+const CARTOGRAPHER={name:"Cartógrafo",hp:1350,reward:30000,body:34,r:75,color:"#789ab0",ammo:"#8daeba",
+  range:810,guns:[-.39,.39].map(offset=>gun(0,{offset,width:.38,length:1.51,speed:.83,damage:1.23,pen:1.8,life:1.2,recoil:0,spread:0}))};
+const ROTATING_BOSSES={...CLASSIC_BOSSES,treeTopper:TREE_TOPPER,decade:DECADE};
+const BOSS_SPECS={...ROTATING_BOSSES,cartographer:CARTOGRAPHER};
 function shuffleBosses(random,previous,events=false){
-  const bosses=Object.keys(events?BOSS_SPECS:CLASSIC_BOSSES);
+  const bosses=Object.keys(events?ROTATING_BOSSES:CLASSIC_BOSSES);
   for(let i=bosses.length-1;i>0;i--){
     const j=Math.floor(random()*(i+1));
     [bosses[i],bosses[j]]=[bosses[j],bosses[i]];
@@ -1926,7 +2002,8 @@ function shotAppearance(p){return p.minion?.appearance??(p.owner.spec===SUMMONER
 function snapshotUnit(t){
   const {type,id,name,cls,x,y,r,aim,hp,hit,team,slot,human,protect}=t;
   if(type==="boss")return {type,id,name,cls,x,y,r,aim,hp,hit,alive:true,spec:t.spec,phase:t.phase,nextVolley:t.nextVolley,
-    turretAngles:t.turrets?.map(turret=>turret.aim)};
+    turretAngles:t.turrets?.map(turret=>turret.aim),
+    ...(t.barrier?{barrier:{ends:t.barrier.ends,segments:t.barrier.segments.map(segment=>({...segment}))}}:{})};
   return {type,id,name,cls,x,y,r,aim,hp,hit,team,slot,human,protect,skin:t.skin,alive:true,
     ...(customTankColor(t)?{playerColor:t.playerColor}:{}),
     maxHp:hull(t),stats:t.stats.slice(),cool:t.cool.slice(),
@@ -3351,6 +3428,7 @@ class Arena {
   }
   kill(e,by,cause){
     if(!e.alive) return;
+    if(e.spec===CARTOGRAPHER)this.clearCartographerBarrier(e);
     if(e.careWindow)finishCare(e,this.time,by===e.careWindow.rival?"foi eliminado":"interrompida");
     if(e.type==="tower"){
       if(this.closing?.active&&by?.type==="closer")this.destroyTowerDuringClosing(e,by);
@@ -3596,7 +3674,7 @@ class Arena {
     return e.spec===FALLEN_BOOSTER||e.spec===FALLEN_OVERLORD||e.provokedBases?.get(team)>this.time;
   }
   spawnBoss(kind){
-    if(this.boss?.alive||this.maze||this.domination||this.mothership||this.tag||this.survival||this.convoy)return null;
+    if(this.boss?.alive||this.maze||this.domination||this.mothership||this.tag||this.survival||this.convoy||kind==="cartographer"&&!this.bossTrial)return null;
     const spec=BOSS_SPECS[kind]??GUARDIAN;
     const angle=this.bossTrial?Math.PI/2:TAU*rngFrom(this.seed^0x25e1dace^this.tick)();
     const orbit=this.bossTrial?430:this.nest*.87;
@@ -3625,6 +3703,7 @@ class Arena {
     }
     if(spec===FALLEN_OVERLORD)Object.assign(this.boss,{aim:angle+Math.PI/8,ports:new Uint8Array(4),
       cruiseAngle:angle-Math.PI/2,phase:"ronda",target:null,polygons:[],nextDrone:this.time+.125});
+    if(spec===CARTOGRAPHER)Object.assign(this.boss,{aim:-Math.PI/2,stats:Array(8).fill(0),nextBarrier:this.time+.25,nextVolley:this.time+.9});
     if(spec===TREE_TOPPER||spec===DECADE)Object.assign(this.boss,{
       stats:[0,0,0,0,0,0,0,0],turrets:Array.from({length:spec===TREE_TOPPER?5:1},(_,i)=>({aim:angle+i*TAU/5,ready:this.time+i*.16})),
       nextDeploy:this.time+1,deployerIndex:0,target:null
@@ -3641,6 +3720,41 @@ class Arena {
     return t?.alive&&t.protect<=0&&(t.level>=15||boss.provoked.has(t.id))&&
       ((boss.spec!==FALLEN_BOOSTER&&boss.spec!==DEFENDER&&boss.spec!==FALLEN_OVERLORD)||
         !this.hasBases||this.baseDistance(t.team,t.x,t.y)>t.r);
+  }
+  clearCartographerBarrier(b){
+    if(b.barrier&&this.maze===b.barrier){
+      this.maze=null;
+      for(const t of this.tanks)delete t.cartographerRoute;
+      for(const p of this.shots)if(p.cartographerRoute)delete p.cartographerRoute;
+    }
+    b.barrier=null;
+  }
+  advanceCartographer(b){
+    const now=this.time;
+    if(now>=b.nextBarrier&&!b.barrier){
+      b.barrier=new CartographerBarrier(b,this.size,now);
+      this.note("Cartógrafo está marcando uma barreira");
+    }
+    const barrier=b.barrier;
+    if(barrier?.ends===null&&now>=barrier.starts){
+      const occupied=this.tanks.some(t=>t.alive&&barrier.hit(t.x,t.y,t.x,t.y,t.r+3)!==null);
+      if(!occupied){barrier.ends=now+CARTOGRAPHER_WALL_TIME;this.maze=barrier;}
+      else if(now>=barrier.starts+1){this.clearCartographerBarrier(b);b.nextBarrier=now+2;}
+    }else if(barrier?.ends!=null&&now>=barrier.ends){
+      this.clearCartographerBarrier(b);b.nextBarrier=now+2;
+    }
+    if(now<b.nextVolley)return;
+    let target=null,distance=b.spec.range;
+    for(const t of this.tanks){
+      const gap=Math.hypot(t.x-b.x,t.y-b.y);
+      if(gap>=distance||!this.bossCanTarget(b,t)||this.maze?.hit(b.x,b.y,t.x,t.y,2)!=null)continue;
+      target=t;distance=gap;
+    }
+    b.nextVolley=now+(target?1.05:.15);
+    if(!target)return;
+    const [x,y]=lead(b,target,bulletSpeed(b,b.spec.guns[0]),.75);
+    b.aim=Math.atan2(y-b.y,x-b.x);
+    for(const g of b.spec.guns)this.spawnShot(b,g);
   }
   advanceFallen(b){
     const spec=b.spec, now=this.time;
@@ -4672,7 +4786,10 @@ class Arena {
     }else if(this.maze&&isDrone)this.maze.move(p,clamp(x,p.r,this.size-p.r),clamp(y,p.r,this.size-p.r));
     else {
       p.x=x;p.y=y;
-      if(this.maze)p.wallTime=this.maze.hit(p.px,p.py,x,y,p.r);
+      if(this.maze instanceof CartographerBarrier){
+        const contact=this.maze.firstContact(p.px,p.py,x,y,p.r);
+        p.wallTime=contact?.time;p.cartographerPillar=contact?.pillar;
+      }else if(this.maze)p.wallTime=this.maze.hit(p.px,p.py,x,y,p.r);
       else if(this.hasBases){
         p.wallTime=this.baseImpact(p.owner,p.px,p.py,x,y,p.r);
         if(p.wallTime!=null&&p.owner.spec===DEFENDER)this.provokeDefenderBases(p.owner,p.px,p.py,x,y,p.r);
@@ -4920,7 +5037,11 @@ class Arena {
         if(p.dur<=0) this.removeShot(p,e.type==="tank"?e:null);
         if(this.duelEnded||this.closing&&!this.closing.active)return;
       }
-      if(p.wallTime!=null)this.removeShot(p);
+      if(p.wallTime!=null){
+        if(p.cartographerPillar&&p.owner.type==="tank"&&this.maze instanceof CartographerBarrier)
+          this.maze.damage(p.cartographerPillar,p.damage*Math.min(1,p.dur/2));
+        this.removeShot(p);
+      }
     }
     // Surviving missiles release side shots after wall and entity impacts.
     this.advanceDeployerMissiles();
@@ -4977,6 +5098,7 @@ class Arena {
       else if(this.boss.spec===SUMMONER)this.advanceSummoner(this.boss);
       else if(this.boss.spec===FALLEN_OVERLORD)this.advanceFallenOverlord(this.boss);
       else if(this.boss.spec===TREE_TOPPER||this.boss.spec===DECADE)this.advanceEventBoss(this.boss);
+      else if(this.boss.spec===CARTOGRAPHER)this.advanceCartographer(this.boss);
       else this.advanceGuardian(this.boss);
     }
     for(const p of this.shots) if(p.alive) this.advanceShot(p);
@@ -5004,6 +5126,7 @@ class Arena {
       const left=this.tanks.filter(e=>e.alive);
       if(this.bossTrial){
         if(!this.boss.alive||!left.length){
+          if(this.boss.spec===CARTOGRAPHER)this.clearCartographerBarrier(this.boss);
           this.winner=left.length?this.bossRewardedTo:this.boss;
           this.bossTrialResult=!this.boss.alive
             ?this.boss.name+" derrotado"+(this.bossRewardedTo?" · finalizado por "+this.bossRewardedTo.name:"")
@@ -5699,7 +5822,7 @@ function botThink(w,t){
   evaluateRetreat(w,t,enemy,eDist,tactic,retreat,nearby,vision);
   const guardDrones=c.style==="drone"&&cautious&&!sustainsAttack;
   let targetX, targetY, aimX, aimY, moving=1, fire=false, alt=false, mode=0, detail="Buscando uma área com formas";
-  let ramFood=null, targetEntity=null;
+  let ramFood=null, targetEntity=null, cartographerPillar=null;
   let booster=null, sniperCover=null, droneCover=null, droneCutoff=null, necroScreen=null, necroGuardShare;
   let factoryTarget=null,factoryGuard=false;
   let opening=null, tankCombat=false, decision=null, tagSearching=false;
@@ -6104,6 +6227,15 @@ function botThink(w,t){
     }
     mode=2;detail=defender?(ram?"Aproveitando uma abertura no Defender":c.ram?"Esperando uma abertura nas armadilhas":
       c.style==="sniper"?"Disparando de longe contra o Defender":"Contornando as armadilhas do Defender"):"Atacando "+boss.name;
+    if(maze instanceof CartographerBarrier&&weapon?.kind==="bullet"&&maze.hit(t.x,t.y,boss.x,boss.y,2)!==null){
+      let reach=Math.min(vision,bulletSpeed(t,weapon)*weapon.life);
+      for(const segment of maze.segments){
+        const gap=Math.hypot(t.x-segment.center,t.y-maze.y);
+        if(gap>=reach||gap<=t.r*weapon.length+35||maze.firstContact(t.x,t.y,segment.center,maze.y,2)?.pillar!==segment)continue;
+        reach=gap;cartographerPillar=segment;
+      }
+      if(cartographerPillar){aimX=cartographerPillar.center;aimY=maze.y;fire=true;}
+    }
   }else if(w.fourTeams&&t.front&&(t.front.kind==="defense"||atHome||!food||
     Math.hypot(t.x-t.front.x,t.y-t.front.y)>515&&(t.level>=10||Math.hypot(food.x-t.x,food.y-t.y)>280))){
     const front=t.front;
@@ -6265,7 +6397,9 @@ function botThink(w,t){
     if(covered){
       targetX=targetEntity.x;targetY=targetEntity.y;
       moving=1;
-      detail=canFight?"Contornando a parede para alcançar "+enemy.name:"Buscando passagem até as formas";
+      detail=maze instanceof CartographerBarrier&&targetEntity===boss?
+        (cartographerPillar?"Atirando no pilar ao buscar uma passagem":"Buscando a abertura na barreira"):
+        canFight?"Contornando a parede para alcançar "+enemy.name:"Buscando passagem até as formas";
     }
     const tx=targetX,ty=targetY;
     [targetX,targetY]=maze.waypoint(t,tx,ty,w.time);
@@ -6388,7 +6522,8 @@ function botThink(w,t){
       const scale=Math.min(1,reach/Math.max(1,Math.hypot(dx,dy)));
       shotX=t.x+dx*scale;shotY=t.y+dy*scale;
     }
-    if(maze.hit(t.x,t.y,shotX,shotY,2)!==null){
+    if(maze.hit(t.x,t.y,shotX,shotY,2)!==null&&
+      !(cartographerPillar&&maze.firstContact(t.x,t.y,shotX,shotY,2)?.pillar===cartographerPillar)){
       fire=false;
       if(t.cls==="Dual-Barrel")alt=false;
     }
@@ -7129,7 +7264,14 @@ function paintBoss(b,x,y,selected,time){
     circle(0,0,b.r+8);ctx.strokeStyle=fallen?"#414754a6":"#a33c687d";ctx.lineWidth=2;
     ctx.setLineDash([6,6]);ctx.stroke();ctx.setLineDash([]);
   }
-  if(b.spec===TREE_TOPPER||b.spec===DECADE){
+  if(b.spec===CARTOGRAPHER){
+    for(const g of b.spec.guns){
+      ctx.beginPath();ctx.rect(b.r*.35,b.r*(g.offset-g.width/2),b.r*(g.length-.35),b.r*g.width);
+      paint("#a0a4a7","#46545d",5);
+    }
+    poly(0,0,b.r,6,Math.PI/6);
+    paint(time-b.hit<.06?"#d4e5ea":b.spec.color,"#354c5b",6);
+  }else if(b.spec===TREE_TOPPER||b.spec===DECADE){
     paintEventBoss(b,time);
   }else if(b.spec===FALLEN_OVERLORD){
     const r=b.r;
@@ -7170,7 +7312,7 @@ function paintBoss(b,x,y,selected,time){
   }
   ctx.restore();
   const width=b.r*1.44, ratio=clamp(b.hp/b.spec.hp,0,1);
-  const barY=y+b.r*(b.spec===FALLEN_OVERLORD?1.67:fallen||b.spec===DEFENDER||b.spec===SUMMONER||b.spec===TREE_TOPPER||b.spec===DECADE?1.22:.7);
+  const barY=y+b.r*(b.spec===FALLEN_OVERLORD?1.67:fallen||b.spec===DEFENDER||b.spec===SUMMONER||b.spec===TREE_TOPPER||b.spec===DECADE||b.spec===CARTOGRAPHER?1.22:.7);
   ctx.fillStyle=fallen?"#414754":"#5e3750";ctx.fillRect(x-width/2,barY,width,7);
   ctx.fillStyle=b.spec.color;ctx.fillRect(x-width/2+1,barY+1,(width-2)*ratio,5);
 }
@@ -7721,6 +7863,31 @@ function paintConvoy(cargo,x,y){
   poly(0,0,r*.25,4,Math.PI/4);paint(color,TEAMS[cargo.attack].line,2);
   ctx.restore();
 }
+function paintCartographerBarrier(barrier,zoom){
+  ctx.save();
+  const warning=barrier.ends===null;
+  for(const segment of barrier.segments){
+    if(segment.hp<=0)continue;
+    const {pillar,walls}=segment;
+    if(warning){
+      ctx.strokeStyle="#8e502a";ctx.lineWidth=2.2/zoom;ctx.setLineDash([10/zoom,6/zoom]);
+      const left=walls[0].x,right=walls[1].x+walls[1].w;
+      ctx.strokeRect(left,pillar.y,right-left,pillar.h);
+      ctx.strokeRect(pillar.x+4,pillar.y+4,pillar.w-8,pillar.h-8);
+    }else{
+      ctx.lineWidth=2.5/zoom;
+      ctx.fillStyle="#82998b";ctx.strokeStyle="#577064";
+      for(const wall of walls){ctx.fillRect(wall.x,wall.y,wall.w,wall.h);ctx.strokeRect(wall.x,wall.y,wall.w,wall.h);}
+      ctx.fillStyle="#a2b4ac";ctx.strokeStyle="#475e55";
+      ctx.fillRect(pillar.x,pillar.y,pillar.w,pillar.h);ctx.strokeRect(pillar.x,pillar.y,pillar.w,pillar.h);
+      if(segment.hp<CARTOGRAPHER_PILLAR_HP){
+        ctx.fillStyle="#475e55";ctx.fillRect(pillar.x+9,pillar.y+pillar.h+7,pillar.w-18,5);
+        ctx.fillStyle="#c6daaa";ctx.fillRect(pillar.x+9,pillar.y+pillar.h+7,(pillar.w-18)*segment.hp/CARTOGRAPHER_PILLAR_HP,5);
+      }
+    }
+  }
+  ctx.restore();
+}
 function drawArena(scene,lens,blend,marked,recorded,network=false){
   const [left,top]=coordinates(0,0,lens),[right,bottom]=coordinates(w,h,lens);
   ctx.setTransform(dpr,0,0,dpr,0,0);
@@ -7793,6 +7960,7 @@ function drawArena(scene,lens,blend,marked,recorded,network=false){
       ctx.strokeRect(wall.x+.5,wall.y+.5,MAZE_CELL-1,MAZE_CELL-1);
     }
   }
+  if(scene.boss?.barrier)paintCartographerBarrier(scene.boss.barrier,lens.zoom);
   ctx.restore();
   ctx.strokeStyle="#607f68";ctx.lineWidth=3;ctx.strokeRect(0,0,world.size,world.size);
   const visible=(x,y,r)=>x+r>=left&&x-r<=right&&y+r>=top&&y-r<=bottom;
