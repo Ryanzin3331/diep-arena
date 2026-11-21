@@ -1,5 +1,5 @@
-localStorage.setItem("diep-arena:player-color","#d12488");
 playerTankColor="#d12488";
+randomSeed=()=>7103;
 let measurement=null;
 function sampleRoomAudit(now){
   if(measurement&&room?.phase==="playing"){
@@ -23,6 +23,14 @@ window.auditRoom={
   },
   join(code,name){showRoomDialog();el("roomName").value=name;el("roomCode").value=code;el("roomJoinForm").requestSubmit();},
   leave(){if(room)closeRoom();},
+  positionPlayers(){
+    // Keep the scripted inputs away from neutral crashers in the central nest.
+    for(const t of world.tanks.filter(t=>t.human)){
+      const x=1200+t.slot*480,y=3900;
+      Object.assign(t,{x,y,px:x,py:y,progress:{x,y,t:world.time}});
+    }
+    world.indexSense();
+  },
   key(key,down){canvas.dispatchEvent(new KeyboardEvent(down?"keydown":"keyup",{key,bubbles:true}));},
   measure(){measurement={frames:[],snapshots:[],lastFrame:null,lastSnapshot:null,maxShots:0};},
   killOnNextStep(slot){

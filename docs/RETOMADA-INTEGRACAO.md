@@ -1,25 +1,35 @@
 # Retomada da integração do Diep Arena
 
-A `main` e o deploy ativo do GitHub Pages estão em `5805932471a4c39ef4e323548e6df6f7f0d43df0`. O workflow `pages build and deployment` concluiu com sucesso para esse SHA. A conferência visual no Pages ficou para a retomada. [Workflow](https://github.com/Ryanzin3331/diep-arena/actions/runs/44864252874) · [Site](https://ryanzin3331.github.io/diep-arena/)
+No checkpoint, a `main` e o deploy ativo do GitHub Pages estavam em `5805932471a4c39ef4e323548e6df6f7f0d43df0`. [Workflow daquele deploy](https://github.com/Ryanzin3331/diep-arena/actions/runs/44864252874) · [Site](https://ryanzin3331.github.io/diep-arena/)
 
 | PR | Branch e revisão | Estado confirmado |
 | --- | --- | --- |
 | [#11 Hunter](https://github.com/Ryanzin3331/diep-arena/pull/11) | `feature/classe-hunter` em `b09b402` | Merge `928f58c`. Suíte com 101 testes. Menu de evolução e os dois disparos confirmados no Chromium local. README aponta para `docs/CLASSES.md`. Publicado. |
 | [#8 Cor](https://github.com/Ryanzin3331/diep-arena/pull/8) | `feature/cor-tanque-jogar` em `9f61926` | Merge `5805932`. Suíte com 101 testes. Chromium local confirmou cor livre, Padrão, persistência, renascimento com morte controlada, identificação de equipe, layout responsivo a 390 × 844 e paleta da sala em WebRTC real entre dois clientes do mesmo notebook. Publicado. |
-| [#3 Salas](https://github.com/Ryanzin3331/diep-arena/pull/3) | `feature/salas-4-jogadores`, integração `bd0eb8a1fbbdd46a2ef5f1c57b2f8e02e2a57e98` | Rascunho. A integração sobre `5805932` passou em `node --test tests/*.test.js` com 106 testes. O transporte dos cinco testes de sala da suíte é simulado. O cenário de WebRTC real desta branch foi preparado e ainda aguarda execução. |
+| [#3 Salas](https://github.com/Ryanzin3331/diep-arena/pull/3) | `feature/salas-4-jogadores`, integração `bd0eb8a1fbbdd46a2ef5f1c57b2f8e02e2a57e98` | A suíte Node passou com 106 testes. Os cinco testes de sala da suíte usam transporte simulado. A execução com WebRTC real está registrada abaixo. |
 
-## Próximo passo do PR #3
+## Validação do multiplayer
 
-Em `tests/audit-webrtc.html`, mudar a espera do anfitrião de `host.api.room?.phase==="lobby"` para `host.api.room?.ready===true`. A inspeção de `openRoom()` mostrou que a sinalização do anfitrião define `ready` e atualiza o diálogo, mas só o convidado passa pela fase `lobby`. O cenário ainda não foi executado, portanto esse ajuste pendente é do medidor e nenhum bloqueio de produto foi observado nesta revisão.
+O medidor aguarda `host.api.room?.ready===true`, mantém os clientes visíveis e espera os primeiros estados antes de enviar os comandos. As primeiras rodadas tiveram falhas de comando, morte ou amostragem. Com a seed fixa 7103 e os jogadores preparados fora do ninho para evitar mortes antes da medição, os fluxos passaram usando o mesmo código do jogo.
 
-Depois executar na raiz da branch:
+Para repetir na raiz do repositório, execute:
 
 ```sh
 node tests/generate-room-audit-fixture.js
 node tests/serve-3c-fixture.js
 ```
 
-Abrir `http://127.0.0.1:8766/audit-webrtc.html` e clicar em **Testar salas reais de 2, 3 e 4**. Se o servidor desta cópia ainda estiver ativo em `8768`, usar essa porta. Registrar os canais RTC reais, comandos independentes, saída do convidado, renascimento ou reinício e p95 dos frames do convidado. O cenário roda clientes Chromium separados em iframes visíveis do mesmo notebook, sem emulação de latência. Depois revisar o README e reavaliar o merge. Conferir o Pages no navegador após o deploy.
+Abra `http://127.0.0.1:8766/audit-webrtc.html` e clique em **Testar salas reais de 2, 3 e 4**. Use `8768` se o servidor desta cópia já estiver ativo nessa porta.
+
+Os três cenários usaram Chromium 157 no mesmo notebook Windows com Intel Core i3-N305, clientes simultâneos em iframes visíveis e sinalização PeerJS real. O medidor confirmou canais de dados WebRTC abertos, comandos independentes e paleta da sala. A morte foi controlada pelo teste e o renascimento usou o botão normal. Nenhuma execução foi feita entre dispositivos ou com latência emulada.
+
+| Jogadores | Bots | p95 de frame dos convidados | Resultado |
+| ---: | ---: | --- | --- |
+| 2 | 0 | 16,8 ms | Renascimento individual |
+| 3 | 8 | 16,8 / 16,8 ms | Reinício da rodada e continuidade após a saída |
+| 4 | 8 | 33,4 / 33,4 / 33,4 ms | Renascimento individual e continuidade após a saída |
+
+O p95 mede intervalos de `requestAnimationFrame` na janela de 4,5 s com os convidados atirando. Inclui o custo de executar simultaneamente todos os clientes no notebook. Na sala de quatro, o p95 de chegada dos estados nos convidados foi de 98,5 a 100,8 ms. Uma execução preliminar de quatro jogadores chegou a 50,0 ms de p95 por frame.
 
 ## Arquivos locais preservados
 

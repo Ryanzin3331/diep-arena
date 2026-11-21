@@ -2,10 +2,10 @@
 <html lang="pt-BR">
 <meta charset="utf-8">
 <title>Auditoria WebRTC do Diep Arena</title>
-<style>body{font:16px system-ui;margin:14px}iframe{width:49%;height:290px;border:1px solid #999}pre{white-space:pre-wrap}</style>
+<style>body{font:16px system-ui;margin:14px}iframe{width:49%;height:150px;border:1px solid #999}pre{white-space:pre-wrap}</style>
 <h1>Auditoria WebRTC do Diep Arena</h1>
 <button id="run">Testar salas reais de 2, 3 e 4</button>
-<pre id="report"></pre><div id="clients"></div>
+<div id="clients"></div><pre id="report"></pre>
 <script>
 const report=document.querySelector("#report"), clients=document.querySelector("#clients");
 function log(message){report.textContent+=message+"\n";}
@@ -36,18 +36,20 @@ async function room(size){
   const [host,...guests]=all;
   try{
     host.api.host(size,size===2?0:8,size===3);
-    await until(()=>host.api.room?.phase==="lobby","Sinalização do host falhou");
+    await until(()=>host.api.room?.ready===true,"Sinalização do host falhou");
     for(let i=0;i<guests.length;i++){
       guests[i].api.join(host.api.room.code,"Convidado "+(i+1));
       await until(()=>["lobby","playing"].includes(guests[i].api.room?.phase),"Convidado "+(i+1)+" falhou na sinalização");
     }
     await until(()=>all.every(c=>c.api.world?.tanks.filter(t=>t.human).length===size),"Elenco não sincronizou");
+    await until(()=>guests.every(c=>c.api.room.lastTick>=10),"Primeiros quadros não chegaram");
     for(const guest of guests){
       const conn=guest.api.room.conn;
       check(conn.peerConnection instanceof guest.iframe.contentWindow.RTCPeerConnection&&conn.dataChannel.readyState==="open","Canal RTC fechado");
     }
     const colors=guests.map(c=>c.api.world.human.roomColor);
     check(new Set(colors).size===guests.length&&guests.every(c=>!c.api.world.human.playerColor),"Paleta da sala");
+    host.api.positionPlayers();
     const keys=["d","w","a","s"],expected=[[1,0],[0,-1],[-1,0],[0,1]];
     try{
       all.forEach((c,i)=>c.api.key(keys[i],true));
@@ -68,7 +70,7 @@ async function room(size){
 
     const first=guests[0], id=first.api.world.human.id;
     host.api.killOnNextStep(1);
-    await until(()=>!first.api.world.human?.alive,"Morte do convidado não chegou");
+    await until(()=>first.api.world.human?.alive===false,"Morte do convidado não chegou");
     if(size===3){
       const round=host.api.room.round;
       await until(()=>all.every(c=>c.api.room.round>round&&c.api.world.human?.alive),"Rodada não reiniciou");
@@ -76,6 +78,7 @@ async function room(size){
     }else{
       await until(()=>!first.doc.querySelector("#enter").disabled,"Botão Renascer indisponível");
       first.doc.querySelector("#enter").click();
+      await until(()=>host.api.world.tanks.some(t=>t.human&&t.slot===1&&t.id!==id),"Host não processou o renascimento");
       await until(()=>first.api.world.human?.alive&&first.api.world.human.id!==id,"Renascimento não chegou");
       log("  Renascimento individual confirmado");
     }
@@ -84,6 +87,12 @@ async function room(size){
       await until(()=>[host,...guests.slice(0,-1)].every(c=>c.api.room?.phase==="playing"&&c.api.world.tanks.filter(t=>t.human).length===size-1),"Saída encerrou a sala");
       log("  A partida continuou após a saída de um convidado");
     }
+  }catch(error){
+    const state=all.map(({api,doc})=>({hidden:doc.hidden,tick:api.world?.tick,
+      round:api.room?.round,role:api.room?.role,slot:api.world?.human?.slot,
+      tanks:api.world?.tanks.filter(t=>t.human).map(t=>[t.slot,t.id,t.alive,t.cause,t.intent?.x,t.intent?.y])}));
+    log("  Estado da falha: "+JSON.stringify(state));
+    throw error;
   }finally{
     all.forEach(c=>c.api.leave());
     clients.replaceChildren();

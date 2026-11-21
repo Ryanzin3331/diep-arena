@@ -19,13 +19,15 @@ Em **Configurar**, escolha o cenário da próxima partida. Além do FFA aberto, 
 
 ![Duelo no Laboratório do Diep Arena com dois tanques de nível 45 e suas classes no placar](docs/images/arena-laboratorio.jpg)
 
-## Jogar com um amigo
+## Jogar com amigos
 
-1. Os dois abrem o jogo no navegador.
+1. Todos abrem o jogo no navegador.
 2. Quem vai hospedar toca em **Multiplayer**, escolhe o total de jogadores, incluindo o anfitrião, e o número de bots. Depois cria a sala.
 3. Os convidados digitam o código em **Multiplayer → Entrar**. A partida começa quando o total escolhido entra. Todos precisam abrir a mesma versão do jogo.
 
 A opção **Reiniciar ao morrer** define como a rodada funciona. Ligada, a morte de qualquer jogador encerra a rodada e todos recomeçam no nível 1 após quatro segundos. Desligada, a arena continua e cada eliminação entre jogadores vale um ponto no placar da sala. Quem caiu pode renascer.
+
+Se um convidado sair de uma sala em andamento, a partida continua enquanto houver outro convidado conectado. O teste local com WebRTC e as medições dos convidados estão no [registro de validação do multiplayer](docs/RETOMADA-INTEGRACAO.md#validação-do-multiplayer).
 
 ## Classes
 
