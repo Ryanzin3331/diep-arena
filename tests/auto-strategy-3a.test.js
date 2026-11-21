@@ -80,8 +80,33 @@ test('duelo FFA reproduzível mantém descoberta no controle e tenta 3A somente 
 });
 
 test('medidor preserva física e credita tiro autônomo tardio à tentativa original',()=>{
- const {spawnSync}=require('node:child_process');const r=spawnSync(process.execPath,['tests/measure-3a-duel.js'],{encoding:'utf8',env:{...process.env,DISABLE_3B:'1',SEED:'7103',DISTANCE:'200',TICKS:'100',CONTROL:'0'}});assert.equal(r.status,0,r.stderr);const x=JSON.parse(r.stdout);const shot=x.associatedShots.find(s=>s.tick===67);assert.ok(shot);const a=x.attempts.find(t=>t.id===shot.attempt);assert.equal(a.end,76);assert.equal(a.reason,'desvio');assert.ok(x.hits.some(h=>h.tick===89&&h.origin===a.id));assert.ok(a.dealt>0);assert.equal(x.results[a.choice].count,1);
+ const {spawnSync}=require('node:child_process');
+ const r=spawnSync(process.execPath,['tests/measure-3a-duel.js'],{encoding:'utf8',env:{...process.env,DISABLE_3B:'1',SEED:'7103',DISTANCE:'200',TICKS:'100',CONTROL:'0'}});
+ assert.equal(r.status,0,r.stderr);
+ const x=JSON.parse(r.stdout);
+ const shot=x.associatedShots.find(s=>s.tick===67);
+ assert.ok(shot);
+ const a=x.attempts.find(t=>t.id===shot.attempt);
+ assert.ok(a?.ended);
+ assert.equal(a.reason,'desvio');
+ assert.equal(shot.category,'rival_encerrada');
+ assert.ok(shot.endTick>a.end);
+ const hit=x.hits.find(h=>h.tick===shot.endTick&&h.from==='tank'&&h.origin===a.id);
+ assert.ok(hit);
+ assert.equal(hit.originActive,false);
+ assert.equal(a.dealt,hit.damage);
+ assert.equal(x.results[a.choice].count,1);
 });
 test('medidor FFA mantém impacto físico e registra acerto autônomo',()=>{
- const {spawnSync}=require('node:child_process');const r=spawnSync(process.execPath,['tests/measure-3a-autonomous.js'],{encoding:'utf8',env:{...process.env,DISABLE_3B:'1',SEED:'7102',TICKS:'470',CORE:'index.html'}});assert.equal(r.status,0,r.stderr);const x=JSON.parse(r.stdout);assert.ok(x.destinations.rival_ativa_perceptivel>0);assert.ok(x.attemptRecords.some(a=>a.dealt>0));
+ const {spawnSync}=require('node:child_process');
+ // Seed with a visible rival hit during an active attempt under the basic dodge.
+ const r=spawnSync(process.execPath,['tests/measure-3a-autonomous.js'],{encoding:'utf8',env:{...process.env,DISABLE_3B:'1',SEED:'7103',TICKS:'470',CORE:'index.html'}});
+ assert.equal(r.status,0,r.stderr);
+ const x=JSON.parse(r.stdout);
+ assert.ok(x.destinations.rival_ativa_perceptivel>0);
+ const hit=x.shotRecords.find(p=>p.category==='rival_ativa_perceptivel');
+ assert.ok(hit);
+ const a=x.attemptRecords.find(a=>a.slot===hit.owner&&a.tick===hit.attemptTick);
+ assert.ok(a?.evaluated&&a.dealt>0);
+ assert.ok(hit.endTick>=a.tick&&hit.endTick<a.end);
 });

@@ -736,6 +736,10 @@ function gun(angle=0,options={}) {
 const rapid = angle => gun(angle,{reload:.66,damage:.47,pen:.58,width:.33,length:1.5,recoil:3,spread:.025});
 const drive = angle => gun(angle,{reload:.88,damage:.57,pen:.56,width:.59,length:1.29,recoil:36,spread:.045});
 const snipe = options => gun(0,{reload:1.45,speed:1.48,damage:1.36,pen:1.3,life:1.24,length:1.85,spread:.013,...options});
+const hunterGuns = [
+  snipe({length:1.91,width:.57,reload:1.65,speed:1.40,damage:.85,pen:1.05,recoil:4,spread:.016}),
+  snipe({length:1.48,width:.96,reload:1.65,speed:1.40,damage:1.03,pen:1.25,recoil:8,spread:0})
+];
 const heavy = options => gun(0,{reload:2.15,speed:.71,damage:3.85,pen:5.6,life:1.14,width:1.58,length:1.52,recoil:128,spread:.012,...options});
 const drone = angle => gun(angle,{kind:"drone",length:1.33,width:1.01,reload:1.72,speed:.7,damage:.88,pen:4.2,recoil:0,spread:0});
 const MOTHERSHIP_WING_CAP=6, MOTHERSHIP_GUARD_RANGE=235, MOTHERSHIP_ATTACK_RANGE=575;
@@ -821,7 +825,7 @@ const tier = (level,style,guns,next=[],options={}) => ({level,style,guns,next,fo
 const C = {
   Tank:tier(1,"balanced",[gun()],["Twin","Sniper","Machine Gun","Flank Guard","Smasher"]),
   Twin:tier(15,"pressure",[-.36,.36].map((offset,i)=>gun(0,{offset,phase:i*.30,pen:.76,damage:.78,width:.61,recoil:8})),["Triple Shot","Quad Tank","Twin Flank"]),
-  Sniper:tier(15,"sniper",[snipe({})],["Assassin","Overseer","Trapper"],{fov:1.19}),
+  Sniper:tier(15,"sniper",[snipe({})],["Assassin","Overseer","Trapper","Hunter"],{fov:1.19}),
   "Machine Gun":tier(15,"pressure",[gun(0,{reload:.69,damage:.73,pen:.77,width:1.01,spread:.32,recoil:10})],["Destroyer","Gunner","Shotgun"]),
   "Flank Guard":tier(15,"balanced",[gun(),gun(Math.PI,{width:.65,length:1.23,recoil:10,damage:.72})],["Tri-Angle","Auto 3","Quad Tank","Twin Flank"]),
   "Twin Flank":tier(30,"balanced",twinFlankGuns,["Battleship"],{opposed:true,alternating:true}),
@@ -831,6 +835,7 @@ const C = {
   })),["Octo Tank","Auto 5"],{radial:true}),
   "Auto 3":tier(30,"balanced",autoGuns(3,{damage:.80,pen:1.37,reload:.94}),["Auto 5"],{turretArc:Math.PI/3}),
   Assassin:tier(30,"sniper",[snipe({speed:1.68,reload:1.70,length:2.04,life:1.38})],["Ranger"],{fov:1.34}),
+  Hunter:tier(30,"sniper",hunterGuns,[],{fov:1.23,alternating:true,burstGap:.12}),
   Overseer:tier(30,"drone",[-Math.PI/2,Math.PI/2].map(drone),["Overlord","Necromancer","Factory","Mothership","Battleship"],{fov:1.12,droneCap:8}),
   Trapper:tier(30,"trap",[trap(0)],["Mega Trapper","Auto Trapper","Gunner Trapper"],{fov:1.08}),
   Destroyer:tier(30,"heavy",[heavy({})],["Annihilator","Hybrid","Firework","Skimmer","Rocketeer"]),
@@ -1074,6 +1079,87 @@ function pruneThreatShots(memory,time){
   for(const [id,until] of memory.seenThreatShots)if(time>until)memory.seenThreatShots.delete(id);
 }
 // Evidence belongs to an opponent and a visible threat, not its internal class.
+function tacticalEvent(m,time,text){if(!m)return;m.tacticalEvents??=[];m.tacticalEvents.push({time,text});if(m.tacticalEvents.length>12)m.tacticalEvents.shift();}
+function chooseDodgeTiming(memory){
+  const rows=memory?.dodgeResults;
+  if(!rows||!rows[0].count)return 0;
+  const [basic,early]=rows;
+  if(!early.count)return 1;
+  const trials=basic.count+early.count;
+  if(trials%6===0)return Math.floor(trials/6)%2;
+  return early.safe/early.count>basic.safe/basic.count?1:0;
+}
+function heavyDodgeWindow(t,p,max,timing){
+  const dx=p.x-t.x,dy=p.y-t.y;
+  const vx=p.vx+(p.kx||0),vy=p.vy+(p.ky||0);
+  const closest=-(dx*vx+dy*vy)/Math.max(1,vx*vx+vy*vy);
+  const earliest=(Math.hypot(dx,dy)-(t.r+p.r+10+t.trait*1.4))/(Math.hypot(vx,vy)+max);
+  if(closest<=.22||earliest<=.22)return .61;
+  return timing===0?.32:.61;
+}
+function stepDodgeReference(a,command){
+  a.px=a.x;a.py=a.y;
+  a.vx+=(command.x-a.vx)*.094;a.vy+=(command.y-a.vy)*.094;
+  a.x+=(a.vx+a.kx)*DT;a.y+=(a.vy+a.ky)*DT;a.kx*=.905;a.ky*=.905;
+}
+function dodgeContact(w,t,p,command){
+  const a={x:t.x,y:t.y,vx:t.vx,vy:t.vy,kx:t.kx,ky:t.ky};
+  for(let elapsed=0;elapsed+DT<=.61&&p.age+elapsed+DT<p.life;elapsed+=DT){
+    stepDodgeReference(a,command);
+    const x=p.x+p.vx*elapsed,y=p.y+p.vy*elapsed;
+    if(w.maze?.hit(a.px,a.py,a.x,a.y,t.r)!=null||w.maze?.hit(x,y,x+p.vx*DT,y+p.vy*DT,p.r)!=null)return null;
+    const hit=impact(x-a.px,y-a.py,p.vx*DT-(a.x-a.px),p.vy*DT-(a.y-a.py),t.r+p.r);
+    if(hit!==null)return elapsed+hit*DT;
+  }
+  return null;
+}
+function beginDodgeAttempt(w,t,p,timing,straight,best){
+  if(t.dodgeAttempt||t.protect>0||t.dodgeSeen?.has(p))return;
+  const dx=best.x-straight.x,dy=best.y-straight.y;
+  if(Math.hypot(dx,dy)<1)return;
+  const contact=dodgeContact(w,t,p,straight);
+  if(contact===null||contact<=0)return;
+  const better=dodgeContact(w,t,p,best);
+  if(better!==null&&better<=contact)return;
+  t.dodgeSeen??=new WeakSet();
+  t.dodgeSeen.add(p);
+  t.dodgeAttempt={p,timing,until:w.time+1,x:t.x,y:t.y,vx:t.vx,vy:t.vy,kx:t.kx,ky:t.ky,
+    straight,dx,dy,executed:false,crossed:false};
+}
+function finishDodgeAttempt(t,safe){
+  const a=t.dodgeAttempt;
+  t.dodgeAttempt=null;
+  if(!a?.executed)return;
+  const rows=t.learning.dodgeResults??=[{count:0,safe:0},{count:0,safe:0}];
+  const result=rows[a.timing];
+  result.count++;
+  if(safe)result.safe++;
+}
+function advanceDodgeReference(w,t){
+  const a=t.dodgeAttempt;
+  if(!a)return;
+  const first=a.px===undefined;
+  stepDodgeReference(a,a.straight);
+  if(Math.min(a.x,a.y,w.size-a.x,w.size-a.y)<t.r||w.maze?.hit(a.px,a.py,a.x,a.y,t.r)!=null){
+    t.dodgeAttempt=null;
+    return;
+  }
+  if(first){
+    a.executed=(t.x-a.x)*a.dx+(t.y-a.y)*a.dy>.01*Math.hypot(a.dx,a.dy);
+    if(!a.executed)t.dodgeAttempt=null;
+  }
+}
+function resolveDodgeAttempt(w,t){
+  const a=t.dodgeAttempt;
+  if(!a)return;
+  const p=a.p;
+  if(!t.alive||!p.alive||p.wallTime!=null||w.time>a.until){t.dodgeAttempt=null;return;}
+  // The live projectile must cross the no-dodge reference before it clears the bot.
+  const hit=impact(p.px-a.px,p.py-a.py,(p.x-p.px)-(a.x-a.px),(p.y-p.py)-(a.y-a.py),t.r+p.r);
+  if(hit!==null)a.crossed=true;
+  const dx=p.x-t.x,dy=p.y-t.y;
+  if(a.crossed&&Math.hypot(dx,dy)>t.r+p.r+4&&dx*(p.vx-t.vx)+dy*(p.vy-t.vy)>0)finishDodgeAttempt(t,true);
+}
 function observeHeavyShot(w,t,p,nearby=w.sense.nearby(t.x,t.y,range(t))){
   if(!localDiscoveryArena(w)||!t.learning||p.kind!=="bullet"||!p.owner?.profileId||p.owner===t||!perceived(w,t,p)||!perceived(w,t,p.owner))return;
   if(p.age>.25||Math.hypot(p.x-p.owner.x,p.y-p.owner.y)>p.owner.r*3.5||p.r<p.owner.r*.75)return;
@@ -1086,7 +1172,7 @@ function observeHeavyShot(w,t,p,nearby=w.sense.nearby(t.x,t.y,range(t))){
   pruneThreatShots(memory,w.time);
   if(memory.seenThreatShots.has(p.id))return;
   memory.seenThreatShots.set(p.id,w.time+Math.max(0,.25-p.age)+DT);
-  const key=p.owner.profileId;memory.threats.set(key,Math.min(3,(memory.threats.get(key)||0)+1));
+  const key=p.owner.profileId;memory.threats.set(key,Math.min(3,(memory.threats.get(key)||0)+1));tacticalEvent(memory,w.time,"Reconheceu tiro pesado de "+p.owner.name);
 }
 // A swarm episode stays active through short visibility or movement gaps.
 function observeDroneSwarm(w,t,risks,nearby){
@@ -1108,7 +1194,7 @@ function observeDroneSwarm(w,t,risks,nearby){
     const key=candidates[0].profileId;if(credited.has(key))continue;credited.add(key);
     const m=t.learning;m.swarmEpisodes??=new Map();m.swarmThreats??=new Map();
     const last=m.swarmEpisodes.get(key);
-    if(last===undefined||w.time-last>2)m.swarmThreats.set(key,Math.min(3,(m.swarmThreats.get(key)||0)+1));
+    if(last===undefined||w.time-last>2){m.swarmThreats.set(key,Math.min(3,(m.swarmThreats.get(key)||0)+1));tacticalEvent(m,w.time,"Reconheceu enxame de "+candidates[0].name);}
     m.swarmEpisodes.set(key,w.time);
   }
   return credited;
@@ -1117,19 +1203,19 @@ function threatDistance(heavy,swarm){return Math.min(140,(heavy?110:0)+(swarm?80
 // Idle windows never create a reward; defensive credit is small and capped.
 // Closed maneuvers retain only a short window for projectiles already fired.
 const HEAVY_SHOT_GRACE=1.5;
-function updateHeavyResult(m,a){
+function updateHeavyResult(m,a,time=0){
   if(!(a.dealt>0||a.taken>0||a.defensive>0))return;
   m.heavyResults??=[{sum:0,count:0},{sum:0,count:0}];
   const row=m.heavyResults[a.choice],score=clamp((a.dealt-a.taken)/100+Math.min(.06,(a.defensive||0)*.02),-1,1);
   if(a.resultVersion===undefined){row.sum=row.sum*.8+score;row.count++;a.resultVersion=row.count;}
   else row.sum+=(score-a.resultScore)*Math.pow(.8,row.count-a.resultVersion);
   a.resultScore=score;
-  m.lastTacticalResult={kind:"heavy",choice:a.choice,score};
+  m.lastTacticalResult={kind:"heavy",choice:a.choice,score};tacticalEvent(m,time,"Avaliou tiro pesado · "+(a.choice===0?"flanco":"distância")+" · "+score.toFixed(2));
 }
 function finishHeavyAttempt(m,now=0){
   const a=m?.heavyAttempt;if(!a)return;
   m.heavyAttempt=null;a.closedAt=now;a.resolveUntil=now+HEAVY_SHOT_GRACE;a.resultMemory=m;
-  updateHeavyResult(m,a);
+  updateHeavyResult(m,a,now);
 }
 function tacticalBasis(n,rows){
   if(n<2||n%6===5)return "exploração";
@@ -1155,11 +1241,11 @@ function chooseHeavyResponse(m){
 function chooseSwarmResponse(m){
   return chooseHeavyResponse({heavyAttempt:m.swarmAttempt,heavyTrials:m.swarmTrials,heavyResults:m.swarmResults});
 }
-function finishSwarmAttempt(m){
+function finishSwarmAttempt(m,time=0){
   const a=m?.swarmAttempt;if(!a)return;m.swarmAttempt=null;
   if(!a.threat||!(a.dealt>0||a.taken>0))return;
   m.swarmResults??=[{sum:0,count:0},{sum:0,count:0}];
-  const row=m.swarmResults[a.choice],score=clamp((a.dealt-a.taken)/100,-1,1);row.sum=row.sum*.8+score;row.count++;m.lastTacticalResult={kind:"swarm",choice:a.choice,score};
+  const row=m.swarmResults[a.choice],score=clamp((a.dealt-a.taken)/100,-1,1);row.sum=row.sum*.8+score;row.count++;m.lastTacticalResult={kind:"swarm",choice:a.choice,score};tacticalEvent(m,time,"Avaliou enxame · "+(a.choice===0?"afastamento":"lateral")+" · "+score.toFixed(2));
 }
 function newMemory(adaptiveBuilds){
   return {foes:new Map(), classes:new Map(), samples:0, escapes:0, changes:0, tactic:0, foeId:null, until:0, note:"", retreat:null,
@@ -1181,6 +1267,8 @@ function respawnLearning(previous,adaptiveBuilds){
   if(previous.swarmResults)memory.swarmResults=previous.swarmResults.map(r=>({...r}));
   if(previous.swarmTrials!==undefined)memory.swarmTrials=previous.swarmTrials;
   if(previous.lastTacticalResult)memory.lastTacticalResult={...previous.lastTacticalResult};
+  if(previous.tacticalEvents)memory.tacticalEvents=previous.tacticalEvents.map(e=>({...e}));
+  if(previous.dodgeResults)memory.dodgeResults=previous.dodgeResults.map(row=>({...row}));
   if(previous.threats)memory.threats=new Map(previous.threats);
   if(previous.swarmThreats)memory.swarmThreats=new Map(previous.swarmThreats);
   if(previous.swarmEpisodes)memory.swarmEpisodes=new Map(previous.swarmEpisodes);
@@ -2055,6 +2143,10 @@ class Arena {
         bot.autoBranch=bot.goal==="Gunner"?"Machine Gun":"Sniper";
         bot.goal="Gunner Trapper";
       }
+      // Reserve an existing Ranger route while offering Hunter to another Sniper.
+      const rangers=this.tanks.filter(t=>t.goal==="Ranger");
+      const hunterRoll=rngFrom(Math.imul(seed,0x9e3779b1)^0x48554e54);
+      if(rangers.length>=2&&hunterRoll()<.75)rangers[1+Math.floor(hunterRoll()*(rangers.length-1))].goal="Hunter";
     }
     if(this.hasBases)this.restockBaseDrones();
     if(this.fourTeams)this.assignFronts();
@@ -4333,17 +4425,19 @@ class Arena {
     else if(t.cls==="Battleship")this.advanceBattleship(t,c);
     else if(c.turretArc)this.advanceAutoTurrets(t,c);
     else if(c.alternating){
-      // Each group owns its reload. The next group also waits half a cycle after a delayed shot.
+      // Groups reload independently. A burst completes after its short gap, even on trigger release.
       const wave=t.volleyWave, guns=c.guns;
+      const burst=c.burstGap!==undefined;
       for(let i=0;i<guns.length;i++)t.cool[i]=Math.max(0,t.cool[i]-DT);
-      if(u.fire&&t.cool[wave]<=1e-9&&(!c.opposed||t.human||Math.abs(angleDelta(u.aim,t.aim))<.14)){
+      if((u.fire||burst&&wave===1)&&t.cool[wave]<=1e-9&&(!c.opposed||t.human||Math.abs(angleDelta(u.aim,t.aim))<.14)){
         const reload=neck(t,guns[0]);
         for(let i=wave;i<guns.length;i+=2){
           this.spawnShot(t,guns[i]);
           t.cool[i]=reload;
         }
         t.volleyWave=1-wave;
-        for(let i=t.volleyWave;i<guns.length;i+=2)t.cool[i]=Math.max(t.cool[i],reload/2);
+        const gap=burst?(wave===0?c.burstGap:0):reload/2;
+        for(let i=t.volleyWave;i<guns.length;i+=2)t.cool[i]=Math.max(t.cool[i],gap);
       }
     }else for(let i=0;i<c.guns.length;i++){
       const g=c.guns[i];
@@ -4596,7 +4690,7 @@ class Arena {
         if(!shot||!shotAttempt.creditedShots.has(shot)){
           if(shot)shotAttempt.creditedShots.add(shot);
           shotAttempt.dealt+=dealt;
-          if(shotAttempt.resultMemory===a.learning)updateHeavyResult(a.learning,shotAttempt);
+          if(shotAttempt.resultMemory===a.learning)updateHeavyResult(a.learning,shotAttempt,this.time);
         }
       }
       if(seeB&&aClass===a.cls) observeHit(a,b,bClass,dealt,false,this.time,shotTactic);
@@ -4695,6 +4789,7 @@ class Arena {
           const tactic=p.kind==="drone"||p.kind===NECRO_DRONE||p.kind===FACTORY_MINION?undefined:p.learningTarget===e.id?p.sourceTactic:0;
           this.combatHit(p.owner,e,p.sourceClass??p.owner.cls,e.cls,p.damage*load,0,tactic,p.heavyAttempt,p);
         }
+        if(e.dodgeAttempt?.p===p&&load>0)finishDodgeAttempt(e,false);
         e.hp-=p.damage*load;e.damaged=e.hit=this.time;
         if(e.type==="boss")this.bossDamage(e,p.owner);
         if(e.mini)this.pressureSurvivalMini(e,p.owner,p.damage*load);
@@ -4750,6 +4845,7 @@ class Arena {
       else if(t.human&&humanIntent)t.intent=humanIntent;
       else if(!t.human&&(this.tick+t.id)%5===0) botThink(this,t);
       this.advanceTank(t);
+      if(t.dodgeAttempt)advanceDodgeReference(this,t);
     }
     for(const e of this.shapes)if(e.alive){
       if(this.survival&&sq(e.x-this.mid)+sq(e.y-this.mid)>(this.survival.radius+e.r)**2)e.alive=false;
@@ -4776,6 +4872,7 @@ class Arena {
     for(const e of this.shots) if(e.alive) this.ballistic.add(e,(e.x+e.px)/2,(e.y+e.py)/2,e.r+Math.hypot(e.x-e.px,e.y-e.py)/2);
     this.collidingBodies();
     if(!this.duelEnded&&!this.closing)this.collidingShots();
+    for(const t of this.tanks)if(t.dodgeAttempt)resolveDodgeAttempt(this,t);
     if(this.tag)this.finishTagTick();
     if(this.survival)this.finishSurvivalTick();
     if(this.convoy)this.advanceConvoy();
@@ -5430,7 +5527,7 @@ function botThink(w,t){
     sq(t.x-shipTarget.x)+sq(t.y-shipTarget.y)<Math.min(vision,575)**2&&
     (!enemy||enemy===shipTarget||sq(t.x-enemy.x)+sq(t.y-enemy.y)>185**2))enemy=shipTarget;
   if(t.learning?.heavyAttempt&&(!enemy||t.learning.heavyAttempt.rivalId!==enemy.id||!perceived(w,t,enemy)))finishHeavyAttempt(t.learning,w.time);
-  if(t.learning?.swarmAttempt&&(!enemy||t.learning.swarmAttempt.rivalId!==enemy.id||!perceived(w,t,enemy)))finishSwarmAttempt(t.learning);
+  if(t.learning?.swarmAttempt&&(!enemy||t.learning.swarmAttempt.rivalId!==enemy.id||!perceived(w,t,enemy)))finishSwarmAttempt(t.learning,w.time);
   t.enemy=enemy;t.food=food;
   t.crasherThreat=crasher;
   t.bossTarget=null;
@@ -5714,7 +5811,7 @@ function botThink(w,t){
       heavyPlan={choice,baseRadial:radial,baseStrafe:strafe};
     }
     if(swarmExperience&&tankCombat&&t.learning&&opening==null){
-      if(t.learning.swarmAttempt&&w.time>=t.learning.swarmAttempt.until)finishSwarmAttempt(t.learning);
+      if(t.learning.swarmAttempt&&w.time>=t.learning.swarmAttempt.until)finishSwarmAttempt(t.learning,w.time);
       swarmPlan={choice:chooseSwarmResponse(t.learning),baseRadial:radial,baseStrafe:strafe};
     }
     [aimX,aimY]=lead(t,enemy,bulletSpeed(t,weapon||gun()),1.25);
@@ -6072,6 +6169,15 @@ function botThink(w,t){
     path=Math.atan2(tagDetour.y-t.y,tagDetour.x-t.x);
     detail="Procurando rivais por outra rota";
   }
+  const dodgeTiming=chooseDodgeTiming(t.learning);
+  let dodgeWindows=null;
+  if(t.learning&&localDiscoveryArena(w))for(const p of threatening){
+    if(p.kind==="bullet"&&p.owner?.type==="tank"&&p.r>=p.owner.r*.75){
+      (dodgeWindows??=new Map()).set(p,heavyDodgeWindow(t,p,max,dodgeTiming));
+    }
+  }
+  // Track which heavy shot changed the winning vector, leaving the movement costs intact.
+  const withoutShot=dodgeWindows&&!t.dodgeAttempt?new Map([...dodgeWindows.keys()].map(p=>[p,{value:Infinity}])):null;
   const shipSpeed=ownShip?.retreating?Math.hypot(ownShip.vx,ownShip.vy):0;
   for(const [offset,power] of [[0,moving],[.67,1],[-.67,1],[1.39,1],[-1.39,1],[2.25,.92],[-2.25,.92],[Math.PI,1],[0,.45],[0,0]]){
     if(Math.abs(offset)<.01&&power>moving)continue;
@@ -6109,15 +6215,19 @@ function botThink(w,t){
     if(sniperCover&&!sniperSight(xf,yf,aimX,aimY,sniperCover))value+=.65;
     if(offset===0&&power===moving)straightShapeCost=shapeCost;
     if(t.stuck && Math.abs(offset)<.6) value+=3.1;
+    const dodgeCosts=withoutShot?new Map():null;
     for(const p of threatening){
       const dx=p.x-t.x,dy=p.y-t.y;
       const px=p.vx+(p.kx||0)-vx*max,py=p.vy+(p.ky||0)-vy*max;
-      const horizon=clamp(-(dx*px+dy*py)/Math.max(1,px*px+py*py),0,.61);
+      const riskWindow=dodgeWindows?.get(p)??.61;
+      const horizon=clamp(-(dx*px+dy*py)/Math.max(1,px*px+py*py),0,riskWindow);
       const r=t.r+p.r+10+t.trait*1.4;
       const gap=Math.hypot(dx+px*horizon,dy+py*horizon)-r;
       if(gap<32){
         const weight=p.damage??p.f.body;
-        value+=(1-gap/32)*clamp(weight/9,.34,4)*(1.4-horizon)*(1+(1-hp)*.7)*(cautious?1.24:1);
+        const cost=(1-gap/32)*clamp(weight/9,.34,4)*(1.4-horizon)*(1+(1-hp)*.7)*(cautious?1.24:1);
+        value+=cost;
+        if(dodgeCosts&&withoutShot.has(p))dodgeCosts.set(p,cost);
       }
     }
     if(enemy&&(!c.ram||retreat)){
@@ -6125,6 +6235,10 @@ function botThink(w,t){
       if(ne<145 && (retreat||C[enemy.cls].ram)) value+=(145-ne)/24;
     }
     value+=.11*(1-vx*t.intent.x-vy*t.intent.y);
+    if(withoutShot)for(const [p,alternative] of withoutShot){
+      const cost=value-(dodgeCosts.get(p)??0);
+      if(cost<alternative.value)Object.assign(alternative,{value:cost,x:vx*max,y:vy*max});
+    }
     if(value<best){
       best=value;bestX=vx;bestY=vy;bestOffset=offset;bestShapeCost=shapeCost;
     }
@@ -6256,17 +6370,21 @@ function botThink(w,t){
     if(!valid)finishHeavyAttempt(m,w.time);
     else if(!m.heavyAttempt){
       m.heavyTrials=(m.heavyTrials??0)+1;
-      m.heavyAttempt={id:m.heavyTrials,rivalId:enemy.id,choice:heavyCandidate.choice,basis:tacticalBasis(m.heavyTrials-1,m.heavyResults),dealt:0,taken:0,until:w.time+2};
+      m.heavyAttempt={id:m.heavyTrials,rivalId:enemy.id,choice:heavyCandidate.choice,basis:tacticalBasis(m.heavyTrials-1,m.heavyResults),dealt:0,taken:0,until:w.time+2};tacticalEvent(m,w.time,"Iniciou tiro pesado · "+(heavyCandidate.choice===0?"flanco":"distância")+" · "+m.heavyAttempt.basis);
     }
   }
   if(t.learning&&localDiscoveryArena(w)){
     const m=t.learning,valid=swarmCandidate&&enemy?.id===swarmCandidate.rivalId&&targetEntity===enemy&&t.cls===swarmCandidate.cls&&
       Math.abs(targetX-swarmCandidate.x)<1e-6&&Math.abs(targetY-swarmCandidate.y)<1e-6&&Math.abs(bestOffset)<1e-9&&Math.hypot(bestX,bestY)>.4;
-    if(!valid)finishSwarmAttempt(m);
+    if(!valid)finishSwarmAttempt(m,w.time);
     else{
-      if(!m.swarmAttempt){m.swarmTrials=(m.swarmTrials??0)+1;m.swarmAttempt={id:m.swarmTrials,rivalId:enemy.id,choice:swarmCandidate.choice,basis:tacticalBasis(m.swarmTrials-1,m.swarmResults),dealt:0,taken:0,threat:false,until:w.time+2};}
+      if(!m.swarmAttempt){m.swarmTrials=(m.swarmTrials??0)+1;m.swarmAttempt={id:m.swarmTrials,rivalId:enemy.id,choice:swarmCandidate.choice,basis:tacticalBasis(m.swarmTrials-1,m.swarmResults),dealt:0,taken:0,threat:false,until:w.time+2};tacticalEvent(m,w.time,"Iniciou enxame · "+(swarmCandidate.choice===0?"afastamento":"lateral")+" · "+m.swarmAttempt.basis);}
       if(observedSwarms.has(enemy.profileId))m.swarmAttempt.threat=true;
     }
+  }
+  if(withoutShot)for(const [p,alternative] of withoutShot){
+    beginDodgeAttempt(w,t,p,dodgeTiming,alternative,{x:bestX*max,y:bestY*max});
+    if(t.dodgeAttempt)break;
   }
   t.intent={x:bestX,y:bestY,aim,aimX,aimY,fire,alt,guardDrones,droneCover,droneCutoff};
   if(c.radial){
@@ -8087,7 +8205,7 @@ function updateInspector(focus){
     focus.type==="tower"?[focus.team,Math.ceil(focus.hp)]:null,
     focus.type==="ship"?[Math.ceil(focus.hp),focus.retreating,focus.escort,focus.threats]:null,
     focus.learning?.changes,focus.learning?.tactic,focus.learning?.note,focus.learning?.escapes,
-    focus.learning?.buildChanges,focus.learning?.lastPoint?.index,focus.learning?.lastPoint?.reason, mode==="watch"&&localDiscoveryArena(world)?tacticalPanel(focus.learning):null
+    focus.learning?.buildChanges,focus.learning?.lastPoint?.index,focus.learning?.lastPoint?.reason, mode==="watch"&&localDiscoveryArena(world)?[tacticalPanel(focus.learning),focus.learning?.tacticalEvents]:null
   ]:[isFree]);
   if(signature===inspectSignature)return;
   inspectSignature=signature;
@@ -8168,7 +8286,7 @@ function updateInspector(focus){
       learning.append(header,node("p",summary+" · "+TACTIC_NAMES[memory.tactic]));
       if(memory.escapes)learning.append(node("p",memory.escapes+(memory.escapes===1?" fuga avaliada":" fugas avaliadas")));
       if(memory.note)learning.append(node("p",memory.note));
-      if(mode==="watch"&&localDiscoveryArena(world))for(const line of tacticalPanel(memory))learning.append(node("p",line));
+      if(mode==="watch"&&localDiscoveryArena(world)){for(const line of tacticalPanel(memory))learning.append(node("p",line));if(memory.tacticalEvents?.length){learning.append(node("h3","Histórico tático"));for(const e of memory.tacticalEvents){const seconds=Math.floor(e.time),stamp=String(Math.floor(seconds/60)).padStart(2,"0")+":"+String(seconds%60).padStart(2,"0");learning.append(node("p",stamp+" · "+e.text));}}}
     }else learning.append(header,node("p","Desligado nesta partida."));
     rows.push(learning);
     const build=node("section",null,"build"), buildHeader=node("div",null,"sidebar-title"), list=node("dl");
