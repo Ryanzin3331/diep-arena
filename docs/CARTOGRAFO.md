@@ -8,7 +8,7 @@ No **FFA aberto**, abra **Configurar**, escolha uma frequência em **Chefes na p
 
 - O contorno tracejado avisa 1,5 s antes de subir. A abertura tem 150 unidades e também dá para contornar as extremidades. Se um casco ocupar o traçado, o chefe adia a construção por até um segundo e cancela o ciclo se o espaço continuar ocupado.
 - Paredes e pilares bloqueiam cascos e projéteis. Cada pilar tem 135 HP. Destruí-lo com tiros derruba o trecho que ele sustenta. A sobra expira depois de sete segundos e é removida quando o encontro acaba.
-- Cada pilar ativo abriga uma torreta Auto com intervalo nominal de 1,12 s. Ela mira na posição atual de alvos visíveis e lança balas leves. A perda do pilar ou a expiração remove a torreta e os projéteis dela ainda em voo.
+- Cada pilar ativo abriga uma torreta Auto com intervalo nominal de 1,12 s. Ela mira no tanque em sua posição atual e pode apontar para a parte exposta do casco se o tiro central raspar no canto da parede. As balas leves dos pilares têm cor âmbar. A perda do pilar ou a expiração remove a torreta e os projéteis dela ainda em voo.
 - Na pausa de dois segundos após a expiração ou o cancelamento, o chefe pode se afastar da ameaça visível mais próxima em qualquer direção. O percurso leva até 1,8 s e fica dentro de um diâmetro do ponto inicial, com espaço para contornar as duas extremidades. O chefe interrompe o deslocamento se um tanque entrar na trajetória. O tracejado marca a geometria a partir da posição em que ele parou.
 - A torreta cinza dupla gira continuamente na direção de alvos visíveis, inclusive durante a recarga. Ao alinhar a mira, dispara um projétil comum pelo próximo canhão. O intervalo nominal entre tiros é de 0,53 s. As paredes ocultam o alvo e bloqueiam o tiro.
 - Os bots calculam a rota pelas aberturas das duas linhas levando em conta o raio do casco. Continuam pela passagem escolhida até sair do outro lado ou até a rota deixar de ser segura. Derrubar um pilar libera novas rotas imediatamente. A mira conserva o pilar por até 0,5 s quando a visão do chefe abre de passagem, e só dispara enquanto o pilar estiver acessível.
@@ -20,10 +20,10 @@ A vida máxima é de 1.350 HP. A barra marca 70% e 35%, indica a fase em vigor e
 | Fase | Vida no início da fase | Movimento e barreira | Visual |
 | --- | ---: | --- | --- |
 | 1 | 1.350 HP | Uma linha com dois pilares, abertura à esquerda e alcance de mira de 245 unidades nas torretas dos pilares. | Casco e pilares azul-acinzentados. |
-| 2 | 945 HP | Deslizamento 50% mais rápido e até 225 unidades por pausa. Abertura à direita. Os pilares acompanham alvos mais rápido e seu alcance de mira sobe para 310 unidades. | Casco azul com duas marcas âmbar e pilares âmbar. |
-| 3 | 472,5 HP | Mantém o deslizamento. Uma segunda linha curta cobre a passagem direta. O terceiro pilar pode ser derrubado para reabri-la. As torretas dos pilares disparam com pelo menos 0,22 s de intervalo entre si. | Casco cobre com três marcas, pilar extra acobreado e tracejado curto na segunda linha. |
+| 2 | 945 HP | Deslizamento 50% mais rápido e até 225 unidades por pausa. Abertura à direita. Os pilares acompanham alvos mais rápido e seu alcance de mira sobe para 310 unidades. | Casco azul com duas divisas âmbar e pilares âmbar. |
+| 3 | 472,5 HP | Mantém o deslizamento. Uma segunda linha curta cobre a passagem direta. O terceiro pilar pode ser derrubado para reabri-la. As torretas dos pilares disparam com pelo menos 0,22 s de intervalo entre si. | Casco cobre com três divisas, pilar extra acobreado e tracejado curto na segunda linha. |
 
-As duas linhas da fase final são avisadas e construídas juntas. As duas rotas externas continuam livres. A torreta principal mantém a antecipação e a cadência anteriores.
+As duas linhas da fase final são avisadas e construídas juntas. As duas rotas externas continuam livres. A torreta principal mantém a antecipação e a cadência anteriores. A perfuração dos projéteis sobe de 1,8 para 2,4 e 3,0 nas três fases. Velocidade e dano base permanecem iguais. As paredes ainda bloqueiam esses tiros.
 
 ## Teste jogável
 
