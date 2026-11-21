@@ -1754,7 +1754,11 @@ function slideAlongWalls(field,e,x,y,startX,startY){
 const CARTOGRAPHER_PILLAR_HP=135, CARTOGRAPHER_WARNING=1.5, CARTOGRAPHER_WALL_TIME=7;
 const CARTOGRAPHER_PAUSE=2, CARTOGRAPHER_SLIDE=1.8, CARTOGRAPHER_END_ROUTE=425, CARTOGRAPHER_WALL_OFFSET=190;
 const CARTOGRAPHER_TURN=2.8, CARTOGRAPHER_SHOT_GAP=.53;
-const CARTOGRAPHER_SHOT_PEN=[1.8,2.4,3];
+const CARTOGRAPHER_SHOTS=[
+  {penetration:1.8,mainDamage:1,pillarDamage:1.5},
+  {penetration:2.4,mainDamage:1.12,pillarDamage:1.9},
+  {penetration:3,mainDamage:1.25,pillarDamage:2.3}
+];
 const CARTOGRAPHER_REPOSITION_HP=.70, CARTOGRAPHER_CROSSFIRE_HP=.35, CARTOGRAPHER_EXTRA_OFFSET=390;
 const CARTOGRAPHER_STAGE_STYLES=[
   {hull:"#789ab0",rim:"#354c5b",accent:"#789ab0",warning:"#8e502a"},
@@ -1989,7 +1993,7 @@ const DECADE_MINIONS=[
 const DECADE_APPEARANCES=new Map(DECADE_MINIONS.map(m=>[m.appearance,m]));
 const CLASSIC_BOSSES={guardian:GUARDIAN,fallen:FALLEN_BOOSTER,defender:DEFENDER,summoner:SUMMONER,fallenOverlord:FALLEN_OVERLORD};
 const CARTOGRAPHER={name:"Cartógrafo",hp:1350,reward:30000,body:34,r:75,color:"#789ab0",ammo:"#8daeba",
-  range:810,guns:[-.39,.39].map(offset=>gun(0,{offset,width:.38,length:1.51,speed:.83,damage:1.23,pen:CARTOGRAPHER_SHOT_PEN[0],life:1.2,recoil:0,spread:0}))};
+  range:810,guns:[-.39,.39].map(offset=>gun(0,{offset,width:.38,length:1.51,speed:.83,damage:1.23,pen:CARTOGRAPHER_SHOTS[0].penetration,life:1.2,recoil:0,spread:0}))};
 const ROTATING_BOSSES={...CLASSIC_BOSSES,treeTopper:TREE_TOPPER,decade:DECADE};
 const BOSS_SPECS={...ROTATING_BOSSES,cartographer:CARTOGRAPHER};
 function shuffleBosses(random,previous,events=false,scope){
@@ -3976,14 +3980,15 @@ class Arena {
     }else if(barrier?.ends!=null&&now>=barrier.ends){
       this.startCartographerPause(b);
     }
+    const profile=CARTOGRAPHER_SHOTS[b.stage-1];
     this.advanceCartographerTurret(b,b.turret,{x:b.x,y:b.y,r:b.r,cartographerShot:true,
-      penetration:CARTOGRAPHER_SHOT_PEN[b.stage-1]},b.spec.guns,b.spec.range,CARTOGRAPHER_SHOT_GAP);
+      penetration:profile.penetration,damageScale:profile.mainDamage},b.spec.guns,b.spec.range,CARTOGRAPHER_SHOT_GAP);
     if(!b.barrier||this.maze!==b.barrier)return;
     const {radius,guns,range,gap}=CARTOGRAPHER_PILLAR_TURRET;
     for(const segment of b.barrier.segments){
       if(segment.hp<=0)continue;
-      this.advanceCartographerTurret(b,segment.turret,{x:segment.center,y:segment.y,r:radius,pillar:segment,cartographerShot:true},
-        guns,b.stage>=2?310:range,gap);
+      this.advanceCartographerTurret(b,segment.turret,{x:segment.center,y:segment.y,r:radius,pillar:segment,cartographerShot:true,
+        damageScale:profile.pillarDamage},guns,b.stage>=2?310:range,gap);
     }
   }
   advanceFallen(b){
@@ -4383,7 +4388,8 @@ class Arena {
     const child={type:"shot",kind:g.kind,owner:t,sourceClass:t.cls,heavyAttempt:localDiscoveryArena(this)?t.learning?.heavyAttempt:undefined,swarmAttempt:localDiscoveryArena(this)?t.learning?.swarmAttempt:undefined,learningTarget:t.learning?.foeId,sourceTactic:t.learning?.tactic,alive:true,x,y,px:x,py:y,angle:a,
       r,
       life:g.kind===FACTORY_MINION?Infinity:g.battleshipWing!=null?g.life:isDrone?90:1.35*g.life,
-      damage:(7+3*t.stats[5])*g.damage,dur:(2+1.5*t.stats[4])*(mount.penetration??g.pen),age:0,speed};
+      damage:(7+3*t.stats[5])*g.damage*(mount.damageScale??1),
+      dur:(2+1.5*t.stats[4])*(mount.penetration??g.pen),age:0,speed};
     const care=mount.parent?mount.parent.careWindow:t.careWindow;
     if(care)child.careWindow=care;
     if(mount.cartographerShot){child.cartographerShot=true;child.bornTick=this.tick;}
