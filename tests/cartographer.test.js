@@ -102,7 +102,7 @@ test('a barreira é removida se os dois desafiantes caírem',()=>{
   assert.equal(b.barrier,null);
 });
 
-test('entre dois ciclos desliza um diâmetro e congela o traçado no aviso e na barreira',()=>{
+test('entre dois ciclos afasta-se da ameaça e congela o traçado no aviso e na barreira',()=>{
   const w=lab(),b=w.boss,home=b.x,y=b.y;
   for(const [i,t] of w.tanks.entries())idle(t,home-650-i*100,y-300);
   stepUntil(w,()=>w.maze);
@@ -115,7 +115,7 @@ test('entre dois ciclos desliza um diâmetro e congela o traçado no aviso e na 
   assert.equal(b.barrier,null);
   stepUntil(w,()=>!b.barrierSlide);
   const stop=b.x;
-  assert.equal(Math.abs(stop-home),2*b.r);
+  assert.ok(stop>home&&stop-home<=2*b.r);
   assert.equal(b.barrier,null);
   stepUntil(w,()=>b.barrier);
   const second=b.barrier, pattern=JSON.stringify(second.segments);
@@ -139,7 +139,7 @@ test('uma construção cancelada por ocupação inicia o mesmo deslizamento sem 
   const w=lab(),b=w.boss,home=b.x,y=b.y-190,[occupant,other]=w.tanks;
   idle(occupant,home+105,y);
   idle(other,home-650,y);
-  occupant.protect=other.protect=10;
+  occupant.protect=10;
   stepUntil(w,()=>b.barrier);
   const first=b.barrier;
   for(let i=0;i<240&&!b.barrierSlide;i++){
@@ -152,6 +152,63 @@ test('uma construção cancelada por ocupação inicia o mesmo deslizamento sem 
   assert.equal(occupant.y,y);
   idle(occupant,home-550,y);
   stepUntil(w,()=>w.maze);
-  assert.equal(Math.abs(b.x-home),2*b.r);
+  assert.ok(b.x>home&&b.x-home<=2*b.r);
   assert.equal(w.maze.gapX,b.x-105);
+});
+
+test('a torreta gira durante a recarga e dispara barris alternados no ângulo desenhado',()=>{
+  const w=lab(),b=w.boss,[player,other]=w.tanks;
+  idle(player,b.x+350,b.y+130);player.protect=0;
+  other.protect=10;
+  const shots=[],spawn=w.spawnShot;
+  w.spawnShot=function(owner,gun,mount){
+    const fired=spawn.call(this,owner,gun,mount);
+    if(fired&&owner===b)shots.push({time:this.time,gun,aim:mount.aim,heading:this.shots.at(-1).angle});
+    return fired;
+  };
+  const aim=b.turret.aim;
+  for(let i=0;i<15;i++)w.step(null);
+  assert.notEqual(b.turret.aim,aim);
+  assert.ok(Math.abs(b.turret.aim-aim)<.75);
+  assert.equal(shots.length,0);
+  stepUntil(w,()=>shots.length>=3,220);
+  assert.deepEqual(shots.map(s=>b.spec.guns.indexOf(s.gun)),[0,1,0]);
+  assert.ok(shots.every(s=>s.aim===s.heading));
+  assert.ok(shots[1].time-shots[0].time>=.53-1e-8&&shots[1].time-shots[0].time<.55);
+});
+
+test('a cobertura bloqueia a mira e derrubar o pilar volta a expor o jogador',()=>{
+  const w=lab(),b=w.boss,[player,other]=w.tanks,y=b.y-190;
+  idle(player,b.x+155,y-170);idle(other,b.x+650,y-150);
+  player.protect=other.protect=4;
+  stepUntil(w,()=>w.maze);
+  player.protect=0;other.protect=10;
+  const wall=w.maze,hp=player.hp;
+  const serial=w.serial;
+  for(let i=0;i<45;i++)w.step(null);
+  assert.equal(player.hp,hp);
+  assert.ok(!w.shots.some(p=>p.id>serial&&p.owner===b));
+  for(let i=0;i<2;i++){
+    player.aim=Math.PI/2;
+    assert.ok(w.spawnShot(player,api.C.Destroyer.guns[0]));
+    const p=w.shots.at(-1);
+    stepUntil(w,()=>!p.alive,40);
+  }
+  assert.equal(wall.segments[1].hp,0);
+  assert.equal(wall.hit(b.x,b.y,player.x,player.y,2),null);
+  stepUntil(w,()=>player.hp<hp,170);
+  assert.equal(w.maze,wall);
+});
+
+test('ameaças nos lados opostos produzem deslocamentos opostos',()=>{
+  for(const side of [-1,1]){
+    const w=lab(),b=w.boss,[player,other]=w.tanks,home=b.x;
+    idle(player,home+side*315,b.y-300);player.protect=0;other.protect=10;
+    w.startCartographerPause(b);
+    assert.equal(Math.sign(b.barrierSlide.to-home),-side);
+    assert.ok(Math.abs(b.barrierSlide.to-home)<2*b.r);
+    b.barrierSlide=null;player.protect=10;
+    w.startCartographerPause(b);
+    assert.equal(b.barrierSlide,null);
+  }
 });

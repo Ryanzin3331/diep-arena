@@ -6,8 +6,9 @@ No **Laboratório**, selecione **Cartógrafo** em **Chefe do desafio** e clique 
 
 - O contorno tracejado avisa 1,5 s antes de subir. A abertura tem 150 unidades e também dá para contornar as extremidades. Se um casco ocupar o traçado, o chefe adia a construção por até um segundo e cancela o ciclo se o espaço continuar ocupado.
 - Paredes e pilares bloqueiam cascos e projéteis. Cada pilar tem 135 HP. Destruí-lo com tiros derruba o trecho que ele sustenta. A sobra expira depois de sete segundos e é removida quando o encontro acaba.
-- Na pausa de dois segundos após a expiração ou o cancelamento, o chefe desliza um diâmetro em 1,8 s e para antes do próximo aviso. Alterna entre a posição inicial e um ponto lateral, com espaço para contornar as duas extremidades. O tracejado marca o contorno exato das paredes e dos pilares a partir da nova posição.
-- O Cartógrafo tem 1.350 HP e usa projéteis comuns. A próxima barreira avisada abaixo de 675 HP espelha a abertura da esquerda para a direita.
+- Na pausa de dois segundos após a expiração ou o cancelamento, o chefe escolhe um ponto lateral afastado da ameaça visível mais próxima. O percurso leva até 1,8 s e fica limitado à região inicial, com espaço para contornar as duas extremidades. O tracejado marca a geometria a partir da posição em que ele parou.
+- A torreta cinza dupla gira continuamente na direção de alvos visíveis, inclusive durante a recarga. Ao alinhar a mira, dispara um projétil comum pelo próximo canhão. O intervalo nominal entre tiros é de 0,53 s. As paredes ocultam o alvo e bloqueiam o tiro.
+- O Cartógrafo tem 1.350 HP. A próxima barreira avisada abaixo de 675 HP espelha a abertura da esquerda para a direita.
 - Os bots aproveitam as passagens e podem atirar num pilar acessível enquanto se deslocam. A rota é mantida em cache por até 0,65 s. A destruição de um trecho invalida o cache do traçado.
 
 ## Teste jogável
@@ -24,3 +25,21 @@ Abra o [cenário local](http://127.0.0.1:8770/cartografo-fixture.html). Você co
 A seleção do Laboratório e o cenário jogável foram conferidos no Chromium. A silhueta, a grade, o aviso e a passagem ficaram legíveis com zoom afastado e em viewport de 390 px. Nessa viewport, tiros manuais derrubaram um pilar e reduziram a vida do chefe abaixo de 50%. O Destroyer atravessou a segunda abertura com a barreira ativa.
 
 As regressões Node cobrem aviso, ocupação por tanques, colisão de cascos e projéteis, destruição parcial, espelhamento, expiração, término do encontro e um bot que atravessa a barreira ativa e causa dano ao Cartógrafo. A revisão de movimento confirmou dois ciclos consecutivos, saídas livres e deslizamento após cancelamento por ocupação. No Chromium, conferi o deslizamento entre os ciclos, o alinhamento do segundo tracejado com a parede erguida e os pilares azul-acinzentados com zoom afastado. A rotação de chefes do FFA segue com o mesmo catálogo.
+
+## Comparação da torreta
+
+`node tests/measure-cartographer.js` compara `7514562` e a revisão nova no cenário de Destroyer nível 45, seed 7103, com o mesmo roteiro de controles por 900 ticks (15 s).
+
+| Medida | Antes | Revisão |
+| --- | ---: | ---: |
+| Tiros do chefe | 26 | 23 |
+| Máximo de tiros do chefe num tick | 2 | 1 |
+| Ticks com rotação da mira sem tiro | 0 | 698 |
+| Primeiro pilar derrubado | Tick 245 | Tick 245 |
+| Deslocamento horizontal da segunda barreira | 150 | 97 |
+| Tiros do chefe que acertaram o Destroyer | 1 | 1 |
+| Vida restante do chefe | 270,6 | 663,4 |
+
+O teste de cobertura começa com o jogador atrás da parede, derruba o pilar com tiros e confirma que o jogador passa a poder acertar e ser acertado por essa linha. O HP e o dano por projétil foram mantidos. Os números descrevem esse roteiro, com um bot aliado, e não representam todas as lutas do Laboratório.
+
+No Chromium, conferi a torreta girando sobre o casco fixo e a segunda marcação após o deslocamento. A suíte completa passou com 120 testes.
