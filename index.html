@@ -30,6 +30,11 @@ button,select,input{font:inherit}button,select,input{border:1px solid var(--line
 .boss-hud{top:12px;left:50%;width:min(285px,45%);transform:translateX(-50%);padding:5px 9px;background:#302036f0;border:1px solid #d88ba7;border-radius:8px}
 .boss-hud button{width:100%;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:2px 6px;border:0;background:transparent;padding:2px;color:#fff1f5;font-size:11px;text-align:left}
 .boss-hud button:disabled{opacity:1;cursor:default}.boss-hud .bar{position:relative;background:#684459;margin:3px 0 1px}.boss-hud .bar i{background:#f17ca7}
+.apprentice-panel{border-top:1px solid #ffffff25;margin-top:10px;padding-top:9px}
+.apprentice-panel h3,.apprentice-panel p{margin:0 0 5px}
+.apprentice-panel h3{font-size:13px}.apprentice-panel p,.apprentice-panel ul{font-size:11px;color:#d1dfcf}
+.apprentice-panel ul{margin:4px 0 8px;padding-left:16px;line-height:1.45}
+.apprentice-actions{display:flex;gap:5px;flex-wrap:wrap}.apprentice-actions button{font-size:11px}
 .boss-thresholds{position:absolute;inset:0;pointer-events:none}.boss-thresholds b{position:absolute;top:0;bottom:0;width:2px;background:#f8eed9}
 .team-scores{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:9px}
 .team-scores div{display:flex;align-items:center;justify-content:space-between;gap:3px;border:1px solid currentColor;border-radius:6px;padding:4px 6px;font-size:11px}
@@ -615,6 +620,15 @@ button{-webkit-tap-highlight-color:transparent}
           <figure class="tag-chart"><figcaption>Tanques por equipe ao longo da rodada</figcaption><canvas id="tagChart" role="img" aria-label="Gráfico de conversões do Tag"></canvas></figure>
         </div>
         <p id="survivalResult" hidden></p><div class="leader-list" id="leaders"></div>
+        <section id="apprenticePanel" class="apprentice-panel" aria-label="Dupla Aprendiz" hidden>
+          <h3>Dupla Aprendiz</h3>
+          <p id="apprenticeStatus"></p>
+          <ul id="apprenticeReport"></ul>
+          <div class="apprentice-actions">
+            <button id="repeatApprentice" type="button">Repetir treino</button>
+            <button id="resetApprentice" type="button">Zerar dupla</button>
+          </div>
+        </section>
       </section>
       <section class="card" id="inspectCard"><div class="sidebar-title"><h2 id="inspectTitle">Em foco</h2><small id="inspectType"></small></div><div id="inspectBody"></div></section>
       <section class="card" id="learningCard" aria-labelledby="learningTitle" hidden><div class="sidebar-title"><h2 id="learningTitle">Aprendizado</h2></div><div id="learningBody"></div></section>
@@ -649,6 +663,7 @@ button{-webkit-tap-highlight-color:transparent}
             <label class="wide">Nível inicial<select id="labLevel"><option>15</option><option>30</option><option selected>45</option></select></label>
             <label class="wide">Chefe do desafio<select id="labBoss"></select></label>
             <button id="summonLabBoss" class="wide" type="button">Invocar Fallen Overlord · 2 contra 1</button>
+            <button id="startApprentice" class="wide" type="button">Iniciar Dupla Aprendiz</button>
           </div>
           <label class="wide" title="A configuração vale ao iniciar ou reiniciar a partida">Aprendizado na próxima partida<select id="learningMode"><option value="both">Todos os bots</option><option value="a" hidden disabled>Só Tanque A</option><option value="b" hidden disabled>Só Tanque B</option><option value="off">Desligado</option></select></label>
           <label class="wide">Builds na próxima partida<select id="buildMode"><option value="adaptive">Adaptativas</option><option value="fixed">Fixas por classe</option></select></label>
@@ -1079,6 +1094,98 @@ function spendBot(t,time){
     spent++;
   }
 }
+const APPRENTICE_PREP=90, APPRENTICE_FIGHT=60, APPRENTICE_INTERVAL=36;
+const APPRENTICE_ACTIONS=[
+  {name:"Parar e atirar",forward:0,side:0,offset:0,fire:true},
+  {name:"Avançar atirando",forward:1,side:0,offset:0,fire:true},
+  {name:"Recuar atirando",forward:-1,side:0,offset:0,fire:true},
+  {name:"Mover de lado e atirar",forward:0,side:1,offset:0,fire:true},
+  {name:"Avançar com mira à esquerda",forward:1,side:0,offset:-.25,fire:true},
+  {name:"Avançar com mira à direita",forward:1,side:0,offset:.25,fire:true},
+  {name:"Avançar sem atirar",forward:1,side:0,offset:0,fire:false},
+  {name:"Atirar no segundo alvo",forward:.55,side:0,offset:0,fire:true,second:true}
+];
+function newApprenticeSession(train=true){
+  return {train,count:0,brains:[new Map(),new Map()],rounds:new Map()};
+}
+function newApprenticeAgent(seed,slot){
+  return {random:rngFrom(seed^Math.imul(slot+1,0x73b98177)),next:1,action:null,known:false,build:""};
+}
+function apprenticeThink(w,t){
+  const agent=t.apprentice;
+  const inFight=Boolean(w.apprentice.prep),vision=range(t);
+  let first=null,second=null,near=vision**2,next=near;
+  for(const e of w.sense.nearby(t.x,t.y,vision)){
+    if(!e.alive||e.type!=="form"&&e.type!=="boss")continue;
+    const d=sq(e.x-t.x)+sq(e.y-t.y);
+    if(d<near){second=first;next=near;first=e;near=d;}
+    else if(d<next){second=e;next=d;}
+  }
+  const context=near<145**2?"perto":near<315**2?"médio":"longe";
+  const options=second?APPRENTICE_ACTIONS:APPRENTICE_ACTIONS.slice(0,-1);
+  const brain=w.apprentice.session.brains[t.slot];
+  const training=w.apprentice.session.train&&!inFight;
+  if(w.tick>=agent.next){
+    agent.next=w.tick+APPRENTICE_INTERVAL;
+    agent.row=null;agent.known=false;
+    agent.wander=agent.random()*TAU;agent.side=agent.random()<.5?-1:1;
+    if(first){
+      let rows=brain.get(context);
+      if(!rows&&training){
+        rows=APPRENTICE_ACTIONS.map(()=>({uses:0,hits:0,reward:0}));
+        brain.set(context,rows);
+      }
+      const available=rows?.slice(0,options.length)??[];
+      const experienced=available.some(row=>row.uses>=2&&row.hits>0);
+      const explore=!experienced||agent.random()<.24;
+      let pick=Math.floor(agent.random()*options.length);
+      if(!explore){
+        let best=-Infinity;
+        for(const [i,row] of available.entries()){
+          const value=row.reward/(row.uses+2);
+          if(value>best){best=value;pick=i;}
+        }
+        agent.known=true;
+      }
+      agent.action=options[pick];
+      if(training){agent.row=rows[pick];agent.row.uses++;}
+    }else agent.action=null;
+  }
+  const action=agent.action,target=action?.second?second??first:first;
+  if(!action||!target){
+    t.intent={x:Math.cos(agent.wander??0),y:Math.sin(agent.wander??0),aim:agent.wander??0,fire:false,alt:false};
+    t.detail="Explorando a arena";return;
+  }
+  const aim=Math.atan2(target.y-t.y,target.x-t.x),side=action.side*agent.side;
+  t.intent={x:Math.cos(aim)*action.forward-Math.sin(aim)*side,y:Math.sin(aim)*action.forward+Math.cos(aim)*side,
+    aim:aim+action.offset,fire:action.fire,alt:false};
+  t.detail=action.name+(agent.known?" · experiência":" · exploração");
+}
+function apprenticeBuild(w,t){
+  const agent=t.apprentice,classes=picks(t);
+  if(classes.length){
+    const name=classes[Math.floor(agent.random()*classes.length)];
+    w.playerClass(t,name);agent.build=name;
+  }
+  while(freePoints(t)>0){
+    const attributes=caps(t).map((cap,index)=>t.stats[index]<cap?index:-1).filter(index=>index>=0);
+    if(!attributes.length)break;
+    const index=attributes[Math.floor(agent.random()*attributes.length)];
+    w.playerUpgrade(t,index);agent.build=statLabel(t,index);
+  }
+}
+function apprenticeSnapshot(tanks){
+  return tanks.map(t=>({xp:t.score,level:t.level,cls:t.cls,stats:t.stats.slice(),alive:t.alive}));
+}
+const apprenticeXp=tanks=>tanks.reduce((sum,t)=>sum+t.xp,0);
+function recordApprenticePrep(w){
+  const trial=w.apprentice,prep=apprenticeSnapshot(w.tanks),rounds=trial.session.rounds;
+  trial.prep=prep;
+  const result=rounds.get(w.seed)??{first:prep,best:prep};
+  if(apprenticeXp(prep)>apprenticeXp(result.best))result.best=prep;
+  rounds.set(w.seed,result);
+}
+
 const TACTIC_NAMES=["Postura padrão","Flanco","Defesa"];
 const MEMORY_TTL=115;
 function localDiscoveryArena(w){return ["open","maze","maze-seed"].includes(w.profileRoster);}
@@ -1934,6 +2041,8 @@ const GUARDIAN={
   range:850,droneRange:530,droneCap:24,droneLife:10,droneDurability:25,droneDamage:3.92,
   droneSpeed:275,dronePeriod:.125,patrolPeriod:40
 };
+const APPRENTICE_GUARDIAN={...GUARDIAN,hp:540,body:16,regen:0,reward:0,
+  droneCap:7,dronePeriod:.48,droneLife:6,droneDurability:12,droneDamage:2.25,droneSpeed:216};
 const FALLEN_BOOSTER={
   name:"Fallen Booster",hp:3000,reward:30000,body:40,regen:3,r:79,color:"#c0c0c0",range:1050,
   guns:[gun(0,{length:1.41,width:.63,damage:.72,speed:1.05,pen:4.5,life:.47,recoil:4}),
@@ -2345,8 +2454,9 @@ class Arena {
     this.learningMode=learningMode;
     this.adaptiveBuilds=adaptiveBuilds;
     this.mapKind=duel?"open":mapKind;
-    this.profileRoster=rosterScope??(duel?(duel[3]?"lab-boss":"lab"):this.mapKind);
-    this.botMemorySession=memoryStore?.open(this.profileRoster)??null;
+    const apprenticeSession=duel?.[4];
+    this.profileRoster=apprenticeSession?"lab-apprentice":rosterScope??(duel?(duel[3]?"lab-boss":"lab"):this.mapKind);
+    this.botMemorySession=apprenticeSession?null:memoryStore?.open(this.profileRoster)??null;
     this.rivalries=!duel&&["open","maze","maze-seed"].includes(this.mapKind)?new Map():null;
     this.rivalExchanges=this.rivalries?new Map():null;
     this.survival=this.mapKind==="survival"?{phase:"opening",radius:SURVIVAL.startRadius,preview:null,xpAt:1,alive:SURVIVAL.count}:null;
@@ -2365,6 +2475,7 @@ class Arena {
     this.shipOpening=this.mothership&&this.startLevel===1?24:0;
     this.maze=this.mapKind.startsWith("maze")?new Maze(this.mapKind,seed):null;
     this.bossTrial=Boolean(duel?.[3]);
+    this.apprentice=apprenticeSession?{session:apprenticeSession,round:++apprenticeSession.count,prep:null}:null;
     this.bossInterval=this.maze||duel||this.domination||this.mothership||this.tag||this.survival||this.convoy?0:BOSS_INTERVAL[bossSchedule]??0;
     this.nextBossAt=this.bossInterval||Infinity;
     this.boss=null;this.bossRewardedTo=null;
@@ -2453,7 +2564,7 @@ class Arena {
     }
     if(this.hasBases)this.restockBaseDrones();
     if(this.fourTeams)this.assignFronts();
-    if(this.bossTrial)this.spawnBoss(duel[3]);
+    if(this.bossTrial&&!this.apprentice)this.spawnBoss(duel[3]);
     if(this.tag)this.updateTagCounts();
     this.indexSense();
     this.history.capture(this);
@@ -3374,12 +3485,15 @@ class Arena {
     if(autoBranch)t.autoBranch=autoBranch;
     if(!human){t.skin=this.skins[slot];t.profileId=this.profileRoster+":bot:"+slot;}
     t.hp=hull(t);
-    if(!human&&(this.learningMode==="both"||this.duel&&this.learningMode===(slot===0?"a":"b")))
+    if(!this.apprentice&&!human&&(this.learningMode==="both"||this.duel&&this.learningMode===(slot===0?"a":"b")))
       t.learning=previousLearning?respawnLearning(previousLearning,this.adaptiveBuilds):
         this.botMemorySession?.load(t.profileId,this.adaptiveBuilds,this.time)??newMemory(this.adaptiveBuilds);
     if(this.convoy&&!human)changeClass(t,t.goal,true);
     else if(force && C[goal]) changeClass(t,goal,true);
-    if(!human) spendBot(t,this.time);
+    if(this.apprentice)t.apprentice=newApprenticeAgent(this.seed,slot);
+    else {
+      if(!human) spendBot(t,this.time);
+    }
     this.tanks.push(t);
     if(localHuman) this.human=t;
     if(this.tag&&human)this.updateTagCounts();
@@ -3464,7 +3578,8 @@ class Arena {
     if(!t?.alive||t.type!=="tank")return;
     const before=t.cls, level=t.level;
     score(t,n);
-    if(!t.human&&(level!==t.level||freePoints(t)>0||picks(t).length)){
+    if(t.apprentice)apprenticeBuild(this,t);
+    else if(!t.human&&(level!==t.level||freePoints(t)>0||picks(t).length)){
       if(this.necroBotLimit&&t.level===45&&t.cls==="Overseer"&&t.goal==="Overlord"&&
         this.tanks.filter(other=>other.alive&&other.cls==="Necromancer"&&!other.human).length<this.necroBotLimit){
         let squares=0;
@@ -3561,12 +3676,13 @@ class Arena {
       const finisher=by?.type==="tank"&&by.alive;
       if(finisher){
         by.kills++;
-        this.award(by,reward);
+        if(reward>0)this.award(by,reward);
         this.bossRewardedTo=by;
       }
       for(const shot of this.shots)if(shot.owner===e)this.removeShot(shot);
       const contest=finisher?[...e.finishers.values()].filter(h=>h.tank!==by&&this.time-h.time<=3).map(h=>h.tank):[];
-      const message=finisher?by.name+" derrotou "+e.name+" · +"+reward.toLocaleString("pt-BR")+" XP":e.name+" foi derrotado";
+      const message=finisher?by.name+" derrotou "+e.name+
+        (reward>0?" · +"+reward.toLocaleString("pt-BR")+" XP":""):e.name+" foi derrotado";
       this.note(message);
       const title=contest.length?message+" · Disputa com "+contest.map(t=>t.name).join(", "):message;
       this.record("chefes",title,[e,by,...contest],e,contest.length?"Golpe final disputado":"Chefe derrotado");
@@ -3792,7 +3908,7 @@ class Arena {
   spawnBoss(kind){
     if(this.boss?.alive||this.maze||this.domination||this.mothership||this.tag||this.survival||this.convoy)return null;
     if(kind==="cartographer"&&!this.bossTrial&&(this.profileRoster!=="open"||!this.bossInterval||!this.eventBosses))return null;
-    const spec=BOSS_SPECS[kind]??GUARDIAN;
+    const spec=this.apprentice?APPRENTICE_GUARDIAN:BOSS_SPECS[kind]??GUARDIAN;
     const angle=this.bossTrial?Math.PI/2:TAU*rngFrom(this.seed^0x25e1dace^this.tick)();
     const orbit=this.bossTrial?430:this.nest*.87;
     const x=this.mid+Math.cos(angle)*orbit,y=this.mid+Math.sin(angle)*orbit;
@@ -4112,17 +4228,18 @@ class Arena {
     if(now-b.damaged>3)b.hp=Math.min(spec.hp,b.hp+spec.regen*DT);
   }
   advanceGuardian(boss){
-    const {patrolPeriod,range,droneCap,dronePeriod,regen}=GUARDIAN;
+    const spec=boss.spec;
+    const {patrolPeriod,range,droneCap,dronePeriod,regen}=spec;
     boss.px=boss.x;boss.py=boss.y;
     boss.angle+=TAU*DT/patrolPeriod*boss.direction;
     boss.aim=boss.angle+Math.PI/2*boss.direction;
     boss.x=this.mid+Math.cos(boss.angle)*boss.orbit;
     boss.y=this.mid+Math.sin(boss.angle)*boss.orbit;
     boss.vx=(boss.x-boss.px)/DT;boss.vy=(boss.y-boss.py)/DT;
-    if(this.time-boss.damaged>1.8)boss.hp=Math.min(GUARDIAN.hp,boss.hp+regen*DT);
+    if(this.time-boss.damaged>1.8)boss.hp=Math.min(spec.hp,boss.hp+regen*DT);
     if(this.tick%5===0){
       for(const [id,until] of boss.provoked)if(until<=this.time)boss.provoked.delete(id);
-      boss.targets=this.tanks.filter(t=>t.alive&&t.protect<=0&&(t.level>=15||boss.provoked.has(t.id))&&
+      boss.targets=this.tanks.filter(t=>t.alive&&t.protect<=0&&(this.apprentice||t.level>=15||boss.provoked.has(t.id))&&
         sq(t.x-boss.x)+sq(t.y-boss.y)<range**2);
     }
     if(boss.drones>=droneCap||this.time<boss.nextDrone)return;
@@ -4131,8 +4248,8 @@ class Arena {
     const angle=boss.aim+Math.PI, x=boss.x+Math.cos(angle)*(boss.r+14), y=boss.y+Math.sin(angle)*(boss.r+14);
     this.shots.push({type:"shot",kind:"drone",owner:boss,sourceClass:boss.cls,id:++this.serial,
       alive:true,x,y,px:x,py:y,angle,vx:Math.cos(angle)*90,vy:Math.sin(angle)*90,r:10,
-      life:GUARDIAN.droneLife,age:0,damage:GUARDIAN.droneDamage,dur:GUARDIAN.droneDurability,
-      speed:GUARDIAN.droneSpeed,seekAt:0,lockUntil:0});
+      life:spec.droneLife,age:0,damage:spec.droneDamage,dur:spec.droneDurability,
+      speed:spec.droneSpeed,seekAt:0,lockUntil:0});
     boss.drones++;
   }
   advanceEventBoss(b){
@@ -4394,6 +4511,7 @@ class Arena {
     if(care)child.careWindow=care;
     if(mount.cartographerShot){child.cartographerShot=true;child.bornTick=this.tick;}
     if(mount.pillar)child.pillarSource=mount.pillar;
+    if(t.apprentice?.row)child.apprenticeRow=t.apprentice.row;
     if(g.kind===SKIMMER_MISSILE){
       child.spin=t.intent.alt?-1:1;
       child.sideSpeed=bulletSpeed(t,skimmerSide);
@@ -5230,7 +5348,7 @@ class Arena {
         if(p.owner.spec===FALLEN_OVERLORD){
           const localProvocation=p.provoker===e&&p.provokedUntil>this.time;
           if(e.type==="tank"?!this.bossCanTarget(p.owner,e)&&!localProvocation:e.type!=="form")continue;
-        }else if(p.owner.type==="boss"&&(e.type!=="tank"||e.level<15&&!p.owner.provoked.has(e.id)))continue;
+        }else if(p.owner.type==="boss"&&(e.type!=="tank"||e.level<15&&!this.apprentice&&!p.owner.provoked.has(e.id)))continue;
         const t=impact(p.px-e.px,p.py-e.py,(p.x-p.px)-(e.x-e.px),(p.y-p.py)-(e.y-e.py),p.r+e.r);
         if(t!==null&&t<(p.wallTime??Infinity))hits.push([t,e]);
       }
@@ -5262,6 +5380,11 @@ class Arena {
           this.combatHit(p.owner,e,p.sourceClass??p.owner.cls,e.cls,p.damage*load,0,tactic,p.heavyAttempt,p);
         }
         if(e.dodgeAttempt?.p===p&&load>0)finishDodgeAttempt(e,false);
+        if(p.apprenticeRow&&e.type==="form"&&!this.apprentice.prep){
+          const dealt=Math.min(e.hp,p.damage*load);
+          p.apprenticeRow.reward+=dealt*.10+(dealt>=e.hp?e.f.xp/45:0);
+          p.apprenticeRow.hits++;
+        }
         e.hp-=p.damage*load;e.damaged=e.hit=this.time;
         if(e.type==="boss")this.bossDamage(e,p.owner);
         if(e.mini)this.pressureSurvivalMini(e,p.owner,p.damage*load);
@@ -5313,6 +5436,10 @@ class Arena {
         if(!this.bossQueue.length)this.bossQueue=shuffleBosses(this.bossRandom,next,this.eventBosses,this.profileRoster);
       }
     }
+    if(this.apprentice&&!this.apprentice.prep&&this.time>=APPRENTICE_PREP){
+      recordApprenticePrep(this);
+      this.spawnBoss("guardian");
+    }
     if(this.hasBases&&this.tick%90===0)this.restockBaseDrones();
     if(this.fourTeams&&this.tick%96===1)this.assignFronts();
     if(this.domination&&this.tick%36===1)this.assignTowers();
@@ -5324,7 +5451,10 @@ class Arena {
         const command=guestCommands?.get(t)??(t===this.human?humanIntent:null);
         if(command)t.intent=command;
       }
-      else if(!t.human&&(this.tick+t.id)%5===0) botThink(this,t);
+      else if((this.tick+t.id)%5===0){
+        if(t.apprentice)apprenticeThink(this,t);
+        else botThink(this,t);
+      }
       this.advanceTank(t);
       if(t.dodgeAttempt)advanceDodgeReference(this,t);
     }
@@ -5367,7 +5497,14 @@ class Arena {
     if(this.duel){
       const left=this.tanks.filter(e=>e.alive);
       if(this.bossTrial){
-        if(!this.boss.alive||!left.length){
+        if(this.apprentice&&(!left.length||this.time>=APPRENTICE_PREP+APPRENTICE_FIGHT||this.boss?.alive===false)){
+          if(!this.apprentice.prep)recordApprenticePrep(this);
+          this.winner=this.boss?.alive===false?this.bossRewardedTo:this.boss;
+          this.duelEnded=true;
+          this.bossTrialResult=this.boss?.alive===false?"A dupla derrotou o Guardião":
+            !left.length?"A dupla foi eliminada":"O tempo do desafio acabou";
+          this.note(this.bossTrialResult);
+        }else if(this.boss&&(!this.boss.alive||!left.length)){
           if(this.boss.spec===CARTOGRAPHER)this.clearCartographerBarrier(this.boss);
           this.winner=left.length?this.bossRewardedTo:this.boss;
           this.bossTrialResult=!this.boss.alive
@@ -6918,6 +7055,7 @@ let liteMode=false,lastDraw=-Infinity;
 try{liteMode=localStorage.getItem(LITE_PREF)==="on";}catch{}
 el("liteMode").value=liteMode?"on":"off";
 let world,mode="watch",pending=false,paused=false,rate=1,follow="leader",focusId=null,freeSelection=null;
+let apprenticeSession=newApprenticeSession(),apprenticeReportKey="";
 const TANK_COLOR_PREF="diep-arena:player-color";
 let playerTankColor;
 try{
@@ -7268,12 +7406,13 @@ function cleanseInputs(){
   keys.clear();mouseFire=false;mouseAlt=false;buttonAlt=false;
   touches.move=null;touches.aim=null;freeDrag=null;freeTouches.clear();
 }
-function restart(bossTrial=false){
+function restart(bossTrial=false,apprentice=null){
   closeReplay(false);
   const seed=clamp(Math.floor(seedValue()),1,4294967295);
   el("seed").value=seed;
   const l=Number(el("labLevel").value);
-  const duel=mode==="lab"?[el("classA").value,el("classB").value,l,bossTrial]:null;
+  const duel=mode!=="lab"?null:apprentice
+    ?["Tank","Tank",1,"guardian",apprentice]:[el("classA").value,el("classB").value,l,bossTrial];
   const config={seed,bots:Number(el("botCount").value),duel,learning:el("learningMode").value,
     adaptive:el("buildMode").value==="adaptive",map:el("arenaMap").value,boss:el("bossSchedule").value,
     ship:Number(el("shipStart").value),events:el("eventBosses").value==="on",player:mode==="play"&&!pending?playerName:null};
@@ -7330,8 +7469,10 @@ function restart(bossTrial=false){
   return ready;
 }
 function finishRestart(config,bossTrial,memoryStore){
-  world=new Arena(config.seed,config.bots,config.duel,config.learning,config.adaptive,
-    config.map,config.boss,config.ship,config.events,config.player,null,memoryStore);
+  const isApprentice=Boolean(config.duel?.[4]);
+  world=new Arena(config.seed,config.bots,config.duel,isApprentice?"off":config.learning,config.adaptive,
+    config.map,config.boss,config.ship,config.events,config.player,null,isApprentice?null:memoryStore);
+  apprenticeReportKey="";
   world.history.lite=liteMode;lastDraw=-Infinity;
   towerUiSignature="";
   tagChartSignature="";
@@ -7348,6 +7489,7 @@ function finishRestart(config,bossTrial,memoryStore){
       camera.x=world.human.x;camera.y=world.human.y;pointer.present=false;pointer.lastAim=world.human.aim;
     }else join();
   }
+  if(isApprentice)setSidePanel("arena");
   updateInterface(true);
   if(sidePanel==='config')void refreshMemoryStatus();
 }
@@ -8702,7 +8844,7 @@ function updateInterface(force=false){
   if(eventBossOption.textContent!==eventBossLabel)eventBossOption.textContent=eventBossLabel;
   el("shipStartField").hidden=mode==="lab"||el("arenaMap").value!=="mothership";
   el("restart").textContent=mode==="lab"?"Iniciar duelo":"Reiniciar";
-  el("scenarioLabel").textContent=mode==="lab"?(world.bossTrial?"2 contra 1":"1 contra 1"):{open:"Arena aberta",survival:"Uma vida",teams:"Azul × Vermelho","four-teams":"Quatro bases",domination:"Dominação",convoy:"Dois times · duas rodadas",mothership:"Naves-mãe",tag:"Quatro equipes",maze:"Maze fixo","maze-seed":"Maze por seed"}[world.mapKind];
+  el("scenarioLabel").textContent=mode==="lab"?(world.apprentice?"Dupla Aprendiz":world.bossTrial?"2 contra 1":"1 contra 1"):{open:"Arena aberta",survival:"Uma vida",teams:"Azul × Vermelho","four-teams":"Quatro bases",domination:"Dominação",convoy:"Dois times · duas rodadas",mothership:"Naves-mãe",tag:"Quatro equipes",maze:"Maze fixo","maze-seed":"Maze por seed"}[world.mapKind];
   el("cameraMode").disabled=Boolean(alive)||!!replay;
   el("cameraMode").textContent={leader:mode==="lab"?"Tanque A":"Líder",action:"Ação",highlights:"Destaques",free:"Livre",chosen:"Seguindo"}[follow];
   el("zoomIn").parentElement.hidden=follow!=="free"||Boolean(alive)||pending||!!replay;
@@ -9039,6 +9181,30 @@ function renderFullscreenLeaders(ordered){
     return row;
   }));
 }
+function updateApprenticeHud(){
+  const trial=world.apprentice;
+  el("apprenticePanel").hidden=!trial;
+  if(!trial)return;
+  const result=trial.session.rounds.get(world.seed);
+  const status=world.duelEnded?world.bossTrialResult:world.boss
+    ?"Guardião · "+Math.ceil(APPRENTICE_PREP+APPRENTICE_FIGHT-world.time)+" s"
+    :"Preparação · Guardião em "+Math.ceil(APPRENTICE_PREP-world.time)+" s";
+  el("stateText").textContent=paused&&!world.duelEnded?"PAUSADO":world.duelEnded?"TREINO ENCERRADO":status;
+  el("apprenticeStatus").textContent="Tentativa "+trial.round+" · "+status;
+  const rows=world.tanks.map((tank,i)=>{
+    const prep=trial.prep?.[i],current=prep??tank, xp=prep?prep.xp:tank.score;
+    const hits=[...trial.session.brains[i].values()].flat().reduce((sum,row)=>sum+row.hits,0);
+    return tank.name+" · "+current.cls+" nv. "+current.level+" · "+fmt.format(xp)+" XP"+
+      (prep?" na preparação":"")+" · "+hits+" acertos registrados";
+  });
+  if(result)rows.push("Nesta seed · 1ª tentativa "+fmt.format(apprenticeXp(result.first))+
+    " XP · melhor "+fmt.format(apprenticeXp(result.best))+" XP");
+  const key=rows.join("|");
+  if(key!==apprenticeReportKey){
+    apprenticeReportKey=key;
+    el("apprenticeReport").replaceChildren(...rows.map(row=>node("li",row)));
+  }
+}
 function updateHud(){
   syncPhoneControls();
   dockStats();
@@ -9115,6 +9281,7 @@ function updateHud(){
   updateTowerHud(inspected);
   updateShipHud(inspected);
   updateConvoyHud();
+  updateApprenticeHud();
   if(world.tag&&sidePanel==="arena")updateTagChart();
   const remoteScene=room?.role==="guest"?room.scene:null;
   const formCount=remoteScene?remoteScene.forms.length/8:world.shapes.length;
@@ -9550,6 +9717,16 @@ for(const [id,boss] of Object.entries(BOSS_SPECS)){
 labBoss.value="fallenOverlord";
 labBoss.onchange=()=>{summonLabBoss.textContent="Invocar "+BOSS_SPECS[labBoss.value].name+" · 2 contra 1";};
 summonLabBoss.onclick=()=>restart(labBoss.value);
+el("startApprentice").onclick=()=>restart("guardian",apprenticeSession);
+el("repeatApprentice").onclick=()=>{
+  el("seed").value=world.seed;
+  restart("guardian",apprenticeSession);
+};
+el("resetApprentice").onclick=()=>{
+  apprenticeSession=newApprenticeSession();
+  el("seed").value=world.seed;
+  restart("guardian",apprenticeSession);
+};
 el("bossFocus").onclick=()=>selectTank(world.boss);
 el("convoyFocus").onclick=()=>{
   if(replay||!world.convoy)return;
