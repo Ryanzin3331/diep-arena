@@ -23,7 +23,19 @@ A vida máxima é de 1.350 HP. A barra marca 70% e 35%, indica a fase em vigor e
 | 2 | 945 HP | Deslizamento 50% mais rápido e até 225 unidades por pausa. Abertura à direita. Os pilares acompanham alvos mais rápido e seu alcance de mira sobe para 310 unidades. | Casco azul com duas divisas âmbar e pilares âmbar. |
 | 3 | 472,5 HP | Mantém o deslizamento. Uma segunda linha curta cobre a passagem direta. O terceiro pilar pode ser derrubado para reabri-la. As torretas dos pilares disparam com pelo menos 0,22 s de intervalo entre si. | Casco cobre com três divisas, pilar extra acobreado e tracejado curto na segunda linha. |
 
-As duas linhas da fase final são avisadas e construídas juntas. As duas rotas externas continuam livres. A torreta principal mantém a antecipação e a cadência anteriores. A perfuração dos projéteis sobe de 1,8 para 2,4 e 3,0 nas três fases. Velocidade e dano base permanecem iguais. As paredes ainda bloqueiam esses tiros.
+As duas linhas da fase final são avisadas e construídas juntas. As duas rotas externas continuam livres. A torreta principal mantém a antecipação, a velocidade e a cadência. A perfuração dos projéteis sobe de 1,8 para 2,4 e 3,0 nas três fases. As paredes continuam bloqueando os tiros.
+
+### Dano por acerto
+
+Vida retirada de um Tank nível 15 no Laboratório, com 98 HP e zero pontos em dano corporal. Os valores incluem a redução por resistência do casco.
+
+| Fase | Bala de pilar | Bala do canhão principal |
+| --- | ---: | ---: |
+| 1 | 1,97 HP | 7,47 HP |
+| 2 | 2,50 HP | 9,64 HP |
+| 3 | 3,03 HP | 10,76 HP |
+
+As balas dos pilares tiravam 1,32 HP em qualquer fase nesse cenário. A perfuração dos pilares, a cadência e a velocidade dos dois tipos de tiro foram mantidas nesta revisão de dano.
 
 ## Teste jogável
 

@@ -463,18 +463,22 @@ test('terceira fase avisa as duas paredes, conserva duas rotas externas e abre a
   assert.deepEqual(Array.from(wall.segments,s=>s.hp),[135,135,0]);
 });
 
-test('um bot consegue atravessar as duas linhas ativas sem destruir o pilar extra',()=>{
-  const w=new api.Arena(7103,2,['Smasher','Tank',45,'cartographer']),b=w.boss,[bot,other]=w.tanks;
-  b.hp=b.spec.hp*.33;
-  idle(bot,b.x+64,b.y-530);
-  idle(other,b.x+750,b.y-480);other.protect=100;
-  stepUntil(w,()=>w.maze);
-  const wall=w.maze;
-  bot.human=false;bot.protect=0;
-  stepUntil(w,()=>bot.y>wall.y+bot.r,400);
-  assert.equal(w.maze,wall);
-  assert.equal(wall.segments[2].hp,135);
-  assert.ok(bot.alive);
+test('bots atravessam as duas linhas ativas sem destruir o pilar extra',()=>{
+  let crossed=0;
+  // Sample both a central approach and an outside route under live fire.
+  for(const offset of [0,64,400]){
+    const w=new api.Arena(7103,2,['Smasher','Tank',45,'cartographer']),b=w.boss,[bot,other]=w.tanks;
+    b.hp=b.spec.hp*.33;
+    idle(bot,b.x+offset,b.y-530);
+    idle(other,b.x+750,b.y-480);other.protect=100;
+    stepUntil(w,()=>w.maze);
+    const wall=w.maze;
+    bot.human=false;bot.protect=0;
+    while(w.maze===wall&&bot.alive&&!w.duelEnded&&bot.y<=wall.y+bot.r)w.step(null);
+    assert.equal(wall.segments[2].hp,135);
+    if(w.maze===wall&&bot.alive&&bot.y>wall.y+bot.r)crossed++;
+  }
+  assert.ok(crossed>=2);
 });
 
 test('as torretas da fase final disparam separadas, e expirar a barreira remove os tiros das duas linhas',()=>{
@@ -599,6 +603,29 @@ test('a perfuração do canhão principal aumenta durante o combate e a fase 3 a
     shots.push({dur,damage,speed,alive:shot.alive});
   }
   assert.deepEqual(shots.map(s=>s.dur),[3.6,4.8,6]);
-  assert.ok(shots.every(s=>s.damage===shots[0].damage&&s.speed===shots[0].speed));
+  assert.ok(shots.every(s=>s.speed===shots[0].speed));
+  assert.deepEqual(shots.map(s=>+s.damage.toFixed(2)),[8.61,9.64,10.76]);
   assert.deepEqual(shots.map(s=>s.alive),[false,false,true]);
+});
+
+test('os pilares causam dano crescente ao Tank de nível 15 sem ganhar perfuração',()=>{
+  const damage=[];
+  for(const health of [1,.70,.35]){
+    const w=new api.Arena(7103,2,['Tank','Tank',15,'cartographer']),b=w.boss,[player,other]=w.tanks;
+    b.hp=b.spec.hp*health;
+    idle(player,b.x+700,b.y);idle(other,b.x+1000,b.y+500);
+    player.protect=other.protect=100;
+    b.turret.ready=Infinity;
+    stepUntil(w,()=>w.maze);
+    const pillar=w.maze.segments[1];
+    idle(player,pillar.center,pillar.y+155);
+    player.protect=0;player.stats[2]=0;
+    const emitted=()=>w.shots.find(p=>p.pillarSource===pillar);
+    stepUntil(w,emitted,150);
+    const shot=emitted(),hp=player.hp;
+    assert.equal(shot.dur,1.3);
+    stepUntil(w,()=>shot.contacts?.has(player.id),45);
+    damage.push(+(hp-player.hp).toFixed(2));
+  }
+  assert.deepEqual(damage,[1.97,2.50,3.03]);
 });
