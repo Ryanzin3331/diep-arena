@@ -10,7 +10,7 @@ const ctx={angle:0,save(){rotations.push(this.angle);},restore(){this.angle=rota
   beginPath(){},fill(){},stroke(){},arc(){},
   rect(x,y,w,h){
     const c=Math.cos(this.angle),s=Math.sin(this.angle),tip=x+w,mid=y+h/2;
-    marks.push({x:c*tip-s*mid,y:s*tip+c*mid,angle:this.angle,length:w});
+    marks.push({x:c*tip-s*mid,y:s*tip+c*mid,angle:this.angle,length:w,baseX:c*x-s*mid,baseY:s*x+c*mid});
   }};
 const api=vm.runInNewContext(core+drawing+';({Arena,C,CARTOGRAPHER,CARTOGRAPHER_PILLAR_TURRET,shuffleBosses,rngFrom,paintCartographerTurret})',{TextEncoder,ctx});
 
@@ -195,11 +195,15 @@ test('a torreta gira durante a recarga e dispara barris alternados no ângulo de
     assert.equal(shot.p.px,shot.p.x);
     assert.equal(shot.p.age,0);
     assert.equal(shot.mount.aim,shot.p.angle);
-    const lengths=marks.map(mark=>mark.length);
+    const resting=marks.slice();
     marks.length=0;
     api.paintCartographerTurret(b.turret,b.spec.guns,b.r,0,b.r*.62,w.time+.035,1);
-    assert.ok(marks[barrel].length<lengths[barrel]);
-    assert.equal(marks[1-barrel].length,lengths[1-barrel]);
+    const moved=marks[barrel],start=resting[barrel];
+    assert.equal(moved.length,start.length);
+    assert.ok((moved.x-start.x)*Math.cos(start.angle)+(moved.y-start.y)*Math.sin(start.angle)<0);
+    assert.ok(Math.abs((moved.x-start.x)-(moved.baseX-start.baseX))<1e-8);
+    assert.ok(Math.abs((moved.y-start.y)-(moved.baseY-start.baseY))<1e-8);
+    assert.deepEqual(marks[1-barrel],resting[1-barrel]);
     w.step(null);
     assert.ok(Math.hypot(shot.p.x-shot.p.px,shot.p.y-shot.p.py)>0);
   }
@@ -270,6 +274,40 @@ test('a torreta do pilar emite pela boca e deixa de existir com seu trecho',()=>
   stepUntil(w,()=>w.maze!==wall);
   assert.equal(b.barrier,null);
   assert.ok(!w.shots.some(p=>p.pillarSource));
+});
+
+test('canhões rígidos giram em 0°, 45° e 90° e o pilar não dispara através da parede',()=>{
+  const w=lab(),b=w.boss;
+  for(const [i,t] of w.tanks.entries())idle(t,b.x+500+i*100,b.y-310);
+  stepUntil(w,()=>w.maze);
+  const barrier=w.maze,pillar=barrier.segments[1];
+  const small=api.CARTOGRAPHER_PILLAR_TURRET;
+  for(const aim of [0,Math.PI/4,Math.PI/2]){
+    const state={aim,previousAim:aim,fired:[]};
+    for(const config of [
+      {guns:b.spec.guns,radius:b.r,x:b.x,y:b.y},
+      {...small,x:pillar.center,y:barrier.y,pillar}
+    ]){
+      marks.length=0;
+      api.paintCartographerTurret(state,config.guns,config.radius,0,config.radius,w.time,1,config.pillar);
+      for(const [i,gun] of config.guns.entries()){
+        const mark=marks[i],length=gun.length*config.radius,offset=gun.offset*config.radius;
+        const {x,y,radius:r}=config;
+        const projected=mark.x*Math.cos(aim)+mark.y*Math.sin(aim);
+        assert.ok(Math.abs(projected-length)<1e-8);
+        assert.ok(Math.abs(mark.baseX+Math.sin(aim)*offset)<1e-8);
+        assert.ok(Math.abs(mark.baseY-Math.cos(aim)*offset)<1e-8);
+        assert.equal(mark.length,length);
+        const fired=w.spawnShot(b,gun,{x,y,r,aim,pillar:config.pillar,cartographerShot:true});
+        if(config.pillar&&aim===0){assert.equal(fired,undefined);continue;}
+        assert.equal(fired,true);
+        const shot=w.shots.at(-1);
+        assert.ok(Math.hypot(shot.x-x-mark.x,shot.y-y-mark.y)<1e-8);
+        assert.equal(shot.angle,aim);
+        assert.equal(barrier.hit(shot.x,shot.y,shot.x,shot.y,shot.r),null);
+      }
+    }
+  }
 });
 
 test('ameaças nos lados opostos produzem deslocamentos opostos',()=>{

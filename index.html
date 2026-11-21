@@ -1754,20 +1754,19 @@ const CARTOGRAPHER_PILLAR_HP=135, CARTOGRAPHER_WARNING=1.5, CARTOGRAPHER_WALL_TI
 const CARTOGRAPHER_PAUSE=2, CARTOGRAPHER_SLIDE=1.8, CARTOGRAPHER_END_ROUTE=425;
 const CARTOGRAPHER_TURN=2.8, CARTOGRAPHER_SHOT_GAP=.53;
 const CARTOGRAPHER_PILLAR_TURRET={radius:15,range:245,gap:1.12,
-  guns:[gun(0,{width:.55,speed:.63,damage:.60,pen:.65,life:.61,recoil:0,spread:0})]};
+  // 58.5 units clears the expanded square even along its diagonal.
+  guns:[gun(0,{length:3.9,width:.55,speed:.63,damage:.60,pen:.65,life:.61,recoil:0,spread:0})]};
 function cartographerTurret(aim,ready){return {aim,previousAim:aim,ready,barrel:0,fired:[]};}
 function turretRecoil(radius,time,fired){
   const age=time-(fired??-Infinity);
   return age>0&&age<.14?radius*.12*Math.min(age/.035,(.14-age)/.105):0;
 }
-function barrelGeometry(g,radius,angle,pillar){
-  const width=radius*g.width;
-  const tip=pillar?(pillar.pillar.w/2+width*.5+3)/Math.max(Math.abs(Math.cos(angle)),Math.abs(Math.sin(angle))):radius*g.length;
-  return {width,tip,offset:radius*g.offset};
+function barrelGeometry(g,radius){
+  return {width:radius*g.width,tip:radius*g.length,offset:radius*g.offset};
 }
 function gunMuzzle(mount,g,radius,shotRadius){
   const angle=mount.aim+g.angle,cos=Math.cos(angle),sin=Math.sin(angle);
-  const {tip,offset}=barrelGeometry(g,radius,angle,mount.pillar);
+  const {tip,offset}=barrelGeometry(g,radius);
   const length=tip+(g.kind==="decadeBullet"?shotRadius:0);
   return {angle,cos,sin,x:mount.x+cos*length-sin*offset,y:mount.y+sin*length+cos*offset};
 }
@@ -4216,6 +4215,7 @@ class Arena {
     const radius=mount.r??t.r;
     const r=g.kind==="trap"?radius*g.width*.69:radius*g.width*(g.count>1?.35:.5);
     let {angle:a,cos:ca,sin:sa,x,y}=gunMuzzle(mount,g,radius,r);
+    if(mount.pillar&&this.maze?.hit(x,y,x,y,r)!=null)return;
     const speed=bulletSpeed(t,g);
     const isDrone=isSpawnedDrone(g.kind);
     const blockedAtBase=this.baseImpact(t,mount.x,mount.y,x,y,r);
@@ -7306,10 +7306,10 @@ function poly(cx,cy,r,sides,turn,context=ctx){
 }
 function circle(x,y,r,context=ctx){context.beginPath();context.arc(x,y,r,0,TAU);}
 function paint(fill,stroke="#273c3292",width=2.5,context=ctx){context.fillStyle=fill;context.fill();context.strokeStyle=stroke;context.lineWidth=width;context.stroke();}
-function paintAutoBarrel(context,g,radius,aim,recoil,line,pillar=null){
-  const {width,tip,offset}=barrelGeometry(g,radius,aim+g.angle,pillar);
+function paintAutoBarrel(context,g,radius,line,start=0,shorten=0){
+  const {width,tip,offset}=barrelGeometry(g,radius);
   context.save();context.rotate(g.angle);context.beginPath();
-  context.rect(0,offset-width/2,tip-recoil,width);
+  context.rect(start,offset-width/2,tip-shorten,width);
   paint("#999999","#737373",line,context);context.restore();
 }
 function paintAutoMount(context,radius,line){
@@ -7319,7 +7319,7 @@ function paintCartographerTurret(turret,guns,radius,hullAim,hub,time,blend,pilla
   const aim=turret.previousAim+angleDelta(turret.aim,turret.previousAim)*blend;
   const line=pillar?2.8:5;
   ctx.save();ctx.rotate(aim-hullAim);
-  for(const [i,g] of guns.entries())paintAutoBarrel(ctx,g,radius,aim,turretRecoil(radius,time,turret.fired[i]),line,pillar);
+  for(const [i,g] of guns.entries())paintAutoBarrel(ctx,g,radius,line,-turretRecoil(radius,time,turret.fired[i]));
   paintAutoMount(ctx,hub,line);
   ctx.restore();
 }
@@ -7479,7 +7479,7 @@ function paintTankBody(ctx,t,x,y,selected,time,spinTime,color){
       ctx.save();
       ctx.translate(Math.cos(outward)*r*AUTO_MOUNT_OFFSET,Math.sin(outward)*r*AUTO_MOUNT_OFFSET);
       ctx.rotate(aim-t.aim);
-      paintAutoBarrel(ctx,g,radius,aim,recoil,2.8);
+      paintAutoBarrel(ctx,g,radius,2.8,0,recoil);
       paintAutoMount(ctx,radius,2.8);
       ctx.restore();
     }
