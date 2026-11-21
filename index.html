@@ -1751,6 +1751,7 @@ function slideAlongWalls(field,e,x,y,startX,startY){
 }
 
 const CARTOGRAPHER_PILLAR_HP=135, CARTOGRAPHER_WARNING=1.5, CARTOGRAPHER_WALL_TIME=7;
+const CARTOGRAPHER_PAUSE=2, CARTOGRAPHER_SLIDE=1.8, CARTOGRAPHER_END_ROUTE=425;
 class CartographerBarrier {
   constructor(boss,size,time){
     this.y=boss.y-190;
@@ -1758,7 +1759,7 @@ class CartographerBarrier {
     this.rects=[]; // Static Maze tiles are rendered separately from this pattern.
     this.mirrored=boss.hp<boss.spec.hp/2;
     this.gapX=boss.x+(this.mirrored?105:-105);
-    this.gates=[boss.x-425,this.gapX,boss.x+425];
+    this.gates=[boss.x-CARTOGRAPHER_END_ROUTE,this.gapX,boss.x+CARTOGRAPHER_END_ROUTE];
     this.starts=time+CARTOGRAPHER_WARNING;
     this.ends=null;
     this.revision=0;
@@ -3703,7 +3704,8 @@ class Arena {
     }
     if(spec===FALLEN_OVERLORD)Object.assign(this.boss,{aim:angle+Math.PI/8,ports:new Uint8Array(4),
       cruiseAngle:angle-Math.PI/2,phase:"ronda",target:null,polygons:[],nextDrone:this.time+.125});
-    if(spec===CARTOGRAPHER)Object.assign(this.boss,{aim:-Math.PI/2,stats:Array(8).fill(0),nextBarrier:this.time+.25,nextVolley:this.time+.9});
+    if(spec===CARTOGRAPHER)Object.assign(this.boss,{aim:-Math.PI/2,stats:Array(8).fill(0),barrierHomeX:x,
+      nextBarrier:this.time+.25,nextVolley:this.time+.9});
     if(spec===TREE_TOPPER||spec===DECADE)Object.assign(this.boss,{
       stats:[0,0,0,0,0,0,0,0],turrets:Array.from({length:spec===TREE_TOPPER?5:1},(_,i)=>({aim:angle+i*TAU/5,ready:this.time+i*.16})),
       nextDeploy:this.time+1,deployerIndex:0,target:null
@@ -3728,9 +3730,26 @@ class Arena {
       for(const p of this.shots)if(p.cartographerRoute)delete p.cartographerRoute;
     }
     b.barrier=null;
+    b.barrierSlide=null;
+  }
+  startCartographerPause(b){
+    this.clearCartographerBarrier(b);
+    const margin=CARTOGRAPHER_END_ROUTE+b.r;
+    const side=clamp(b.barrierHomeX+b.direction*2*b.r,margin,this.size-margin);
+    const to=Math.abs(b.x-b.barrierHomeX)<.01?side:b.barrierHomeX;
+    b.barrierSlide={from:b.x,to,started:this.time};
+    b.nextBarrier=this.time+CARTOGRAPHER_PAUSE;
   }
   advanceCartographer(b){
     const now=this.time;
+    b.px=b.x;b.py=b.y;
+    const slide=b.barrierSlide;
+    if(slide){
+      const t=clamp((now-slide.started)/CARTOGRAPHER_SLIDE,0,1);
+      b.x=slide.from+(slide.to-slide.from)*t*t*(3-2*t);
+      if(t===1)b.barrierSlide=null;
+    }
+    b.vx=(b.x-b.px)/DT;
     if(now>=b.nextBarrier&&!b.barrier){
       b.barrier=new CartographerBarrier(b,this.size,now);
       this.note("Cartógrafo está marcando uma barreira");
@@ -3739,9 +3758,9 @@ class Arena {
     if(barrier?.ends===null&&now>=barrier.starts){
       const occupied=this.tanks.some(t=>t.alive&&barrier.hit(t.x,t.y,t.x,t.y,t.r+3)!==null);
       if(!occupied){barrier.ends=now+CARTOGRAPHER_WALL_TIME;this.maze=barrier;}
-      else if(now>=barrier.starts+1){this.clearCartographerBarrier(b);b.nextBarrier=now+2;}
+      else if(now>=barrier.starts+1)this.startCartographerPause(b);
     }else if(barrier?.ends!=null&&now>=barrier.ends){
-      this.clearCartographerBarrier(b);b.nextBarrier=now+2;
+      this.startCartographerPause(b);
     }
     if(now<b.nextVolley)return;
     let target=null,distance=b.spec.range;
@@ -7871,14 +7890,12 @@ function paintCartographerBarrier(barrier,zoom){
     const {pillar,walls}=segment;
     if(warning){
       ctx.strokeStyle="#8e502a";ctx.lineWidth=2.2/zoom;ctx.setLineDash([10/zoom,6/zoom]);
-      const left=walls[0].x,right=walls[1].x+walls[1].w;
-      ctx.strokeRect(left,pillar.y,right-left,pillar.h);
-      ctx.strokeRect(pillar.x+4,pillar.y+4,pillar.w-8,pillar.h-8);
+      for(const rect of [...walls,pillar])ctx.strokeRect(rect.x,rect.y,rect.w,rect.h);
     }else{
       ctx.lineWidth=2.5/zoom;
       ctx.fillStyle="#82998b";ctx.strokeStyle="#577064";
       for(const wall of walls){ctx.fillRect(wall.x,wall.y,wall.w,wall.h);ctx.strokeRect(wall.x,wall.y,wall.w,wall.h);}
-      ctx.fillStyle="#a2b4ac";ctx.strokeStyle="#475e55";
+      ctx.fillStyle=CARTOGRAPHER.color;ctx.strokeStyle="#354c5b";
       ctx.fillRect(pillar.x,pillar.y,pillar.w,pillar.h);ctx.strokeRect(pillar.x,pillar.y,pillar.w,pillar.h);
       if(segment.hp<CARTOGRAPHER_PILLAR_HP){
         ctx.fillStyle="#475e55";ctx.fillRect(pillar.x+9,pillar.y+pillar.h+7,pillar.w-18,5);

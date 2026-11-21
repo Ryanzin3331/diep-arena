@@ -6,6 +6,7 @@ No **Laboratório**, selecione **Cartógrafo** em **Chefe do desafio** e clique 
 
 - O contorno tracejado avisa 1,5 s antes de subir. A abertura tem 150 unidades e também dá para contornar as extremidades. Se um casco ocupar o traçado, o chefe adia a construção por até um segundo e cancela o ciclo se o espaço continuar ocupado.
 - Paredes e pilares bloqueiam cascos e projéteis. Cada pilar tem 135 HP. Destruí-lo com tiros derruba o trecho que ele sustenta. A sobra expira depois de sete segundos e é removida quando o encontro acaba.
+- Na pausa de dois segundos após a expiração ou o cancelamento, o chefe desliza um diâmetro em 1,8 s e para antes do próximo aviso. Alterna entre a posição inicial e um ponto lateral, com espaço para contornar as duas extremidades. O tracejado marca o contorno exato das paredes e dos pilares a partir da nova posição.
 - O Cartógrafo tem 1.350 HP e usa projéteis comuns. A próxima barreira avisada abaixo de 675 HP espelha a abertura da esquerda para a direita.
 - Os bots aproveitam as passagens e podem atirar num pilar acessível enquanto se deslocam. A rota é mantida em cache por até 0,65 s. A destruição de um trecho invalida o cache do traçado.
 
@@ -22,4 +23,4 @@ Abra o [cenário local](http://127.0.0.1:8770/cartografo-fixture.html). Você co
 
 A seleção do Laboratório e o cenário jogável foram conferidos no Chromium. A silhueta, a grade, o aviso e a passagem ficaram legíveis com zoom afastado e em viewport de 390 px. Nessa viewport, tiros manuais derrubaram um pilar e reduziram a vida do chefe abaixo de 50%. O Destroyer atravessou a segunda abertura com a barreira ativa.
 
-As regressões Node cobrem aviso, ocupação por tanques, colisão de cascos e projéteis, destruição parcial, espelhamento, expiração, término do encontro e um bot que atravessa a barreira ativa e causa dano ao Cartógrafo. A rotação de chefes do FFA segue com o mesmo catálogo.
+As regressões Node cobrem aviso, ocupação por tanques, colisão de cascos e projéteis, destruição parcial, espelhamento, expiração, término do encontro e um bot que atravessa a barreira ativa e causa dano ao Cartógrafo. A revisão de movimento confirmou dois ciclos consecutivos, saídas livres e deslizamento após cancelamento por ocupação. No Chromium, conferi o deslizamento entre os ciclos, o alinhamento do segundo tracejado com a parede erguida e os pilares azul-acinzentados com zoom afastado. A rotação de chefes do FFA segue com o mesmo catálogo.

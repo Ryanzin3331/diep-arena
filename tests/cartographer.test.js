@@ -101,3 +101,57 @@ test('a barreira é removida se os dois desafiantes caírem',()=>{
   assert.equal(w.maze,null);
   assert.equal(b.barrier,null);
 });
+
+test('entre dois ciclos desliza um diâmetro e congela o traçado no aviso e na barreira',()=>{
+  const w=lab(),b=w.boss,home=b.x,y=b.y;
+  for(const [i,t] of w.tanks.entries())idle(t,home-650-i*100,y-300);
+  stepUntil(w,()=>w.maze);
+  const first=w.maze;
+  assert.equal(b.x,home);
+  stepUntil(w,()=>!b.barrier);
+  const started=w.time;
+  stepUntil(w,()=>w.time>=started+1);
+  assert.ok(Math.abs(b.x-home)>0&&Math.abs(b.x-home)<2*b.r);
+  assert.equal(b.barrier,null);
+  stepUntil(w,()=>!b.barrierSlide);
+  const stop=b.x;
+  assert.equal(Math.abs(stop-home),2*b.r);
+  assert.equal(b.barrier,null);
+  stepUntil(w,()=>b.barrier);
+  const second=b.barrier, pattern=JSON.stringify(second.segments);
+  assert.notEqual(second,first);
+  assert.equal(second.gapX,stop-105);
+  assert.equal(b.x,stop);
+  assert.equal(b.vx,0);
+  stepUntil(w,()=>w.maze);
+  assert.equal(w.maze,second);
+  assert.equal(JSON.stringify(second.segments),pattern);
+  assert.equal(b.x,stop);
+  assert.equal(b.y,y);
+  for(const gate of second.gates){
+    const radius=w.tanks[0].r;
+    assert.ok(gate>=radius&&gate<=w.size-radius);
+    assert.equal(second.hit(gate,second.y-100,gate,second.y+100,radius),null);
+  }
+});
+
+test('uma construção cancelada por ocupação inicia o mesmo deslizamento sem bloquear o tanque',()=>{
+  const w=lab(),b=w.boss,home=b.x,y=b.y-190,[occupant,other]=w.tanks;
+  idle(occupant,home+105,y);
+  idle(other,home-650,y);
+  occupant.protect=other.protect=10;
+  stepUntil(w,()=>b.barrier);
+  const first=b.barrier;
+  for(let i=0;i<240&&!b.barrierSlide;i++){
+    w.step(null);
+    assert.equal(w.maze,null);
+  }
+  assert.ok(b.barrierSlide);
+  assert.equal(first.ends,null);
+  assert.ok(w.time>=first.starts+1);
+  assert.equal(occupant.y,y);
+  idle(occupant,home-550,y);
+  stepUntil(w,()=>w.maze);
+  assert.equal(Math.abs(b.x-home),2*b.r);
+  assert.equal(w.maze.gapX,b.x-105);
+});
