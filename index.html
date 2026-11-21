@@ -57,6 +57,9 @@ button,select,input{font:inherit}button,select,input{border:1px solid var(--line
 .panel-nav{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;padding:4px;background:#131b14;border:1px solid var(--line);border-radius:9px}
 .panel-nav button{font-size:11px;min-height:36px;padding:4px 3px;border-color:transparent;background:transparent}
 .panel-nav button[aria-pressed="true"]{background:var(--plate);color:var(--green);border-color:#708b60}
+.panel-nav.with-learning{grid-template-columns:repeat(4,minmax(0,1fr))}
+.learning-skill{margin-top:8px;border:1px solid var(--line);border-radius:7px;padding:8px}
+.learning-skill summary{cursor:pointer;font-size:12px}.learning-skill summary span{display:block;color:var(--muted);margin-top:3px}.learning-skill meter{width:100%;height:7px;display:block;margin-top:5px}.learning-skill p{margin:7px 0 0;font-size:11px;line-height:1.4}
 .dom-hud{top:12px;left:50%;transform:translateX(-50%);display:grid;grid-template-columns:repeat(4,minmax(30px,1fr));gap:4px;background:#17231aeb;padding:4px;border:1px solid #526850;border-radius:8px}
 .dom-hud button{min-width:34px;min-height:30px;padding:3px 5px;border:1px solid #6e7d72;font-size:11px;color:var(--owner);background:#24332c;font-weight:750}
 .dom-hud button[aria-pressed="true"]{border-color:var(--owner)}.dom-hud .bar{height:3px;margin:3px 0 0}.dom-hud .bar i{background:var(--owner)}.arena.replaying .dom-hud{display:none}
@@ -591,7 +594,7 @@ button{-webkit-tap-highlight-color:transparent}
       <div class="footer"><span id="counts">Arena FFA</span><span id="tip">Clique em um tanque ou no placar para acompanhar.</span><span class="mobile-camera-tip">Arraste para mover · Pinça para dar zoom</span></div>
     </section>
     <aside class="side" aria-label="Painéis da partida">
-      <nav class="panel-nav" id="panelNav" aria-label="Painéis"><button id="panelArena" aria-pressed="true" aria-controls="leadersCard inspectCard">Arena</button><button id="panelHistory" aria-pressed="false" aria-controls="historyCard">Histórico</button><button id="panelConfig" aria-pressed="false" aria-controls="configCard">Configurar</button></nav>
+      <nav class="panel-nav" id="panelNav" aria-label="Painéis"><button id="panelArena" aria-pressed="true" aria-controls="leadersCard inspectCard">Arena</button><button id="panelLearning" aria-pressed="false" aria-controls="learningCard" hidden>Aprendizado</button><button id="panelHistory" aria-pressed="false" aria-controls="historyCard">Histórico</button><button id="panelConfig" aria-pressed="false" aria-controls="configCard">Configurar</button></nav>
       <section class="card" id="leadersCard"><div class="sidebar-title"><h2>Placar</h2><small id="leaderCount"></small></div>
         <div class="team-scores" id="convoyScores" aria-label="Avanço por equipe" hidden>
           <div style="color:#8bd5f5"><span>Azul</span><b id="blueConvoy">—</b></div>
@@ -613,6 +616,7 @@ button{-webkit-tap-highlight-color:transparent}
         <p id="survivalResult" hidden></p><div class="leader-list" id="leaders"></div>
       </section>
       <section class="card" id="inspectCard"><div class="sidebar-title"><h2 id="inspectTitle">Em foco</h2><small id="inspectType"></small></div><div id="inspectBody"></div></section>
+      <section class="card" id="learningCard" aria-labelledby="learningTitle" hidden><div class="sidebar-title"><h2 id="learningTitle">Aprendizado</h2></div><div id="learningBody"></div></section>
       <section class="card history-card" id="historyCard" aria-labelledby="historyTitle" hidden>
         <div class="sidebar-title"><h2 id="historyTitle">Histórico da partida</h2><small id="historyCount"></small></div>
         <div class="history-tabs" role="group" aria-label="Eventos da partida"><button id="historyAll" aria-pressed="true">Histórico</button><button id="historyBest" aria-pressed="false">Melhores momentos</button></div>
@@ -1086,6 +1090,85 @@ function pruneThreatShots(memory,time){
 }
 // Evidence belongs to an opponent and a visible threat, not its internal class.
 function tacticalEvent(m,time,text){if(!m)return;m.tacticalEvents??=[];m.tacticalEvents.push({time,text});if(m.tacticalEvents.length>12)m.tacticalEvents.shift();}
+const CARE_START=6, CARE_EXTENSION=2, CARE_RESELECT=3;
+function chooseCare(memory,window,gap){
+  const average=memory.careResults;
+  if(average?.count&&average.count%5===4&&memory.careExplored!==average.count)return {choice:"Insistir",basis:"exploração"};
+  if(average?.count>=2)return {choice:average.score/average.count>0?"Insistir":"Abandonar",basis:"histórico"};
+  const pressure=window.dealt>=6&&window.dealt>window.taken||window.taken===0&&window.gap-gap>42;
+  return {choice:pressure?"Insistir":"Abandonar",basis:"regra inicial"};
+}
+function finishCare(t,time,outcome){
+  const a=t.careWindow;
+  t.careWindow=null;
+  if(!a?.extension)return;
+  const elapsed=Math.min(time,a.until)-a.started;
+  // A veto with no interaction supplies no evidence about the extension.
+  if(elapsed<.25||outcome==="interrompida"&&a.dealt+a.taken===0)return;
+  const score=clamp((a.dealt-a.taken)/Math.max(1,hull(t))-.055*elapsed+
+    (outcome==="eliminou o rival"&&a.dealt>0?.30:outcome==="foi eliminado"?-.30:0),-1,1);
+  const m=t.learning, results=m.careResults??={count:0,score:0,seconds:0,dealt:0,taken:0};
+  results.count++;results.score+=score;results.seconds+=elapsed;results.dealt+=a.dealt;results.taken+=a.taken;
+  m.lastCareResult={outcome,elapsed,dealt:a.dealt,taken:a.taken,score};
+  tacticalEvent(m,time,"Avaliou Cuidado · "+outcome+" · "+score.toFixed(2));
+}
+function careDanger(t,hp,pressure,crasher,risks){
+  return hp<.55||pressure>=2||Boolean(crasher)||risks.some(p=>{
+    const x=p.x-t.x,y=p.y-t.y;
+    return impact(x,y,(p.vx-t.vx)*.22,(p.vy-t.vy)*.22,t.r+p.r+8)!==null;
+  });
+}
+function careTarget(w,t,enemy,alternate,hp,pressure,crasher,risks){
+  if(!t.learning||!localDiscoveryArena(w))return enemy;
+  const m=t.learning,a=t.careWindow;
+  if(t.careCooldown&&w.time>=t.careCooldown.until)t.careCooldown=null;
+  if(a&&a.rival!==enemy)finishCare(t,w.time,!a.rival.alive&&a.rival.killer===t?"eliminou o rival":"perdeu o rival");
+  if(!enemy)return enemy;
+  const cooling=t.careCooldown?.rival===enemy&&w.time<t.careCooldown.until;
+  const due=a?.rival===enemy&&w.time>=a.until;
+  if(!cooling&&!due&&!(a?.rival===enemy&&a.extension))return enemy;
+  const gap=Math.hypot(enemy.x-t.x,enemy.y-t.y);
+  if(careDanger(t,hp,pressure,crasher,risks)){
+    if(a?.rival===enemy)finishCare(t,w.time,"interrompida");
+    if(m.lastCareChoice?.basis!=="emergência"){
+      m.lastCareChoice={choice:"Priorizar defesa",basis:"emergência",time:w.time};
+      tacticalEvent(m,w.time,"Cuidado · emergência priorizada");
+    }
+    return enemy;
+  }
+  if(cooling&&gap>=310)return alternate;
+  if(!due)return enemy;
+  if(a.extension)finishCare(t,w.time,"janela concluída");
+  if(gap<310||enemy.protect>0){t.careWindow=null;return enemy;}
+  const choice=chooseCare(m,a,gap);
+  if(choice.basis==="exploração")m.careExplored=m.careResults.count;
+  m.lastCareChoice={...choice,time:w.time,elapsed:w.time-a.started,dealt:a.dealt,taken:a.taken,gapChange:a.gap-gap};
+  if(choice.basis==="histórico"){
+    m.lastCareChoice.evaluated=m.careResults.count;
+    m.lastCareChoice.average=m.careResults.score/m.careResults.count;
+  }
+  tacticalEvent(m,w.time,"Cuidado · "+choice.choice.toLowerCase()+" · "+choice.basis);
+  if(choice.choice==="Abandonar"){
+    t.careWindow=null;
+    t.careCooldown={rival:enemy,until:w.time+CARE_RESELECT};
+    return alternate;
+  }
+  t.careWindow={rival:enemy,started:w.time,until:w.time+CARE_EXTENSION,gap,dealt:0,taken:0,extension:true};
+  return enemy;
+}
+function trackCare(w,t,enemy,advancing){
+  if(!t.learning||!localDiscoveryArena(w))return;
+  const a=t.careWindow;
+  if(!advancing){if(a)finishCare(t,w.time,"interrompida");return;}
+  if(!a)t.careWindow={rival:enemy,started:w.time,until:w.time+CARE_START,
+    gap:Math.hypot(enemy.x-t.x,enemy.y-t.y),dealt:0,taken:0};
+}
+function careDamage(t,rival,dealt,taken,shot,time){
+  const a=t.careWindow;
+  if(!a||a.rival!==rival||time>a.until)return;
+  if(!shot||shot.careWindow===a)a.dealt+=Math.max(0,dealt);
+  a.taken+=Math.max(0,taken);
+}
 function chooseDodgeTiming(memory){
   const rows=memory?.dodgeResults;
   if(!rows||!rows[0].count)return 0;
@@ -1119,7 +1202,7 @@ function dodgeContact(w,t,p,command){
   }
   return null;
 }
-function beginDodgeAttempt(w,t,p,timing,straight,best){
+function beginDodgeAttempt(w,t,p,timing,straight,best,basis){
   if(t.dodgeAttempt||t.protect>0||t.dodgeSeen?.has(p))return;
   const dx=best.x-straight.x,dy=best.y-straight.y;
   if(Math.hypot(dx,dy)<1)return;
@@ -1129,7 +1212,7 @@ function beginDodgeAttempt(w,t,p,timing,straight,best){
   if(better!==null&&better<=contact)return;
   t.dodgeSeen??=new WeakSet();
   t.dodgeSeen.add(p);
-  t.dodgeAttempt={p,timing,until:w.time+1,x:t.x,y:t.y,vx:t.vx,vy:t.vy,kx:t.kx,ky:t.ky,
+  t.dodgeAttempt={p,timing,basis,until:w.time+1,x:t.x,y:t.y,vx:t.vx,vy:t.vy,kx:t.kx,ky:t.ky,
     straight,dx,dy,executed:false,crossed:false};
 }
 function finishDodgeAttempt(t,safe){
@@ -1153,6 +1236,10 @@ function advanceDodgeReference(w,t){
   if(first){
     a.executed=(t.x-a.x)*a.dx+(t.y-a.y)*a.dy>.01*Math.hypot(a.dx,a.dy);
     if(!a.executed)t.dodgeAttempt=null;
+    else {
+      t.learning.dodgeChoice={choice:a.timing,basis:a.basis};
+      (t.learning.dodgeTrials??=[0,0])[a.timing]++;
+    }
   }
 }
 function resolveDodgeAttempt(w,t){
@@ -1275,6 +1362,11 @@ function respawnLearning(previous,adaptiveBuilds){
   if(previous.lastTacticalResult)memory.lastTacticalResult={...previous.lastTacticalResult};
   if(previous.tacticalEvents)memory.tacticalEvents=previous.tacticalEvents.map(e=>({...e}));
   if(previous.dodgeResults)memory.dodgeResults=previous.dodgeResults.map(row=>({...row}));
+  if(previous.dodgeTrials)memory.dodgeTrials=previous.dodgeTrials.slice();
+  for(const key of ["dodgeChoice","heavyChoice","swarmChoice","careResults","lastCareChoice","lastCareResult"]){
+    if(previous[key])memory[key]={...previous[key]};
+  }
+  if(previous.careExplored!==undefined)memory.careExplored=previous.careExplored;
   if(previous.threats)memory.threats=new Map(previous.threats);
   if(previous.swarmThreats)memory.swarmThreats=new Map(previous.swarmThreats);
   if(previous.swarmEpisodes)memory.swarmEpisodes=new Map(previous.swarmEpisodes);
@@ -3259,6 +3351,7 @@ class Arena {
   }
   kill(e,by,cause){
     if(!e.alive) return;
+    if(e.careWindow)finishCare(e,this.time,by===e.careWindow.rival?"foi eliminado":"interrompida");
     if(e.type==="tower"){
       if(this.closing?.active&&by?.type==="closer")this.destroyTowerDuringClosing(e,by);
       else this.transferTower(e,by);
@@ -3948,6 +4041,8 @@ class Arena {
       r,
       life:g.kind===FACTORY_MINION?Infinity:g.battleshipWing!=null?g.life:isDrone?90:1.35*g.life,
       damage:(7+3*t.stats[5])*g.damage,dur:(2+1.5*t.stats[4])*g.pen,age:0,speed};
+    const care=mount.parent?mount.parent.careWindow:t.careWindow;
+    if(care)child.careWindow=care;
     if(g.kind===SKIMMER_MISSILE){
       child.spin=t.intent.alt?-1:1;
       child.sideSpeed=bulletSpeed(t,skimmerSide);
@@ -4692,6 +4787,8 @@ class Arena {
     if(!(a.learning||b.learning))return;
     const dealt=Math.min(aDamage,b.hp),taken=Math.min(bDamage,a.hp);
     if(localDiscoveryArena(this)){
+      if(seeB&&a.careWindow)careDamage(a,b,dealt,taken,shot,this.time);
+      if(seeA&&b.careWindow)careDamage(b,a,taken,dealt,null,this.time);
       const victim=b.learning?.swarmAttempt,attacker=a.learning?.swarmAttempt;
       if(dealt>0&&seeA&&victim?.rivalId===a.id&&this.time<=victim.until)victim.taken+=dealt;
       if(dealt>0&&seeB&&attacker&&shot?.swarmAttempt===attacker&&attacker.rivalId===b.id&&this.time<=attacker.until){
@@ -5449,7 +5546,7 @@ function botThink(w,t){
   const hp=t.hp/hull(t);
   const nearby=w.sense.nearby(t.x,t.y,vision);
   const maze=w.maze;
-  let enemy=null, enemyCost=Infinity, food=null, foodValue=-Infinity, pressure=0;
+  let enemy=null, enemyCost=Infinity, alternate=null, alternateCost=Infinity, food=null, foodValue=-Infinity, pressure=0;
   let crasher=null, danger=0;
   let boss=null, bossDrones=0, incoming=null, droneGap=Infinity;
   let defenderTraps=0;
@@ -5508,7 +5605,8 @@ function botThink(w,t){
       const pursuing=overseer?.target===e&&w.time<overseer.until&&d<=420&&
         !covered&&e.protect<=0&&hp>=.55&&t.drones>=overseer.minimum&&e.hp/hull(e)<=.40;
       const cost=k-(locked?230:pursuing?130:0)-(w.rivalries?w.rivalTargetBonus(t,e,d,hp,covered):0);
-      if(cost<enemyCost){enemyCost=cost;enemy=e;}
+      if(cost<enemyCost){alternateCost=enemyCost;alternate=enemy;enemyCost=cost;enemy=e;}
+      else if(cost<alternateCost){alternateCost=cost;alternate=e;}
     }else if(e.type==="boss"){
       boss=e;
       if(d<t.r+e.r+250)forms.push(e);
@@ -5547,6 +5645,7 @@ function botThink(w,t){
   if(shipTarget?.alive&&shipTarget.team!==t.team&&shipTarget.protect<=0&&
     sq(t.x-shipTarget.x)+sq(t.y-shipTarget.y)<Math.min(vision,575)**2&&
     (!enemy||enemy===shipTarget||sq(t.x-enemy.x)+sq(t.y-enemy.y)>185**2))enemy=shipTarget;
+  if(t.careWindow||t.careCooldown)enemy=careTarget(w,t,enemy,alternate,hp,pressure,crasher,risks);
   if(t.learning?.heavyAttempt&&(!enemy||t.learning.heavyAttempt.rivalId!==enemy.id||!perceived(w,t,enemy)))finishHeavyAttempt(t.learning,w.time);
   if(t.learning?.swarmAttempt&&(!enemy||t.learning.swarmAttempt.rivalId!==enemy.id||!perceived(w,t,enemy)))finishSwarmAttempt(t.learning,w.time);
   t.enemy=enemy;t.food=food;
@@ -6391,7 +6490,7 @@ function botThink(w,t){
     if(!valid)finishHeavyAttempt(m,w.time);
     else if(!m.heavyAttempt){
       m.heavyTrials=(m.heavyTrials??0)+1;
-      m.heavyAttempt={id:m.heavyTrials,rivalId:enemy.id,choice:heavyCandidate.choice,basis:tacticalBasis(m.heavyTrials-1,m.heavyResults),dealt:0,taken:0,until:w.time+2};tacticalEvent(m,w.time,"Iniciou tiro pesado · "+(heavyCandidate.choice===0?"flanco":"distância")+" · "+m.heavyAttempt.basis);
+      m.heavyAttempt={id:m.heavyTrials,rivalId:enemy.id,choice:heavyCandidate.choice,basis:tacticalBasis(m.heavyTrials-1,m.heavyResults),dealt:0,taken:0,until:w.time+2};m.heavyChoice={choice:m.heavyAttempt.choice,basis:m.heavyAttempt.basis};tacticalEvent(m,w.time,"Iniciou tiro pesado · "+(heavyCandidate.choice===0?"flanco":"distância")+" · "+m.heavyAttempt.basis);
     }
   }
   if(t.learning&&localDiscoveryArena(w)){
@@ -6399,14 +6498,20 @@ function botThink(w,t){
       Math.abs(targetX-swarmCandidate.x)<1e-6&&Math.abs(targetY-swarmCandidate.y)<1e-6&&Math.abs(bestOffset)<1e-9&&Math.hypot(bestX,bestY)>.4;
     if(!valid)finishSwarmAttempt(m,w.time);
     else{
-      if(!m.swarmAttempt){m.swarmTrials=(m.swarmTrials??0)+1;m.swarmAttempt={id:m.swarmTrials,rivalId:enemy.id,choice:swarmCandidate.choice,basis:tacticalBasis(m.swarmTrials-1,m.swarmResults),dealt:0,taken:0,threat:false,until:w.time+2};tacticalEvent(m,w.time,"Iniciou enxame · "+(swarmCandidate.choice===0?"afastamento":"lateral")+" · "+m.swarmAttempt.basis);}
+      if(!m.swarmAttempt){m.swarmTrials=(m.swarmTrials??0)+1;m.swarmAttempt={id:m.swarmTrials,rivalId:enemy.id,choice:swarmCandidate.choice,basis:tacticalBasis(m.swarmTrials-1,m.swarmResults),dealt:0,taken:0,threat:false,until:w.time+2};m.swarmChoice={choice:m.swarmAttempt.choice,basis:m.swarmAttempt.basis};tacticalEvent(m,w.time,"Iniciou enxame · "+(swarmCandidate.choice===0?"afastamento":"lateral")+" · "+m.swarmAttempt.basis);}
       if(observedSwarms.has(enemy.profileId))m.swarmAttempt.threat=true;
     }
   }
   if(withoutShot)for(const [p,alternative] of withoutShot){
-    beginDodgeAttempt(w,t,p,dodgeTiming,alternative,{x:bestX*max,y:bestY*max});
+    const rows=t.learning.dodgeResults, count=(rows?.[0].count??0)+(rows?.[1].count??0);
+    const basis=heavyDodgeWindow(t,p,max,0)>.32?"emergência":!count?"regra inicial":
+      !rows[1].count||count%6===0?"exploração":"histórico";
+    beginDodgeAttempt(w,t,p,dodgeTiming,alternative,{x:bestX*max,y:bestY*max},basis);
     if(t.dodgeAttempt)break;
   }
+  const pursuing=tankCombat&&mode===2&&targetEntity===enemy&&eDist>310&&eDist<vision*.85&&enemy.protect<=0&&
+    !t.dodgeAttempt&&((enemy.x-t.x)*bestX+(enemy.y-t.y)*bestY)>eDist*.32;
+  trackCare(w,t,enemy,pursuing);
   t.intent={x:bestX,y:bestY,aim,aimX,aimY,fire,alt,guardDrones,droneCover,droneCutoff};
   if(c.radial){
     t.intent.radialSpin=radialSpin;
@@ -7855,18 +7960,85 @@ function drawMap(target,scene=world,lens=camera){
     if(target?.id===ship.id){mapCtx.strokeStyle="#f3f8db";mapCtx.stroke();}
   }
 }
+function learningPanelAvailable(){return mode==="watch"&&!room;}
+const sidePanels=[["panelArena","arena"],["panelLearning","learning"],["panelHistory","history"],["panelConfig","config"]];
 function setSidePanel(next){
+  if(next==="learning"&&!learningPanelAvailable())next="arena";
   if(sidePanel!==next)side.scrollTop=0;
   sidePanel=next;
-  for(const [id,name] of [["panelArena","arena"],["panelHistory","history"],["panelConfig","config"]]){
+  for(const [id,name] of sidePanels){
     el(id).setAttribute("aria-pressed",String(name===sidePanel));
   }
-  el("leadersCard").hidden=sidePanel!=="arena";
+  el("leadersCard").hidden=sidePanel!=="arena"&&sidePanel!=="learning";
   el("inspectCard").hidden=sidePanel!=="arena"&&el("inspectCard").parentElement!==arenaEl;
+  el("learningCard").hidden=sidePanel!=="learning";
   el("historyCard").hidden=sidePanel!=="history";
   el("configCard").hidden=sidePanel!=="config";
   if(sidePanel==="history")updateHistory();
   if(sidePanel==="config")void refreshMemoryStatus();
+}
+let learningSignature="", learningFocus=null;
+function updateLearningPanel(focus){
+  if(sidePanel!=="learning")return;
+  const body=el("learningBody"),bot=focus?.type==="tank"&&!focus.human?focus:null,m=bot?.learning;
+  const skills=[];
+  if(m){
+    const last=(record,names)=>record?"Última escolha · "+(names?.[record.choice]??record.choice)+" · "+
+      (record.basis==="padrão"?"regra inicial":record.basis):"Nenhuma escolha registrada.";
+    const stat=(value)=>Number(value.toFixed(2)).toLocaleString("pt-BR");
+    const seen=Array.from(m.threats?.values()??[]), swarms=Array.from(m.swarmThreats?.values()??[]);
+    const confirmed=(list)=>list.filter(n=>n>=2).length;
+    skills.push(["Reconhecimento",confirmed(seen)+confirmed(swarms)>0?2:seen.length+swarms.length>0?1:0,[
+      "Tiro pesado · "+seen.length+" rivais observados, "+confirmed(seen)+" com duas ou mais evidências.",
+      "Enxame · "+swarms.length+" rivais observados, "+confirmed(swarms)+" com duas ou mais evidências.",
+      ...(m.tacticalEvents??[]).filter(e=>e.text.startsWith("Reconheceu")).slice(-3).map(e=>clockLabel(e.time)+" · "+e.text)
+    ],["Sem dados","Coletando evidências","Ameaça reconhecida"]]);
+    for(const [title,names,rows,trials,choice] of [
+      ["Esquiva de tiro pesado",["Básica","Antecipada"],m.dodgeResults,m.dodgeTrials,m.dodgeChoice],
+      ["Resposta a tiro pesado",["Flanco","Distância"],m.heavyResults,m.heavyTrials,m.heavyChoice],
+      ["Resposta a enxame",["Afastamento","Lateral"],m.swarmResults,m.swarmTrials,m.swarmChoice]
+    ]){
+      const count=(rows?.[0].count??0)+(rows?.[1].count??0);
+      const attempts=Array.isArray(trials)?trials[0]+trials[1]:trials??0;
+      const both=Boolean(rows?.every(r=>r.count));
+      const dodge=Array.isArray(trials);
+      const preferred=both?(dodge?(rows[1].safe/rows[1].count>rows[0].safe/rows[0].count?1:0):
+        chooseHeavyResponse({heavyTrials:2,heavyResults:rows})):null;
+      skills.push([title,both?2:attempts||count?1:0,[
+        "Grupo · "+(title.includes("enxame")?"Enxame":"Tiro pesado"),
+        "Tentativas iniciadas · "+attempts+". Avaliadas · "+count+".",
+        ...names.map((name,i)=>name+" · "+(rows?.[i].count??0)+" avaliações"+(rows?.[i].count?
+          dodge?", "+rows[i].safe+" desvios":", saldo "+stat(rows[i].sum):"")),
+        ...(both?["Preferência fora da exploração · "+names[preferred]]:[]),last(choice,names)
+      ]]);
+    }
+    const care=m.careResults,previous=m.lastCareResult,choice=m.lastCareChoice;
+    skills.push(["Cuidado em perseguições",care?.count>=2?2:choice||bot.careWindow?1:0,[
+      care?.count>=2?"Preferência fora da exploração · "+(care.score>0?"Insistir":"Abandonar"):"Preferência · regra inicial até duas extensões avaliadas.",
+      "Extensões avaliadas · "+(care?.count??0)+".",
+      ...(care?["Total médio por extensão · "+stat(care.seconds/care.count)+" s, "+stat(care.dealt/care.count)+
+        " de dano causado e "+stat(care.taken/care.count)+" recebido. Saldo médio · "+stat(care.score/care.count)+"."]:[]),
+      last(choice),
+      ...(choice?.evaluated?["A escolha usou "+choice.evaluated+" avaliações com saldo médio de "+stat(choice.average)+"."]:[]),
+      ...(choice?.elapsed===undefined?[]:["Janela anterior · "+stat(choice.elapsed)+" s, "+stat(choice.dealt)+" de dano causado, "+
+        stat(choice.taken)+" recebido e "+stat(choice.gapChange)+" de redução da distância."]),
+      ...(previous?["Última extensão · "+previous.outcome+" em "+stat(previous.elapsed)+" s, "+stat(previous.dealt)+" de dano causado e "+stat(previous.taken)+" recebido."]:[])
+    ]]);
+  }
+  const signature=JSON.stringify([bot?.id,bot?.name,skills]);
+  if(signature===learningSignature)return;
+  learningSignature=signature;
+  const open=learningFocus===bot?.id?new Set(Array.from(body.querySelectorAll("details[open]"),e=>e.dataset.skill)):new Set();
+  learningFocus=bot?.id;
+  if(!m){body.replaceChildren(node("p",bot?"Aprendizado indisponível para este bot.":"Selecione um bot no placar."));return;}
+  const heading=node("h3",bot.name);
+  body.replaceChildren(heading,...skills.map(([title,value,lines,states=["Sem dados","Experimentando","Preferência formada"]])=>{
+    const section=node("details",null,"learning-skill"), summary=node("summary",title),bar=node("meter");
+    section.dataset.skill=title;section.open=open.has(title);
+    bar.max=2;bar.value=value;bar.setAttribute("aria-label",title+" · "+states[value]);
+    summary.append(node("span",states[value]),bar);section.append(summary,...lines.map(line=>node("p",line)));
+    return section;
+  }));
 }
 function node(tag,text,className){
   const e=document.createElement(tag);
@@ -8030,6 +8202,10 @@ function dockStats(alive=mode==="play"&&world.human?.alive&&!pending&&!world.due
 }
 function updateInterface(force=false){
   syncPhoneControls();
+  const showLearning=learningPanelAvailable();
+  el("panelLearning").hidden=!showLearning;
+  el("panelNav").classList.toggle("with-learning",showLearning);
+  if(!showLearning&&sidePanel==="learning")setSidePanel("arena");
   const human=world.human;
   const localPlay=mode==="play"&&!room;
   el("tankColorControls").hidden=!localPlay;
@@ -8527,6 +8703,7 @@ function updateHud(){
     el("xpFill").style.width=(next?clamp((focus.score-cur)/(next-cur),0,1)*100:100)+"%";
   }
   updateInspector(inspected);
+  updateLearningPanel(inspected);
   if(!replay)drawMap(inspected);
   updateHistory();
 }
@@ -8884,7 +9061,7 @@ function enterGuestFullscreen(current){
   });
 }
 for(const id of ["watch","play","lab"]) el(id).onclick=()=>setMode(id);
-for(const [id,name] of [["panelArena","arena"],["panelHistory","history"],["panelConfig","config"]]){
+for(const [id,name] of sidePanels){
   el(id).onclick=()=>{setSidePanel(name);updateInterface();};
 }
 el("enter").onclick=()=>{
