@@ -1715,12 +1715,7 @@ class Maze {
         ??this.center(this.nearestOpen(startX,startY,e.r));
       x+=startX-originX;y+=startY-originY;
     }
-    const dx=x-startX,dy=y-startY, across=this.hit(startX,startY,x,startY,e.r);
-    e.x=across===null?x:startX+dx*Math.max(0,across-.02/Math.max(.02,Math.abs(dx)));
-    if(across!==null){e.vx=0;if(e.kx!==undefined)e.kx=0;}
-    const down=this.hit(e.x,startY,e.x,y,e.r);
-    e.y=down===null?y:startY+dy*Math.max(0,down-.02/Math.max(.02,Math.abs(dy)));
-    if(down!==null){e.vy=0;if(e.ky!==undefined)e.ky=0;}
+    slideAlongWalls(this,e,x,y,startX,startY);
   }
   waypoint(e,x,y,time){
     const r=e.r+.005, size=MAZE_SIZE*MAZE_CELL;
@@ -1744,6 +1739,103 @@ class Maze {
       if(this.hit(e.x,e.y,cx,cy,r)===null)return [cx,cy];
     }
     return this.center(start);
+  }
+}
+function slideAlongWalls(field,e,x,y,startX,startY){
+  const dx=x-startX,dy=y-startY,across=field.hit(startX,startY,x,startY,e.r);
+  e.x=across===null?x:startX+dx*Math.max(0,across-.02/Math.max(.02,Math.abs(dx)));
+  if(across!==null){e.vx=0;if(e.kx!==undefined)e.kx=0;}
+  const down=field.hit(e.x,startY,e.x,y,e.r);
+  e.y=down===null?y:startY+dy*Math.max(0,down-.02/Math.max(.02,Math.abs(dy)));
+  if(down!==null){e.vy=0;if(e.ky!==undefined)e.ky=0;}
+}
+
+const CARTOGRAPHER_PILLAR_HP=135, CARTOGRAPHER_WARNING=1.5, CARTOGRAPHER_WALL_TIME=7;
+const CARTOGRAPHER_PAUSE=2, CARTOGRAPHER_SLIDE=1.8, CARTOGRAPHER_END_ROUTE=425, CARTOGRAPHER_WALL_OFFSET=190;
+const CARTOGRAPHER_TURN=2.8, CARTOGRAPHER_SHOT_GAP=.53;
+const CARTOGRAPHER_PILLAR_TURRET={radius:15,range:245,gap:1.12,
+  // 58.5 units clears the expanded square even along its diagonal.
+  guns:[gun(0,{length:3.9,width:.55,speed:.63,damage:.60,pen:.65,life:.61,recoil:0,spread:0})]};
+function cartographerTurret(aim,ready){return {aim,previousAim:aim,ready,barrel:0,fired:[]};}
+function turretRecoil(radius,time,fired){
+  const age=time-(fired??-Infinity);
+  return age>0&&age<.14?radius*.12*Math.min(age/.035,(.14-age)/.105):0;
+}
+function barrelGeometry(g,radius){
+  return {width:radius*g.width,tip:radius*g.length,offset:radius*g.offset};
+}
+function gunMuzzle(mount,g,radius,shotRadius){
+  const angle=mount.aim+g.angle,cos=Math.cos(angle),sin=Math.sin(angle);
+  const {tip,offset}=barrelGeometry(g,radius);
+  const length=tip+(g.kind==="decadeBullet"?shotRadius:0);
+  return {angle,cos,sin,x:mount.x+cos*length-sin*offset,y:mount.y+sin*length+cos*offset};
+}
+class CartographerBarrier {
+  constructor(boss,size,time){
+    this.y=boss.y-CARTOGRAPHER_WALL_OFFSET;
+    this.size=size;
+    this.rects=[]; // Static Maze tiles are rendered separately from this pattern.
+    this.mirrored=boss.hp<boss.spec.hp/2;
+    this.gapX=boss.x+(this.mirrored?105:-105);
+    this.gates=[boss.x-CARTOGRAPHER_END_ROUTE,this.gapX,boss.x+CARTOGRAPHER_END_ROUTE];
+    this.starts=time+CARTOGRAPHER_WARNING;
+    this.ends=null;
+    this.revision=0;
+    const spans=this.mirrored?[[-340,30],[180,340]]:[[-340,-180],[-30,340]];
+    this.segments=spans.map(([from,to])=>{
+      const left=boss.x+from,right=boss.x+to,center=(left+right)/2;
+      return {hp:CARTOGRAPHER_PILLAR_HP,center,turret:cartographerTurret(-Math.PI/2,Infinity),
+        pillar:{x:center-34,y:this.y-34,w:68,h:68},
+        walls:[{x:left,y:this.y-16,w:center-34-left,h:32},{x:center+34,y:this.y-16,w:right-center-34,h:32}]};
+    });
+  }
+  firstContact(x,y,tx,ty,r=0,ownPillar=null){
+    let nearest=null;
+    for(const segment of this.segments){
+      if(segment.hp<=0)continue;
+      const pillar=segment===ownPillar?null:rectImpact(segment.pillar,x,y,tx,ty,r);
+      if(pillar&&(!nearest||pillar.time<nearest.time))nearest={time:pillar.time,pillar:segment};
+      for(const wall of segment.walls){
+        const hit=rectImpact(wall,x,y,tx,ty,r);
+        if(hit&&(!nearest||hit.time<nearest.time))nearest={time:hit.time,pillar:null};
+      }
+    }
+    return nearest;
+  }
+  hit(x,y,tx,ty,r=0){return this.firstContact(x,y,tx,ty,r)?.time??null;}
+  move(e,x,y){
+    let {x:startX,y:startY}=e;
+    if(this.hit(startX,startY,startX,startY,e.r)!==null){
+      // A spawning form, knockback or a change in hull size can overlap a wall.
+      const above=this.y-34-e.r-.02,below=this.y+34+e.r+.02;
+      const outside=startY<=this.y?above:below;
+      y+=outside-startY;startY=outside;
+    }
+    slideAlongWalls(this,e,clamp(x,e.r,this.size-e.r),clamp(y,e.r,this.size-e.r),startX,startY);
+  }
+  damage(segment,amount){
+    if(!segment||segment.hp<=0)return;
+    segment.hp=Math.max(0,segment.hp-amount);
+    if(segment.hp===0){this.gates.push(segment.center);this.revision++;}
+  }
+  waypoint(e,x,y,time){
+    const r=e.r+.005;
+    x=clamp(x,r,this.size-r);y=clamp(y,r,this.size-r);
+    if(this.hit(e.x,e.y,x,y,r)===null)return [x,y];
+    const side=e.y<=this.y?-1:1,goalSide=y<=this.y?-1:1,clear=34+r+12;
+    const near=this.y+side*clear,far=this.y-side*clear;
+    let route=e.cartographerRoute;
+    if(route?.field!==this||route.revision!==this.revision||route.goalSide!==goalSide||time>=route.until){
+      let gate=null,cost=Infinity;
+      for(const candidate of this.gates){
+        if(this.hit(e.x,e.y,candidate,near,r)!==null||this.hit(candidate,near,candidate,far,r)!==null)continue;
+        const distance=Math.hypot(e.x-candidate,e.y-near)+Math.hypot(x-candidate,y-far);
+        if(distance<cost){cost=distance;gate=candidate;}
+      }
+      route=e.cartographerRoute={field:this,revision:this.revision,goalSide,gate,until:time+.65};
+    }
+    if(route.gate===null)return [e.x,near];
+    return this.hit(e.x,e.y,route.gate,far,r)===null?[route.gate,far]:[route.gate,near];
   }
 }
 const GUARDIAN={
@@ -1809,9 +1901,13 @@ const DECADE_MINIONS=[
 }));
 const DECADE_APPEARANCES=new Map(DECADE_MINIONS.map(m=>[m.appearance,m]));
 const CLASSIC_BOSSES={guardian:GUARDIAN,fallen:FALLEN_BOOSTER,defender:DEFENDER,summoner:SUMMONER,fallenOverlord:FALLEN_OVERLORD};
-const BOSS_SPECS={...CLASSIC_BOSSES,treeTopper:TREE_TOPPER,decade:DECADE};
-function shuffleBosses(random,previous,events=false){
-  const bosses=Object.keys(events?BOSS_SPECS:CLASSIC_BOSSES);
+const CARTOGRAPHER={name:"Cartógrafo",hp:1350,reward:30000,body:34,r:75,color:"#789ab0",ammo:"#8daeba",
+  range:810,guns:[-.39,.39].map(offset=>gun(0,{offset,width:.38,length:1.51,speed:.83,damage:1.23,pen:1.8,life:1.2,recoil:0,spread:0}))};
+const ROTATING_BOSSES={...CLASSIC_BOSSES,treeTopper:TREE_TOPPER,decade:DECADE};
+const BOSS_SPECS={...ROTATING_BOSSES,cartographer:CARTOGRAPHER};
+function shuffleBosses(random,previous,events=false,scope){
+  const bosses=Object.keys(events?ROTATING_BOSSES:CLASSIC_BOSSES);
+  if(events&&scope==="open")bosses.push("cartographer");
   for(let i=bosses.length-1;i>0;i--){
     const j=Math.floor(random()*(i+1));
     [bosses[i],bosses[j]]=[bosses[j],bosses[i]];
@@ -1926,12 +2022,16 @@ function shotAppearance(p){return p.minion?.appearance??(p.owner.spec===SUMMONER
 function snapshotUnit(t){
   const {type,id,name,cls,x,y,r,aim,hp,hit,team,slot,human,protect}=t;
   if(type==="boss")return {type,id,name,cls,x,y,r,aim,hp,hit,alive:true,spec:t.spec,phase:t.phase,nextVolley:t.nextVolley,
-    turretAngles:t.turrets?.map(turret=>turret.aim)};
+    turretAngles:t.turrets?.map(turret=>turret.aim),
+    ...(t.turret?{turret:snapshotCartographerTurret(t.turret)}:{}),
+    ...(t.barrier?{barrier:{starts:t.barrier.starts,ends:t.barrier.ends,segments:t.barrier.segments.map(segment=>
+      ({...segment,turret:snapshotCartographerTurret(segment.turret)}))}}:{})};
   return {type,id,name,cls,x,y,r,aim,hp,hit,team,slot,human,protect,skin:t.skin,alive:true,
     ...(customTankColor(t)?{playerColor:t.playerColor}:{}),
     maxHp:hull(t),stats:t.stats.slice(),cool:t.cool.slice(),
     ...(t.autoTurrets?{turretAngles:t.autoTurrets.map(m=>m.aim)}:{})};
 }
+function snapshotCartographerTurret(turret){return {aim:turret.aim,previousAim:turret.aim,fired:turret.fired.slice()};}
 function snapshotEffects(items,stride,write){
   const data=new Float32Array(items.length*stride);
   let index=0;
@@ -2178,7 +2278,7 @@ class Arena {
     this.boss=null;this.bossRewardedTo=null;
     this.bossRandom=rngFrom(seed^0x5f90b345);
     this.eventBosses=eventBosses;
-    this.bossQueue=this.bossInterval?shuffleBosses(this.bossRandom,undefined,eventBosses):[];
+    this.bossQueue=this.bossInterval?shuffleBosses(this.bossRandom,undefined,eventBosses,this.profileRoster):[];
     this.tick=0; this.time=0; this.serial=0; this.events=[];
     this.history=new MatchHistory();
     this.tanks=[]; this.shapes=[]; this.shots=[]; this.bits=[];
@@ -2994,6 +3094,7 @@ class Arena {
     }
   }
   beginClosing(){
+    if(this.boss?.spec===CARTOGRAPHER)this.clearCartographerBarrier(this.boss);
     this.closing??={startsAt:this.time+1.6,closers:[],active:false,last:null,lastTower:null, tanksDone:false,summary:""};
   }
   spawnClosers(){
@@ -3351,6 +3452,7 @@ class Arena {
   }
   kill(e,by,cause){
     if(!e.alive) return;
+    if(e.spec===CARTOGRAPHER)this.clearCartographerBarrier(e);
     if(e.careWindow)finishCare(e,this.time,by===e.careWindow.rival?"foi eliminado":"interrompida");
     if(e.type==="tower"){
       if(this.closing?.active&&by?.type==="closer")this.destroyTowerDuringClosing(e,by);
@@ -3597,6 +3699,7 @@ class Arena {
   }
   spawnBoss(kind){
     if(this.boss?.alive||this.maze||this.domination||this.mothership||this.tag||this.survival||this.convoy)return null;
+    if(kind==="cartographer"&&!this.bossTrial&&(this.profileRoster!=="open"||!this.bossInterval||!this.eventBosses))return null;
     const spec=BOSS_SPECS[kind]??GUARDIAN;
     const angle=this.bossTrial?Math.PI/2:TAU*rngFrom(this.seed^0x25e1dace^this.tick)();
     const orbit=this.bossTrial?430:this.nest*.87;
@@ -3625,6 +3728,8 @@ class Arena {
     }
     if(spec===FALLEN_OVERLORD)Object.assign(this.boss,{aim:angle+Math.PI/8,ports:new Uint8Array(4),
       cruiseAngle:angle-Math.PI/2,phase:"ronda",target:null,polygons:[],nextDrone:this.time+.125});
+    if(spec===CARTOGRAPHER)Object.assign(this.boss,{aim:-Math.PI/2,stats:Array(8).fill(0),barrierHomeX:x,barrierHomeY:y,
+      nextBarrier:this.time+.25,turret:cartographerTurret(-Math.PI/2,this.time+.9)});
     if(spec===TREE_TOPPER||spec===DECADE)Object.assign(this.boss,{
       stats:[0,0,0,0,0,0,0,0],turrets:Array.from({length:spec===TREE_TOPPER?5:1},(_,i)=>({aim:angle+i*TAU/5,ready:this.time+i*.16})),
       nextDeploy:this.time+1,deployerIndex:0,target:null
@@ -3641,6 +3746,107 @@ class Arena {
     return t?.alive&&t.protect<=0&&(t.level>=15||boss.provoked.has(t.id))&&
       ((boss.spec!==FALLEN_BOOSTER&&boss.spec!==DEFENDER&&boss.spec!==FALLEN_OVERLORD)||
         !this.hasBases||this.baseDistance(t.team,t.x,t.y)>t.r);
+  }
+  clearCartographerBarrier(b){
+    if(b.barrier&&this.maze===b.barrier){
+      this.maze=null;
+      for(const t of this.tanks)delete t.cartographerRoute;
+      for(const p of this.shots){
+        if(p.cartographerRoute)delete p.cartographerRoute;
+        if(p.pillarSource&&p.alive)this.removeShot(p);
+      }
+    }
+    b.barrier=null;
+    b.barrierSlide=null;
+  }
+  cartographerTarget(b,mount=b,range=b.spec.range){
+    let target=null,distance=range;
+    for(const t of this.tanks){
+      const gap=Math.hypot(t.x-mount.x,t.y-mount.y);
+      if(gap>=distance||!this.bossCanTarget(b,t)||this.maze?.firstContact(mount.x,mount.y,t.x,t.y,2,mount.pillar))continue;
+      target=t;distance=gap;
+    }
+    return target;
+  }
+  advanceCartographerTurret(b,turret,mount,guns,range,gap){
+    turret.previousAim=turret.aim;
+    const target=this.cartographerTarget(b,mount,range);
+    if(!target)return;
+    const g=guns[turret.barrel];
+    const [x,y]=mount.pillar?[target.x,target.y]:lead(mount,target,bulletSpeed(b,g),.75);
+    const turn=angleDelta(Math.atan2(y-mount.y,x-mount.x),turret.aim);
+    turret.aim=angleDelta(turret.aim+clamp(turn,-CARTOGRAPHER_TURN*DT,CARTOGRAPHER_TURN*DT),0);
+    if(this.time<turret.ready||Math.abs(turn)>.15)return;
+    mount.aim=turret.aim;
+    const radius=mount.r,shotRadius=radius*g.width/2;
+    const muzzle=gunMuzzle(mount,g,radius,shotRadius);
+    const distance=Math.hypot(x-muzzle.x,y-muzzle.y);
+    if(this.maze?.hit(muzzle.x,muzzle.y,muzzle.x+muzzle.cos*distance,muzzle.y+muzzle.sin*distance,shotRadius)!=null)return;
+    if(this.spawnShot(b,g,mount)){
+      turret.fired[turret.barrel]=this.time;
+      turret.ready=this.time+gap;
+      turret.barrel=(turret.barrel+1)%guns.length;
+    }
+  }
+  startCartographerPause(b){
+    this.clearCartographerBarrier(b);
+    b.nextBarrier=this.time+CARTOGRAPHER_PAUSE;
+    const threat=this.cartographerTarget(b);
+    if(!threat)return;
+    const diameter=2*b.r, margin=CARTOGRAPHER_END_ROUTE+b.r;
+    const away=Math.atan2(b.y-threat.y,b.x-threat.x);
+    const distance=clamp(diameter-Math.hypot(threat.x-b.x,threat.y-b.y)*.15,b.r,diameter);
+    const homeDx=b.x+Math.cos(away)*distance-b.barrierHomeX;
+    const homeDy=b.y+Math.sin(away)*distance-b.barrierHomeY;
+    const homeScale=diameter/Math.max(diameter,Math.hypot(homeDx,homeDy));
+    const dx=clamp(b.barrierHomeX+homeDx*homeScale,margin,this.size-margin)-b.x;
+    const dy=clamp(b.barrierHomeY+homeDy*homeScale,CARTOGRAPHER_WALL_OFFSET+34+b.r,this.size-b.r)-b.y;
+    let fraction=1;
+    for(const t of this.tanks){
+      if(!t.alive)continue;
+      const contact=impact(b.x-t.x,b.y-t.y,dx,dy,b.r+t.r+12);
+      if(contact!==null)fraction=Math.min(fraction,Math.max(0,contact-.02));
+    }
+    if(Math.hypot(dx,dy)*fraction>=8)b.barrierSlide={x:b.x,y:b.y,dx:dx*fraction,dy:dy*fraction,started:this.time};
+  }
+  advanceCartographer(b){
+    const now=this.time;
+    b.px=b.x;b.py=b.y;
+    const slide=b.barrierSlide;
+    if(slide){
+      const t=clamp((now-slide.started)/CARTOGRAPHER_SLIDE,0,1);
+      const progress=t*t*(3-2*t),x=slide.x+slide.dx*progress,y=slide.y+slide.dy*progress;
+      const occupied=this.tanks.some(tank=>tank.alive&&impact(b.x-tank.x,b.y-tank.y,x-b.x,y-b.y,b.r+tank.r)!==null);
+      if(occupied)b.barrierSlide=null;
+      else {
+        b.x=x;b.y=y;
+        if(t===1)b.barrierSlide=null;
+      }
+    }
+    b.vx=(b.x-b.px)/DT;b.vy=(b.y-b.py)/DT;
+    if(now>=b.nextBarrier&&!b.barrier){
+      b.barrier=new CartographerBarrier(b,this.size,now);
+      this.note("Cartógrafo está marcando uma barreira");
+    }
+    const barrier=b.barrier;
+    if(barrier?.ends===null&&now>=barrier.starts){
+      const occupied=this.tanks.some(t=>t.alive&&barrier.hit(t.x,t.y,t.x,t.y,t.r+3)!==null);
+      if(!occupied){
+        barrier.ends=now+CARTOGRAPHER_WALL_TIME;
+        this.maze=barrier;
+        for(const [i,segment] of barrier.segments.entries())segment.turret.ready=now+.45+i*.22;
+      }
+      else if(now>=barrier.starts+1)this.startCartographerPause(b);
+    }else if(barrier?.ends!=null&&now>=barrier.ends){
+      this.startCartographerPause(b);
+    }
+    this.advanceCartographerTurret(b,b.turret,{x:b.x,y:b.y,r:b.r,cartographerShot:true},b.spec.guns,b.spec.range,CARTOGRAPHER_SHOT_GAP);
+    if(!b.barrier||this.maze!==b.barrier)return;
+    const {radius,guns,range,gap}=CARTOGRAPHER_PILLAR_TURRET;
+    for(const segment of b.barrier.segments){
+      if(segment.hp<=0)continue;
+      this.advanceCartographerTurret(b,segment.turret,{x:segment.center,y:b.barrier.y,r:radius,pillar:segment,cartographerShot:true},guns,range,gap);
+    }
   }
   advanceFallen(b){
     const spec=b.spec, now=this.time;
@@ -4018,16 +4224,15 @@ class Arena {
   }
   spawnShot(t,g,mount=t){
     if(this.shots.length>3000) return;
-    const a=mount.aim+g.angle, ca=Math.cos(a),sa=Math.sin(a);
     const radius=mount.r??t.r;
     const r=g.kind==="trap"?radius*g.width*.69:radius*g.width*(g.count>1?.35:.5);
-    const muzzle=radius*g.length+(g.kind==="decadeBullet"?r:0);
-    let x=mount.x+ca*muzzle-sa*radius*g.offset;
-    let y=mount.y+sa*muzzle+ca*radius*g.offset;
+    let {angle:a,cos:ca,sin:sa,x,y}=gunMuzzle(mount,g,radius,r);
+    if(mount.pillar&&this.maze?.hit(x,y,x,y,r)!=null)return;
     const speed=bulletSpeed(t,g);
     const isDrone=isSpawnedDrone(g.kind);
     const blockedAtBase=this.baseImpact(t,mount.x,mount.y,x,y,r);
-    const wall=this.maze?.hit(mount.x,mount.y,x,y,r)??blockedAtBase;
+    const wall=(mount.pillar?this.maze?.firstContact(mount.x,mount.y,x,y,r,mount.pillar)?.time:
+      this.maze?.hit(mount.x,mount.y,x,y,r))??blockedAtBase;
     if(wall!=null&&this.hasBases){
       if(t.spec===DEFENDER)this.provokeDefenderBases(t,mount.x,mount.y,x,y,r);
       return;
@@ -4043,6 +4248,8 @@ class Arena {
       damage:(7+3*t.stats[5])*g.damage,dur:(2+1.5*t.stats[4])*g.pen,age:0,speed};
     const care=mount.parent?mount.parent.careWindow:t.careWindow;
     if(care)child.careWindow=care;
+    if(mount.cartographerShot){child.cartographerShot=true;child.bornTick=this.tick;}
+    if(mount.pillar)child.pillarSource=mount.pillar;
     if(g.kind===SKIMMER_MISSILE){
       child.spin=t.intent.alt?-1:1;
       child.sideSpeed=bulletSpeed(t,skimmerSide);
@@ -4642,6 +4849,8 @@ class Arena {
     p.vy+=pushY*correction;
   }
   advanceShot(p){
+    // Keep the first visible state at the muzzle before advancing the sweep.
+    if(p.cartographerShot&&p.bornTick===this.tick)return;
     if(!p.owner.alive&&(isSpawnedDrone(p.kind)||p.kind===NECRO_DRONE)){
       this.removeShot(p);return;
     }
@@ -4672,7 +4881,10 @@ class Arena {
     }else if(this.maze&&isDrone)this.maze.move(p,clamp(x,p.r,this.size-p.r),clamp(y,p.r,this.size-p.r));
     else {
       p.x=x;p.y=y;
-      if(this.maze)p.wallTime=this.maze.hit(p.px,p.py,x,y,p.r);
+      if(this.maze instanceof CartographerBarrier){
+        const contact=this.maze.firstContact(p.px,p.py,x,y,p.r);
+        p.wallTime=contact?.time;p.cartographerPillar=contact?.pillar;
+      }else if(this.maze)p.wallTime=this.maze.hit(p.px,p.py,x,y,p.r);
       else if(this.hasBases){
         p.wallTime=this.baseImpact(p.owner,p.px,p.py,x,y,p.r);
         if(p.wallTime!=null&&p.owner.spec===DEFENDER)this.provokeDefenderBases(p.owner,p.px,p.py,x,y,p.r);
@@ -4920,7 +5132,14 @@ class Arena {
         if(p.dur<=0) this.removeShot(p,e.type==="tank"?e:null);
         if(this.duelEnded||this.closing&&!this.closing.active)return;
       }
-      if(p.wallTime!=null)this.removeShot(p);
+      if(p.wallTime!=null){
+        const segment=p.cartographerPillar;
+        if(segment?.hp>0&&p.owner.type==="tank"&&this.maze instanceof CartographerBarrier){
+          this.maze.damage(segment,p.damage*Math.min(1,p.dur/2));
+          if(segment.hp===0)for(const shot of this.shots)if(shot.alive&&shot.pillarSource===segment)this.removeShot(shot);
+        }
+        this.removeShot(p);
+      }
     }
     // Surviving missiles release side shots after wall and entity impacts.
     this.advanceDeployerMissiles();
@@ -4947,7 +5166,7 @@ class Arena {
       const next=this.bossQueue[0];
       if(this.spawnBoss(next)){
         this.bossQueue.shift();
-        if(!this.bossQueue.length)this.bossQueue=shuffleBosses(this.bossRandom,next,this.eventBosses);
+        if(!this.bossQueue.length)this.bossQueue=shuffleBosses(this.bossRandom,next,this.eventBosses,this.profileRoster);
       }
     }
     if(this.hasBases&&this.tick%90===0)this.restockBaseDrones();
@@ -4977,6 +5196,7 @@ class Arena {
       else if(this.boss.spec===SUMMONER)this.advanceSummoner(this.boss);
       else if(this.boss.spec===FALLEN_OVERLORD)this.advanceFallenOverlord(this.boss);
       else if(this.boss.spec===TREE_TOPPER||this.boss.spec===DECADE)this.advanceEventBoss(this.boss);
+      else if(this.boss.spec===CARTOGRAPHER)this.advanceCartographer(this.boss);
       else this.advanceGuardian(this.boss);
     }
     for(const p of this.shots) if(p.alive) this.advanceShot(p);
@@ -5004,6 +5224,7 @@ class Arena {
       const left=this.tanks.filter(e=>e.alive);
       if(this.bossTrial){
         if(!this.boss.alive||!left.length){
+          if(this.boss.spec===CARTOGRAPHER)this.clearCartographerBarrier(this.boss);
           this.winner=left.length?this.bossRewardedTo:this.boss;
           this.bossTrialResult=!this.boss.alive
             ?this.boss.name+" derrotado"+(this.bossRewardedTo?" · finalizado por "+this.bossRewardedTo.name:"")
@@ -5699,7 +5920,7 @@ function botThink(w,t){
   evaluateRetreat(w,t,enemy,eDist,tactic,retreat,nearby,vision);
   const guardDrones=c.style==="drone"&&cautious&&!sustainsAttack;
   let targetX, targetY, aimX, aimY, moving=1, fire=false, alt=false, mode=0, detail="Buscando uma área com formas";
-  let ramFood=null, targetEntity=null;
+  let ramFood=null, targetEntity=null, cartographerPillar=null;
   let booster=null, sniperCover=null, droneCover=null, droneCutoff=null, necroScreen=null, necroGuardShare;
   let factoryTarget=null,factoryGuard=false;
   let opening=null, tankCombat=false, decision=null, tagSearching=false;
@@ -6104,6 +6325,15 @@ function botThink(w,t){
     }
     mode=2;detail=defender?(ram?"Aproveitando uma abertura no Defender":c.ram?"Esperando uma abertura nas armadilhas":
       c.style==="sniper"?"Disparando de longe contra o Defender":"Contornando as armadilhas do Defender"):"Atacando "+boss.name;
+    if(maze instanceof CartographerBarrier&&weapon?.kind==="bullet"&&maze.hit(t.x,t.y,boss.x,boss.y,2)!==null){
+      let reach=Math.min(vision,bulletSpeed(t,weapon)*weapon.life);
+      for(const segment of maze.segments){
+        const gap=Math.hypot(t.x-segment.center,t.y-maze.y);
+        if(gap>=reach||gap<=t.r*weapon.length+35||maze.firstContact(t.x,t.y,segment.center,maze.y,2)?.pillar!==segment)continue;
+        reach=gap;cartographerPillar=segment;
+      }
+      if(cartographerPillar){aimX=cartographerPillar.center;aimY=maze.y;fire=true;}
+    }
   }else if(w.fourTeams&&t.front&&(t.front.kind==="defense"||atHome||!food||
     Math.hypot(t.x-t.front.x,t.y-t.front.y)>515&&(t.level>=10||Math.hypot(food.x-t.x,food.y-t.y)>280))){
     const front=t.front;
@@ -6265,7 +6495,9 @@ function botThink(w,t){
     if(covered){
       targetX=targetEntity.x;targetY=targetEntity.y;
       moving=1;
-      detail=canFight?"Contornando a parede para alcançar "+enemy.name:"Buscando passagem até as formas";
+      detail=maze instanceof CartographerBarrier&&targetEntity===boss?
+        (cartographerPillar?"Atirando no pilar ao buscar uma passagem":"Buscando a abertura na barreira"):
+        canFight?"Contornando a parede para alcançar "+enemy.name:"Buscando passagem até as formas";
     }
     const tx=targetX,ty=targetY;
     [targetX,targetY]=maze.waypoint(t,tx,ty,w.time);
@@ -6388,7 +6620,8 @@ function botThink(w,t){
       const scale=Math.min(1,reach/Math.max(1,Math.hypot(dx,dy)));
       shotX=t.x+dx*scale;shotY=t.y+dy*scale;
     }
-    if(maze.hit(t.x,t.y,shotX,shotY,2)!==null){
+    if(maze.hit(t.x,t.y,shotX,shotY,2)!==null&&
+      !(cartographerPillar&&maze.firstContact(t.x,t.y,shotX,shotY,2)?.pillar===cartographerPillar)){
       fire=false;
       if(t.cls==="Dual-Barrel")alt=false;
     }
@@ -7085,6 +7318,23 @@ function poly(cx,cy,r,sides,turn,context=ctx){
 }
 function circle(x,y,r,context=ctx){context.beginPath();context.arc(x,y,r,0,TAU);}
 function paint(fill,stroke="#273c3292",width=2.5,context=ctx){context.fillStyle=fill;context.fill();context.strokeStyle=stroke;context.lineWidth=width;context.stroke();}
+function paintAutoBarrel(context,g,radius,line,start=0,shorten=0){
+  const {width,tip,offset}=barrelGeometry(g,radius);
+  context.save();context.rotate(g.angle);context.beginPath();
+  context.rect(start,offset-width/2,tip-shorten,width);
+  paint("#999999","#737373",line,context);context.restore();
+}
+function paintAutoMount(context,radius,line){
+  circle(0,0,radius,context);paint("#999999","#737373",line,context);
+}
+function paintCartographerTurret(turret,guns,radius,hullAim,hub,time,blend,pillar=null){
+  const aim=turret.previousAim+angleDelta(turret.aim,turret.previousAim)*blend;
+  const line=pillar?2.8:5;
+  ctx.save();ctx.rotate(aim-hullAim);
+  for(const [i,g] of guns.entries())paintAutoBarrel(ctx,g,radius,line,-turretRecoil(radius,time,turret.fired[i]));
+  paintAutoMount(ctx,hub,line);
+  ctx.restore();
+}
 function paintDefender(b,time){
   const r=b.r,metal="#999999",rim="#737373";
   ctx.lineJoin="round";
@@ -7122,14 +7372,18 @@ function paintSummoner(b,time){
   ctx.beginPath();ctx.rect(-side,-side,side*2,side*2);
   paint(time-b.hit<.06?"#fff1be":b.spec.color,"#bfaf50",r*.069);
 }
-function paintBoss(b,x,y,selected,time){
+function paintBoss(b,x,y,selected,time,blend=1,animationTime=time){
   const fallen=b.spec===FALLEN_BOOSTER;
   ctx.save();ctx.translate(x,y);ctx.rotate(b.aim);
   if(selected){
     circle(0,0,b.r+8);ctx.strokeStyle=fallen?"#414754a6":"#a33c687d";ctx.lineWidth=2;
     ctx.setLineDash([6,6]);ctx.stroke();ctx.setLineDash([]);
   }
-  if(b.spec===TREE_TOPPER||b.spec===DECADE){
+  if(b.spec===CARTOGRAPHER){
+    poly(0,0,b.r,6,Math.PI/6);
+    paint(time-b.hit<.06?"#d4e5ea":b.spec.color,"#354c5b",6);
+    paintCartographerTurret(b.turret,b.spec.guns,b.r,b.aim,b.r*.62,animationTime,blend);
+  }else if(b.spec===TREE_TOPPER||b.spec===DECADE){
     paintEventBoss(b,time);
   }else if(b.spec===FALLEN_OVERLORD){
     const r=b.r;
@@ -7170,7 +7424,7 @@ function paintBoss(b,x,y,selected,time){
   }
   ctx.restore();
   const width=b.r*1.44, ratio=clamp(b.hp/b.spec.hp,0,1);
-  const barY=y+b.r*(b.spec===FALLEN_OVERLORD?1.67:fallen||b.spec===DEFENDER||b.spec===SUMMONER||b.spec===TREE_TOPPER||b.spec===DECADE?1.22:.7);
+  const barY=y+b.r*(b.spec===FALLEN_OVERLORD?1.67:fallen||b.spec===DEFENDER||b.spec===SUMMONER||b.spec===TREE_TOPPER||b.spec===DECADE||b.spec===CARTOGRAPHER?1.22:.7);
   ctx.fillStyle=fallen?"#414754":"#5e3750";ctx.fillRect(x-width/2,barY,width,7);
   ctx.fillStyle=b.spec.color;ctx.fillRect(x-width/2+1,barY+1,(width-2)*ratio,5);
 }
@@ -7237,9 +7491,8 @@ function paintTankBody(ctx,t,x,y,selected,time,spinTime,color){
       ctx.save();
       ctx.translate(Math.cos(outward)*r*AUTO_MOUNT_OFFSET,Math.sin(outward)*r*AUTO_MOUNT_OFFSET);
       ctx.rotate(aim-t.aim);
-      ctx.beginPath();ctx.rect(0,-radius*g.width/2,radius*g.length-recoil,radius*g.width);
-      paint("#999999","#737373",2.8,ctx);
-      circle(0,0,radius,ctx);paint("#999999","#737373",2.8,ctx);
+      paintAutoBarrel(ctx,g,radius,2.8,0,recoil);
+      paintAutoMount(ctx,radius,2.8);
       ctx.restore();
     }
   }else for(let i=0;i<spec.guns.length;i++){
@@ -7721,8 +7974,36 @@ function paintConvoy(cargo,x,y){
   poly(0,0,r*.25,4,Math.PI/4);paint(color,TEAMS[cargo.attack].line,2);
   ctx.restore();
 }
+function paintCartographerBarrier(barrier,zoom,time,blend){
+  ctx.save();
+  const warning=barrier.ends===null;
+  for(const segment of barrier.segments){
+    if(segment.hp<=0)continue;
+    const {pillar,walls}=segment;
+    if(warning){
+      ctx.strokeStyle="#8e502a";ctx.lineWidth=2.2/zoom;ctx.setLineDash([10/zoom,6/zoom]);
+      for(const rect of [...walls,pillar])ctx.strokeRect(rect.x,rect.y,rect.w,rect.h);
+    }else{
+      ctx.lineWidth=2.5/zoom;
+      ctx.fillStyle="#82998b";ctx.strokeStyle="#577064";
+      for(const wall of walls){ctx.fillRect(wall.x,wall.y,wall.w,wall.h);ctx.strokeRect(wall.x,wall.y,wall.w,wall.h);}
+      ctx.fillStyle=CARTOGRAPHER.color;ctx.strokeStyle="#354c5b";
+      ctx.fillRect(pillar.x,pillar.y,pillar.w,pillar.h);ctx.strokeRect(pillar.x,pillar.y,pillar.w,pillar.h);
+      const {guns,radius}=CARTOGRAPHER_PILLAR_TURRET;
+      ctx.save();ctx.translate(segment.center,pillar.y+pillar.h/2);
+      paintCartographerTurret(segment.turret,guns,radius,0,radius,time,blend,segment);
+      ctx.restore();
+      if(segment.hp<CARTOGRAPHER_PILLAR_HP){
+        ctx.fillStyle="#475e55";ctx.fillRect(pillar.x+9,pillar.y+pillar.h+7,pillar.w-18,5);
+        ctx.fillStyle="#c6daaa";ctx.fillRect(pillar.x+9,pillar.y+pillar.h+7,(pillar.w-18)*segment.hp/CARTOGRAPHER_PILLAR_HP,5);
+      }
+    }
+  }
+  ctx.restore();
+}
 function drawArena(scene,lens,blend,marked,recorded,network=false){
   const [left,top]=coordinates(0,0,lens),[right,bottom]=coordinates(w,h,lens);
+  const animationTime=scene.animationTime??Math.max(0,scene.time-DT*(1-blend));
   ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.fillStyle="#c5d4c1";ctx.fillRect(0,0,w,h);
   ctx.save();ctx.translate(w/2,h/2);ctx.scale(lens.zoom,lens.zoom);ctx.translate(-lens.x,-lens.y);
@@ -7793,6 +8074,7 @@ function drawArena(scene,lens,blend,marked,recorded,network=false){
       ctx.strokeRect(wall.x+.5,wall.y+.5,MAZE_CELL-1,MAZE_CELL-1);
     }
   }
+  if(scene.boss?.barrier)paintCartographerBarrier(scene.boss.barrier,lens.zoom,animationTime,blend);
   ctx.restore();
   ctx.strokeStyle="#607f68";ctx.lineWidth=3;ctx.strokeRect(0,0,world.size,world.size);
   const visible=(x,y,r)=>x+r>=left&&x-r<=right&&y+r>=top&&y-r<=bottom;
@@ -7825,6 +8107,7 @@ function drawArena(scene,lens,blend,marked,recorded,network=false){
     }
     for(const p of scene.shots){
       if(!visible(p.x,p.y,p.r))continue;
+      if(p.cartographerShot&&p.bornTick===scene.tick&&blend<1)continue;
       const [x,y]=tp(p,blend);
       const kind=shotAppearance(p),color=shotColor(p,scene.time);
       if(kind==="decadeBullet")decadeShots.push({x,y,r:p.r,color});
@@ -7848,13 +8131,13 @@ function drawArena(scene,lens,blend,marked,recorded,network=false){
   const b=scene.boss;
   if(b?.alive&&visible(b.x,b.y,b.r)){
     const [x,y]=recorded?[b.x,b.y]:tp(b,blend);
-    paintBoss(b,x,y,marked===b.id,scene.time);
+    paintBoss(b,x,y,marked===b.id,scene.time,blend,animationTime);
   }
   for(const {x,y,r,color} of decadeShots)paintShot(x,y,r,0,"decadeBullet",color);
   for(const tank of scene.tanks){
     if(tank.alive&&visible(tank.x,tank.y,tank.r)){
       const [x,y]=recorded&&!network?[tank.x,tank.y]:tp(tank,blend);
-      paintTank(tank,x,y,tank.id===marked,scene.time,scene.animationTime??Math.max(0,scene.time-DT*(1-blend)));
+      paintTank(tank,x,y,tank.id===marked,scene.time,animationTime);
     }
   }
   for(const t of (recorded?scene.closers:scene.closing?.closers)??[]){
@@ -8117,12 +8400,21 @@ function replayScene(state){
   state.index=i;
   const before=frames[i],after=frames[i+1];
   const blend=after?clamp((time-before.time)/(after.time-before.time),0,1):0;
+  const cartographerAim=(turret,next)=>{
+    const aim=turret.aim+angleDelta(next.aim,turret.aim)*blend;
+    const fired=Array.from({length:Math.max(turret.fired.length,next.fired.length)},(_,i)=>
+      next.fired[i]<=time?next.fired[i]:turret.fired[i]);
+    return {aim,previousAim:aim,fired};
+  };
   const interpolate=(unit,next)=>!unit||!next||unit.id!==next.id?unit:{
     ...unit,x:unit.x+(next.x-unit.x)*blend,y:unit.y+(next.y-unit.y)*blend,
     aim:unit.aim+angleDelta(next.aim,unit.aim)*blend,
     turretAngles:unit.turretAngles&&next.turretAngles?.length===unit.turretAngles.length&&unit.cls===next.cls
       ?unit.turretAngles.map((aim,i)=>aim+angleDelta(next.turretAngles[i],aim)*blend)
-      :unit.turretAngles
+      :unit.turretAngles,
+    ...(unit.turret&&next.turret?{turret:cartographerAim(unit.turret,next.turret)}:{}),
+    ...(unit.barrier&&unit.barrier.starts===next.barrier?.starts?{barrier:{...unit.barrier,
+      segments:unit.barrier.segments.map((segment,i)=>({...segment,turret:cartographerAim(segment.turret,next.barrier.segments[i].turret)}))}}:{})
   };
   const tanks=after?before.tanks.map(t=>interpolate(t,after.tanks.find(next=>next.id===t.id))):before.tanks;
   const boss=interpolate(before.boss,after?.boss),convoy=interpolate(before.convoy,after?.convoy);
@@ -8250,6 +8542,9 @@ function updateInterface(force=false){
   el("bossField").hidden=mode==="lab"||el("arenaMap").value.startsWith("maze")||["domination","mothership","tag","survival","convoy"].includes(el("arenaMap").value);
   el("eventBossField").hidden=el("bossField").hidden;
   el("eventBosses").disabled=el("bossSchedule").value==="off";
+  const eventBossOption=el("eventBosses").options[1];
+  const eventBossLabel=el("arenaMap").value==="open"?"Ligados · 8 chefes":"Ligados · 7 chefes";
+  if(eventBossOption.textContent!==eventBossLabel)eventBossOption.textContent=eventBossLabel;
   el("shipStartField").hidden=mode==="lab"||el("arenaMap").value!=="mothership";
   el("restart").textContent=mode==="lab"?"Iniciar duelo":"Reiniciar";
   el("scenarioLabel").textContent=mode==="lab"?(world.bossTrial?"2 contra 1":"1 contra 1"):{open:"Arena aberta",survival:"Uma vida",teams:"Azul × Vermelho","four-teams":"Quatro bases",domination:"Dominação",convoy:"Dois times · duas rodadas",mothership:"Naves-mãe",tag:"Quatro equipes",maze:"Maze fixo","maze-seed":"Maze por seed"}[world.mapKind];
@@ -8274,7 +8569,7 @@ function updateInterface(force=false){
     world.shipResult?world.shipResult.startsWith("Empate")?"EMPATE":TEAMS[1-world.finalShip.team].name.toUpperCase()+" VENCEU":
     world.duelEnded?(world.survival?"SURVIVAL ENCERRADO":world.bossTrial?"DESAFIO ENCERRADO":"DUELO ENCERRADO"):paused?"PAUSADO":mode==="lab"?(world.bossTrial?"DESAFIO DE CHEFE":"DUELO"):
     world.survival?"SURVIVAL":world.convoy?"COMBOIO":
-    world.tag?"TAG AO VIVO":world.domination?"DOMINAÇÃO":world.mothership?"MOTHERSHIP":world.maze?"MAZE AO VIVO":
+    world.tag?"TAG AO VIVO":world.domination?"DOMINAÇÃO":world.mothership?"MOTHERSHIP":world.mapKind.startsWith("maze")?"MAZE AO VIVO":
     world.fourTeams?"4 TEAMS AO VIVO":world.teams?"2 TEAMS AO VIVO":"FFA AO VIVO");
   el("pause").textContent=paused?"Retomar":"Pausar";el("pause").disabled=world.duelEnded;
   el("step").disabled=!paused||world.duelEnded||!!replay;
