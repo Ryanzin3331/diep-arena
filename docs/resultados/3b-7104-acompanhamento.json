@@ -1,0 +1,75 @@
+{
+  "seed": 7104,
+  "ticks": 4800,
+  "hash": "0c3417440267711672073419cfdd65de14426cfa788683271b14c3e2930defbb",
+  "events": [
+    {
+      "type": "open",
+      "tick": 1076,
+      "id": 1,
+      "rival": 425,
+      "choice": 0,
+      "without": 0,
+      "trials": 0,
+      "exploration": true,
+      "results": null
+    },
+    {
+      "type": "end",
+      "tick": 1196,
+      "id": 1,
+      "rival": 425,
+      "reason": "prazo",
+      "threat": true,
+      "dealt": 107.8,
+      "taken": 0,
+      "evaluated": true
+    },
+    {
+      "type": "open",
+      "tick": 1196,
+      "id": 2,
+      "rival": 425,
+      "choice": 1,
+      "without": 1,
+      "trials": 1,
+      "exploration": true,
+      "results": [
+        {
+          "sum": 1,
+          "count": 1
+        },
+        {
+          "sum": 0,
+          "count": 0
+        }
+      ]
+    },
+    {
+      "type": "end",
+      "tick": 1211,
+      "id": 2,
+      "rival": 425,
+      "reason": "plano_invalido_ou_alvo",
+      "threat": false,
+      "dealt": 0,
+      "taken": 0,
+      "evaluated": false
+    }
+  ],
+  "final": {
+    "tick": 4800,
+    "alive": true,
+    "attempt": null,
+    "results": [
+      {
+        "sum": 1,
+        "count": 1
+      },
+      {
+        "sum": 0,
+        "count": 0
+      }
+    ]
+  }
+}

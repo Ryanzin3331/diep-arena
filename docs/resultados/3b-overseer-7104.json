@@ -1,0 +1,1882 @@
+{
+  "seed": 7104,
+  "distance": 300,
+  "hash": "4f08e47fb05c57faec365db28db73ff591bb25c06b1bf2dfd4e9a6b3fee1e3f6",
+  "ticks": 2379,
+  "stop": "tank_morreu",
+  "visibleTicks": 2312,
+  "vetoCount": 247,
+  "vetoReasons": {
+    "desvio": 174,
+    "sem_movimento": 1,
+    "sem_plano": 72
+  },
+  "events": [
+    {
+      "type": "visibility",
+      "tick": 1,
+      "visible": true
+    },
+    {
+      "type": "recognition",
+      "tick": 91,
+      "evidence": 1
+    },
+    {
+      "type": "veto",
+      "tick": 801,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "recognition",
+      "tick": 801,
+      "evidence": 2
+    },
+    {
+      "type": "veto",
+      "tick": 806,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 811,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 816,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 821,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "open",
+      "tick": 826,
+      "id": 1,
+      "rival": 290,
+      "choice": 0,
+      "without": 0,
+      "trials": 0,
+      "exploration": true,
+      "results": null
+    },
+    {
+      "type": "veto",
+      "tick": 836,
+      "reason": "desvio",
+      "active": 1
+    },
+    {
+      "type": "end",
+      "tick": 836,
+      "id": 1,
+      "rival": 290,
+      "threat": false,
+      "dealt": 0,
+      "taken": 0,
+      "evaluated": false,
+      "reason": "alvo_ou_plano_invalido"
+    },
+    {
+      "type": "open",
+      "tick": 841,
+      "id": 2,
+      "rival": 290,
+      "choice": 1,
+      "without": 1,
+      "trials": 1,
+      "exploration": true,
+      "results": null
+    },
+    {
+      "type": "veto",
+      "tick": 896,
+      "reason": "desvio",
+      "active": 2
+    },
+    {
+      "type": "end",
+      "tick": 896,
+      "id": 2,
+      "rival": 290,
+      "threat": true,
+      "dealt": 25,
+      "taken": 44,
+      "evaluated": true,
+      "reason": "alvo_ou_plano_invalido"
+    },
+    {
+      "type": "open",
+      "tick": 901,
+      "id": 3,
+      "rival": 290,
+      "choice": 0,
+      "without": 1,
+      "trials": 2,
+      "exploration": false,
+      "results": [
+        {
+          "sum": 0,
+          "count": 0
+        },
+        {
+          "sum": -0.19,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "type": "veto",
+      "tick": 916,
+      "reason": "desvio",
+      "active": 3
+    },
+    {
+      "type": "end",
+      "tick": 916,
+      "id": 3,
+      "rival": 290,
+      "threat": true,
+      "dealt": 0,
+      "taken": 22,
+      "evaluated": true,
+      "reason": "alvo_ou_plano_invalido"
+    },
+    {
+      "type": "veto",
+      "tick": 921,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 926,
+      "reason": "sem_movimento",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 931,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 936,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 941,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 946,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 951,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 956,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 961,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 966,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 971,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 976,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 981,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 986,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 991,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 996,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1001,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1006,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1011,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1016,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1021,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1026,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1031,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1036,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1041,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1046,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "open",
+      "tick": 1051,
+      "id": 4,
+      "rival": 290,
+      "choice": 1,
+      "without": 1,
+      "trials": 3,
+      "exploration": false,
+      "results": [
+        {
+          "sum": -0.22,
+          "count": 1
+        },
+        {
+          "sum": -0.19,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "type": "veto",
+      "tick": 1056,
+      "reason": "desvio",
+      "active": 4
+    },
+    {
+      "type": "end",
+      "tick": 1056,
+      "id": 4,
+      "rival": 290,
+      "threat": false,
+      "dealt": 0,
+      "taken": 0,
+      "evaluated": false,
+      "reason": "alvo_ou_plano_invalido"
+    },
+    {
+      "type": "veto",
+      "tick": 1061,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1066,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1071,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "recognition",
+      "tick": 1071,
+      "evidence": 3
+    },
+    {
+      "type": "veto",
+      "tick": 1076,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1081,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1086,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1091,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1096,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1101,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1106,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1111,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1116,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1121,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1126,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1131,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1136,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1141,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1146,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1151,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1156,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1161,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1166,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1171,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1176,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1181,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1186,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1191,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1196,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "open",
+      "tick": 1201,
+      "id": 5,
+      "rival": 290,
+      "choice": 1,
+      "without": 1,
+      "trials": 4,
+      "exploration": false,
+      "results": [
+        {
+          "sum": -0.22,
+          "count": 1
+        },
+        {
+          "sum": -0.19,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "type": "veto",
+      "tick": 1231,
+      "reason": "desvio",
+      "active": 5
+    },
+    {
+      "type": "end",
+      "tick": 1231,
+      "id": 5,
+      "rival": 290,
+      "threat": true,
+      "dealt": 0,
+      "taken": 66,
+      "evaluated": true,
+      "reason": "alvo_ou_plano_invalido"
+    },
+    {
+      "type": "veto",
+      "tick": 1236,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1241,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1246,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "open",
+      "tick": 1251,
+      "id": 6,
+      "rival": 290,
+      "choice": 0,
+      "without": 0,
+      "trials": 5,
+      "exploration": true,
+      "results": [
+        {
+          "sum": -0.22,
+          "count": 1
+        },
+        {
+          "sum": -0.812,
+          "count": 2
+        }
+      ]
+    },
+    {
+      "type": "veto",
+      "tick": 1291,
+      "reason": "desvio",
+      "active": 6
+    },
+    {
+      "type": "end",
+      "tick": 1291,
+      "id": 6,
+      "rival": 290,
+      "threat": true,
+      "dealt": 0,
+      "taken": 0,
+      "evaluated": false,
+      "reason": "alvo_ou_plano_invalido"
+    },
+    {
+      "type": "veto",
+      "tick": 1296,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1301,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1306,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1311,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1316,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1321,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1326,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1331,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1336,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1341,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1346,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1351,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1356,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1361,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1366,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1371,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1376,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1381,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1386,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1391,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1396,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1401,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1406,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1411,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1416,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1421,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1426,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "visibility",
+      "tick": 1428,
+      "visible": false
+    },
+    {
+      "type": "visibility",
+      "tick": 1447,
+      "visible": true
+    },
+    {
+      "type": "veto",
+      "tick": 1451,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1456,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1461,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "open",
+      "tick": 1466,
+      "id": 7,
+      "rival": 290,
+      "choice": 0,
+      "without": 1,
+      "trials": 6,
+      "exploration": false,
+      "results": [
+        {
+          "sum": -0.22,
+          "count": 1
+        },
+        {
+          "sum": -0.812,
+          "count": 2
+        }
+      ]
+    },
+    {
+      "type": "veto",
+      "tick": 1486,
+      "reason": "desvio",
+      "active": 7
+    },
+    {
+      "type": "end",
+      "tick": 1486,
+      "id": 7,
+      "rival": 290,
+      "threat": true,
+      "dealt": 0,
+      "taken": 0,
+      "evaluated": false,
+      "reason": "alvo_ou_plano_invalido"
+    },
+    {
+      "type": "veto",
+      "tick": 1491,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1496,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1501,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1506,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1511,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1516,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1521,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1526,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1531,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1536,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1541,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1546,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1551,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1556,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1561,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1566,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1571,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1576,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1581,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1586,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1591,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1596,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1601,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1606,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1611,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1616,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1621,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1626,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1631,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1636,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1641,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1646,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1651,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1656,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1661,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1666,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1671,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1676,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1681,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1686,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1691,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1696,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1701,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1706,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1711,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1716,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1721,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1726,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1731,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1736,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1741,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "visibility",
+      "tick": 1742,
+      "visible": false
+    },
+    {
+      "type": "visibility",
+      "tick": 1772,
+      "visible": true
+    },
+    {
+      "type": "veto",
+      "tick": 1776,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1781,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1786,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1791,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1796,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1801,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1806,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1811,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1816,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1821,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "open",
+      "tick": 1826,
+      "id": 8,
+      "rival": 290,
+      "choice": 0,
+      "without": 1,
+      "trials": 7,
+      "exploration": false,
+      "results": [
+        {
+          "sum": -0.22,
+          "count": 1
+        },
+        {
+          "sum": -0.812,
+          "count": 2
+        }
+      ]
+    },
+    {
+      "type": "veto",
+      "tick": 1856,
+      "reason": "desvio",
+      "active": 8
+    },
+    {
+      "type": "end",
+      "tick": 1856,
+      "id": 8,
+      "rival": 290,
+      "threat": true,
+      "dealt": 0,
+      "taken": 0,
+      "evaluated": false,
+      "reason": "alvo_ou_plano_invalido"
+    },
+    {
+      "type": "veto",
+      "tick": 1861,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1866,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1871,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1876,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1881,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1886,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1891,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1896,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1901,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1906,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1911,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1916,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1921,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1926,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1931,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1936,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1941,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1946,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1951,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1956,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1961,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1966,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1971,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1976,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1981,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1986,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1991,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 1996,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2001,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2006,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2011,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2016,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2021,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2026,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2031,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2036,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2041,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2046,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2051,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2056,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2061,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "open",
+      "tick": 2066,
+      "id": 9,
+      "rival": 290,
+      "choice": 0,
+      "without": 1,
+      "trials": 8,
+      "exploration": false,
+      "results": [
+        {
+          "sum": -0.22,
+          "count": 1
+        },
+        {
+          "sum": -0.812,
+          "count": 2
+        }
+      ]
+    },
+    {
+      "type": "veto",
+      "tick": 2086,
+      "reason": "desvio",
+      "active": 9
+    },
+    {
+      "type": "end",
+      "tick": 2086,
+      "id": 9,
+      "rival": 290,
+      "threat": true,
+      "dealt": 0,
+      "taken": 0,
+      "evaluated": false,
+      "reason": "alvo_ou_plano_invalido"
+    },
+    {
+      "type": "veto",
+      "tick": 2091,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2096,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2101,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2106,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "open",
+      "tick": 2111,
+      "id": 10,
+      "rival": 290,
+      "choice": 0,
+      "without": 1,
+      "trials": 9,
+      "exploration": false,
+      "results": [
+        {
+          "sum": -0.22,
+          "count": 1
+        },
+        {
+          "sum": -0.812,
+          "count": 2
+        }
+      ]
+    },
+    {
+      "type": "veto",
+      "tick": 2121,
+      "reason": "desvio",
+      "active": 10
+    },
+    {
+      "type": "end",
+      "tick": 2121,
+      "id": 10,
+      "rival": 290,
+      "threat": false,
+      "dealt": 0,
+      "taken": 66,
+      "evaluated": false,
+      "reason": "alvo_ou_plano_invalido"
+    },
+    {
+      "type": "veto",
+      "tick": 2126,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "open",
+      "tick": 2131,
+      "id": 11,
+      "rival": 290,
+      "choice": 0,
+      "without": 1,
+      "trials": 10,
+      "exploration": false,
+      "results": [
+        {
+          "sum": -0.22,
+          "count": 1
+        },
+        {
+          "sum": -0.812,
+          "count": 2
+        }
+      ]
+    },
+    {
+      "type": "veto",
+      "tick": 2171,
+      "reason": "sem_plano",
+      "active": 11
+    },
+    {
+      "type": "end",
+      "tick": 2171,
+      "id": 11,
+      "rival": 290,
+      "threat": false,
+      "dealt": 0,
+      "taken": 22,
+      "evaluated": false,
+      "reason": "alvo_ou_plano_invalido"
+    },
+    {
+      "type": "veto",
+      "tick": 2176,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2181,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2186,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2191,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2196,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "visibility",
+      "tick": 2198,
+      "visible": false
+    },
+    {
+      "type": "visibility",
+      "tick": 2216,
+      "visible": true
+    },
+    {
+      "type": "veto",
+      "tick": 2221,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2226,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2231,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2236,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2241,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2246,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2251,
+      "reason": "sem_plano",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2256,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2261,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2266,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2271,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2276,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2281,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2286,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2291,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2296,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2301,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2306,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2311,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2316,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2321,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2326,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2331,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2336,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2341,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2346,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2351,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2356,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2361,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2366,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2371,
+      "reason": "desvio",
+      "active": null
+    },
+    {
+      "type": "veto",
+      "tick": 2376,
+      "reason": "sem_plano",
+      "active": null
+    }
+  ],
+  "results": [
+    {
+      "sum": -0.22,
+      "count": 1
+    },
+    {
+      "sum": -0.812,
+      "count": 2
+    }
+  ],
+  "attempt": null
+}

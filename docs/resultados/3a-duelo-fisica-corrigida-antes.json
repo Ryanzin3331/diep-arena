@@ -1,0 +1,7876 @@
+[
+  {
+    "seed": 7102,
+    "distance": 200,
+    "control": true,
+    "ticks": 900,
+    "stop": "limite",
+    "finalClasses": [
+      "Tank",
+      "Destroyer"
+    ],
+    "finalDistance": 369.0027503174508,
+    "fired": {
+      "tank": 43,
+      "destroyer": 20
+    },
+    "hits": [],
+    "shotCollisions": [
+      {
+        "tick": 16,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 32,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 66,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 80,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 108,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 165,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 196,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 267,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 297,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 389,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 398,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 428,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 544,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 613,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 673,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 701,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 801,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 844,
+        "owners": [
+          0,
+          1
+        ]
+      }
+    ],
+    "interceptions": [],
+    "removals": [
+      {
+        "tick": 16,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 32,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 66,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 80,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 108,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 165,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 196,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 267,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 297,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 389,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 398,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 428,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 544,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 613,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 673,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 701,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 801,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 844,
+        "owner": 0,
+        "by": 1
+      }
+    ],
+    "associatedShots": [],
+    "attempts": [],
+    "results": null,
+    "trials": 0,
+    "nextChoice": 0,
+    "threat": 3
+  },
+  {
+    "seed": 7102,
+    "distance": 200,
+    "control": false,
+    "ticks": 900,
+    "stop": "limite",
+    "finalClasses": [
+      "Tank",
+      "Destroyer"
+    ],
+    "finalDistance": 445.42369709102,
+    "fired": {
+      "tank": 43,
+      "destroyer": 18
+    },
+    "hits": [],
+    "shotCollisions": [
+      {
+        "tick": 16,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 32,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 67,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 81,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 109,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 124,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 152,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 168,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 196,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 303,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 354,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 444,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 474,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 520,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 567,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 600,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 614,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 644,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 689,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 745,
+        "owners": [
+          0,
+          1
+        ]
+      }
+    ],
+    "interceptions": [],
+    "removals": [
+      {
+        "tick": 16,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 32,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 67,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 81,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 109,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 124,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 152,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 168,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 196,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 303,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 354,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 444,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 474,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 520,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 567,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 600,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 614,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 644,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 689,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 745,
+        "owner": 0,
+        "by": 1
+      }
+    ],
+    "associatedShots": [
+      {
+        "attempt": 1,
+        "tick": 11,
+        "category": "interceptado",
+        "endTick": 16
+      },
+      {
+        "attempt": 2,
+        "tick": 53,
+        "category": "interceptado",
+        "endTick": 67
+      },
+      {
+        "attempt": 2,
+        "tick": 74,
+        "category": "interceptado",
+        "endTick": 81
+      },
+      {
+        "attempt": 2,
+        "tick": 95,
+        "category": "interceptado",
+        "endTick": 109
+      },
+      {
+        "attempt": 2,
+        "tick": 116,
+        "category": "interceptado",
+        "endTick": 124
+      },
+      {
+        "attempt": 2,
+        "tick": 137,
+        "category": "interceptado",
+        "endTick": 152
+      },
+      {
+        "attempt": 2,
+        "tick": 158,
+        "category": "interceptado",
+        "endTick": 168
+      },
+      {
+        "attempt": 3,
+        "tick": 179,
+        "category": "interceptado",
+        "endTick": 196
+      },
+      {
+        "attempt": 3,
+        "tick": 200,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 280
+      },
+      {
+        "attempt": 5,
+        "tick": 263,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 343
+      },
+      {
+        "attempt": 5,
+        "tick": 284,
+        "category": "interceptado",
+        "endTick": 303
+      },
+      {
+        "attempt": 6,
+        "tick": 326,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 406
+      },
+      {
+        "attempt": 7,
+        "tick": 410,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 490
+      },
+      {
+        "attempt": 8,
+        "tick": 473,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 553
+      },
+      {
+        "attempt": 9,
+        "tick": 578,
+        "category": "interceptado",
+        "endTick": 600
+      },
+      {
+        "attempt": 11,
+        "tick": 662,
+        "category": "interceptado",
+        "endTick": 689
+      },
+      {
+        "attempt": 11,
+        "tick": 683,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 763
+      },
+      {
+        "attempt": 11,
+        "tick": 704,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 784
+      },
+      {
+        "attempt": 11,
+        "tick": 725,
+        "category": "interceptado",
+        "endTick": 745
+      },
+      {
+        "attempt": 11,
+        "tick": 746,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 826
+      },
+      {
+        "attempt": 11,
+        "tick": 767,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 847
+      },
+      {
+        "attempt": 12,
+        "tick": 788,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 868
+      },
+      {
+        "attempt": 12,
+        "tick": 809,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 889
+      },
+      {
+        "attempt": 12,
+        "tick": 830,
+        "category": null
+      },
+      {
+        "attempt": 12,
+        "tick": 851,
+        "category": null
+      },
+      {
+        "attempt": 12,
+        "tick": 872,
+        "category": null
+      },
+      {
+        "attempt": 12,
+        "tick": 893,
+        "category": null
+      }
+    ],
+    "attempts": [
+      {
+        "slot": 0,
+        "tick": 6,
+        "choice": 0,
+        "ended": true,
+        "end": 16,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 51,
+        "choice": 1,
+        "ended": true,
+        "end": 171,
+        "reason": "prazo",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 120
+      },
+      {
+        "slot": 0,
+        "tick": 171,
+        "choice": 1,
+        "ended": true,
+        "end": 201,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 30
+      },
+      {
+        "slot": 0,
+        "tick": 246,
+        "choice": 1,
+        "ended": true,
+        "end": 251,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 5
+      },
+      {
+        "slot": 0,
+        "tick": 261,
+        "choice": 1,
+        "ended": true,
+        "end": 296,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 35
+      },
+      {
+        "slot": 0,
+        "tick": 311,
+        "choice": 0,
+        "ended": true,
+        "end": 336,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 25
+      },
+      {
+        "slot": 0,
+        "tick": 391,
+        "choice": 1,
+        "ended": true,
+        "end": 426,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 35
+      },
+      {
+        "slot": 0,
+        "tick": 461,
+        "choice": 1,
+        "ended": true,
+        "end": 476,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 15
+      },
+      {
+        "slot": 0,
+        "tick": 566,
+        "choice": 1,
+        "ended": true,
+        "end": 586,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 20
+      },
+      {
+        "slot": 0,
+        "tick": 601,
+        "choice": 1,
+        "ended": true,
+        "end": 611,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 661,
+        "choice": 1,
+        "ended": true,
+        "end": 781,
+        "reason": "prazo",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 120
+      },
+      {
+        "slot": 0,
+        "tick": 781,
+        "choice": 1,
+        "end": 900,
+        "reason": "fim_observacao",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 119
+      }
+    ],
+    "results": null,
+    "trials": 12,
+    "nextChoice": 1,
+    "threat": 3
+  },
+  {
+    "seed": 7102,
+    "distance": 300,
+    "control": true,
+    "ticks": 900,
+    "stop": "limite",
+    "finalClasses": [
+      "Tank",
+      "Destroyer"
+    ],
+    "finalDistance": 351.4328805141182,
+    "fired": {
+      "tank": 43,
+      "destroyer": 20
+    },
+    "hits": [],
+    "shotCollisions": [
+      {
+        "tick": 21,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 37,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 68,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 111,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 166,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 195,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 265,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 299,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 312,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 397,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 444,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 471,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 499,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 546,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 615,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 628,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 660,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 702,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 730,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 778,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 791,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 861,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 889,
+        "owners": [
+          0,
+          1
+        ]
+      }
+    ],
+    "interceptions": [],
+    "removals": [
+      {
+        "tick": 21,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 37,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 68,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 111,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 166,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 195,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 265,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 299,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 312,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 397,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 444,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 471,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 499,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 546,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 615,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 628,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 660,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 702,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 730,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 778,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 791,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 861,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 889,
+        "owner": 0,
+        "by": 1
+      }
+    ],
+    "associatedShots": [],
+    "attempts": [],
+    "results": null,
+    "trials": 0,
+    "nextChoice": 0,
+    "threat": 3
+  },
+  {
+    "seed": 7102,
+    "distance": 300,
+    "control": false,
+    "ticks": 900,
+    "stop": "limite",
+    "finalClasses": [
+      "Tank",
+      "Destroyer"
+    ],
+    "finalDistance": 481.07697554572167,
+    "fired": {
+      "tank": 43,
+      "destroyer": 18
+    },
+    "hits": [],
+    "shotCollisions": [
+      {
+        "tick": 21,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 86,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 101,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 234,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 304,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 404,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 558,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 644,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 686,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 714,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 730,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 803,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 873,
+        "owners": [
+          0,
+          1
+        ]
+      }
+    ],
+    "interceptions": [],
+    "removals": [
+      {
+        "tick": 21,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 86,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 101,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 234,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 304,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 404,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 558,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 644,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 686,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 714,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 730,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 803,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 873,
+        "owner": 0,
+        "by": 1
+      }
+    ],
+    "associatedShots": [
+      {
+        "attempt": 1,
+        "tick": 11,
+        "category": "interceptado",
+        "endTick": 21
+      },
+      {
+        "attempt": 2,
+        "tick": 74,
+        "category": "interceptado",
+        "endTick": 86
+      },
+      {
+        "attempt": 2,
+        "tick": 95,
+        "category": "interceptado",
+        "endTick": 101
+      },
+      {
+        "attempt": 2,
+        "tick": 116,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 196
+      },
+      {
+        "attempt": 2,
+        "tick": 137,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 217
+      },
+      {
+        "attempt": 4,
+        "tick": 221,
+        "category": "interceptado",
+        "endTick": 234
+      },
+      {
+        "attempt": 4,
+        "tick": 242,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 322
+      },
+      {
+        "attempt": 5,
+        "tick": 305,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 385
+      },
+      {
+        "attempt": 9,
+        "tick": 515,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 595
+      },
+      {
+        "attempt": 9,
+        "tick": 536,
+        "category": "interceptado",
+        "endTick": 558
+      },
+      {
+        "attempt": 9,
+        "tick": 557,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 637
+      },
+      {
+        "attempt": 9,
+        "tick": 578,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 658
+      },
+      {
+        "attempt": 9,
+        "tick": 599,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 679
+      },
+      {
+        "attempt": 9,
+        "tick": 620,
+        "category": "interceptado",
+        "endTick": 644
+      },
+      {
+        "attempt": 10,
+        "tick": 641,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 721
+      },
+      {
+        "attempt": 11,
+        "tick": 662,
+        "category": "interceptado",
+        "endTick": 686
+      },
+      {
+        "attempt": 11,
+        "tick": 683,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 763
+      },
+      {
+        "attempt": 12,
+        "tick": 772,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 852
+      },
+      {
+        "attempt": 12,
+        "tick": 793,
+        "category": "interceptado",
+        "endTick": 803
+      },
+      {
+        "attempt": 12,
+        "tick": 814,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 894
+      },
+      {
+        "attempt": 13,
+        "tick": 856,
+        "category": "interceptado",
+        "endTick": 873
+      }
+    ],
+    "attempts": [
+      {
+        "slot": 0,
+        "tick": 6,
+        "choice": 0,
+        "ended": true,
+        "end": 16,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 61,
+        "choice": 1,
+        "ended": true,
+        "end": 156,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 95
+      },
+      {
+        "slot": 0,
+        "tick": 201,
+        "choice": 1,
+        "ended": true,
+        "end": 211,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 221,
+        "choice": 1,
+        "ended": true,
+        "end": 251,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 30
+      },
+      {
+        "slot": 0,
+        "tick": 301,
+        "choice": 1,
+        "ended": true,
+        "end": 306,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 5
+      },
+      {
+        "slot": 0,
+        "tick": 311,
+        "choice": 0,
+        "ended": true,
+        "end": 326,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 15
+      },
+      {
+        "slot": 0,
+        "tick": 331,
+        "choice": 1,
+        "ended": true,
+        "end": 346,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 15
+      },
+      {
+        "slot": 0,
+        "tick": 441,
+        "choice": 1,
+        "ended": true,
+        "end": 451,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 511,
+        "choice": 1,
+        "ended": true,
+        "end": 631,
+        "reason": "prazo",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 120
+      },
+      {
+        "slot": 0,
+        "tick": 631,
+        "choice": 1,
+        "ended": true,
+        "end": 646,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 15
+      },
+      {
+        "slot": 0,
+        "tick": 661,
+        "choice": 1,
+        "ended": true,
+        "end": 686,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 25
+      },
+      {
+        "slot": 0,
+        "tick": 756,
+        "choice": 1,
+        "ended": true,
+        "end": 821,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 65
+      },
+      {
+        "slot": 0,
+        "tick": 836,
+        "choice": 1,
+        "ended": true,
+        "end": 861,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 25
+      }
+    ],
+    "results": null,
+    "trials": 13,
+    "nextChoice": 1,
+    "threat": 3
+  },
+  {
+    "seed": 7102,
+    "distance": 380,
+    "control": true,
+    "ticks": 900,
+    "stop": "limite",
+    "finalClasses": [
+      "Tank",
+      "Destroyer"
+    ],
+    "finalDistance": 315.36369894938537,
+    "fired": {
+      "tank": 43,
+      "destroyer": 20
+    },
+    "hits": [],
+    "shotCollisions": [
+      {
+        "tick": 25,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 37,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 67,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 81,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 108,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 166,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 196,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 267,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 298,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 341,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 356,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 385,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 427,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 458,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 574,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 717,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 775,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 804,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 859,
+        "owners": [
+          1,
+          0
+        ]
+      }
+    ],
+    "interceptions": [],
+    "removals": [
+      {
+        "tick": 25,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 37,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 67,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 81,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 108,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 166,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 196,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 267,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 298,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 341,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 356,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 385,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 427,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 458,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 574,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 717,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 775,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 804,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 859,
+        "owner": 0,
+        "by": 1
+      }
+    ],
+    "associatedShots": [],
+    "attempts": [],
+    "results": null,
+    "trials": 0,
+    "nextChoice": 0,
+    "threat": 3
+  },
+  {
+    "seed": 7102,
+    "distance": 380,
+    "control": false,
+    "ticks": 900,
+    "stop": "limite",
+    "finalClasses": [
+      "Tank",
+      "Destroyer"
+    ],
+    "finalDistance": 439.8054641423322,
+    "fired": {
+      "tank": 43,
+      "destroyer": 17
+    },
+    "hits": [
+      {
+        "tick": 204,
+        "from": "tank",
+        "damage": 25,
+        "origin": 3,
+        "active": null,
+        "originActive": false
+      }
+    ],
+    "shotCollisions": [
+      {
+        "tick": 25,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 38,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 68,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 82,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 124,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 152,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 290,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 384,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 412,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 523,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 534,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 575,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 618,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 631,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 705,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 749,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 750,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 808,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 841,
+        "owners": [
+          1,
+          0
+        ]
+      }
+    ],
+    "interceptions": [],
+    "removals": [
+      {
+        "tick": 25,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 38,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 68,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 82,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 124,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 152,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 290,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 384,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 412,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 523,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 534,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 575,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 618,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 631,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 705,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 749,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 750,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 808,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 841,
+        "owner": 0,
+        "by": 1
+      }
+    ],
+    "associatedShots": [
+      {
+        "attempt": 1,
+        "tick": 11,
+        "category": "interceptado",
+        "endTick": 25
+      },
+      {
+        "attempt": 3,
+        "tick": 74,
+        "category": "interceptado",
+        "endTick": 82
+      },
+      {
+        "attempt": 3,
+        "tick": 95,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 175
+      },
+      {
+        "attempt": 3,
+        "tick": 116,
+        "category": "interceptado",
+        "endTick": 124
+      },
+      {
+        "attempt": 3,
+        "tick": 137,
+        "category": "interceptado",
+        "endTick": 152
+      },
+      {
+        "attempt": 3,
+        "tick": 158,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 238
+      },
+      {
+        "attempt": 3,
+        "tick": 179,
+        "category": "rival_encerrada",
+        "endTick": 204
+      },
+      {
+        "attempt": 5,
+        "tick": 221,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 301
+      },
+      {
+        "attempt": 8,
+        "tick": 326,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 406
+      },
+      {
+        "attempt": 8,
+        "tick": 347,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 427
+      },
+      {
+        "attempt": 8,
+        "tick": 368,
+        "category": "interceptado",
+        "endTick": 384
+      },
+      {
+        "attempt": 8,
+        "tick": 389,
+        "category": "interceptado",
+        "endTick": 412
+      },
+      {
+        "attempt": 8,
+        "tick": 410,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 490
+      },
+      {
+        "attempt": 8,
+        "tick": 431,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 511
+      },
+      {
+        "attempt": 9,
+        "tick": 452,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 532
+      },
+      {
+        "attempt": 10,
+        "tick": 515,
+        "category": "interceptado",
+        "endTick": 534
+      },
+      {
+        "attempt": 11,
+        "tick": 578,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 658
+      },
+      {
+        "attempt": 11,
+        "tick": 599,
+        "category": "interceptado",
+        "endTick": 618
+      },
+      {
+        "attempt": 11,
+        "tick": 620,
+        "category": "interceptado",
+        "endTick": 631
+      },
+      {
+        "attempt": 11,
+        "tick": 641,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 721
+      },
+      {
+        "attempt": 12,
+        "tick": 683,
+        "category": "interceptado",
+        "endTick": 705
+      },
+      {
+        "attempt": 13,
+        "tick": 851,
+        "category": null
+      },
+      {
+        "attempt": 14,
+        "tick": 872,
+        "category": null
+      },
+      {
+        "attempt": 14,
+        "tick": 893,
+        "category": null
+      }
+    ],
+    "attempts": [
+      {
+        "slot": 0,
+        "tick": 6,
+        "choice": 0,
+        "ended": true,
+        "end": 16,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 21,
+        "choice": 1,
+        "ended": true,
+        "end": 26,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 5
+      },
+      {
+        "slot": 0,
+        "tick": 56,
+        "choice": 1,
+        "ended": true,
+        "end": 181,
+        "reason": "prazo",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 125
+      },
+      {
+        "slot": 0,
+        "tick": 181,
+        "choice": 1,
+        "ended": true,
+        "end": 196,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 15
+      },
+      {
+        "slot": 0,
+        "tick": 216,
+        "choice": 1,
+        "ended": true,
+        "end": 241,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 25
+      },
+      {
+        "slot": 0,
+        "tick": 246,
+        "choice": 0,
+        "ended": true,
+        "end": 251,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 5
+      },
+      {
+        "slot": 0,
+        "tick": 256,
+        "choice": 1,
+        "ended": true,
+        "end": 261,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 5
+      },
+      {
+        "slot": 0,
+        "tick": 326,
+        "choice": 1,
+        "ended": true,
+        "end": 446,
+        "reason": "prazo",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 120
+      },
+      {
+        "slot": 0,
+        "tick": 446,
+        "choice": 1,
+        "ended": true,
+        "end": 456,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 511,
+        "choice": 1,
+        "ended": true,
+        "end": 531,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 20
+      },
+      {
+        "slot": 0,
+        "tick": 561,
+        "choice": 1,
+        "ended": true,
+        "end": 651,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 90
+      },
+      {
+        "slot": 0,
+        "tick": 676,
+        "choice": 1,
+        "ended": true,
+        "end": 701,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 25
+      },
+      {
+        "slot": 0,
+        "tick": 836,
+        "choice": 1,
+        "ended": true,
+        "end": 856,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 20
+      },
+      {
+        "slot": 0,
+        "tick": 866,
+        "choice": 1,
+        "end": 900,
+        "reason": "fim_observacao",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 34
+      }
+    ],
+    "results": null,
+    "trials": 14,
+    "nextChoice": 1,
+    "threat": 3
+  },
+  {
+    "seed": 7103,
+    "distance": 200,
+    "control": true,
+    "ticks": 900,
+    "stop": "limite",
+    "finalClasses": [
+      "Tank",
+      "Destroyer"
+    ],
+    "finalDistance": 348.8578147230504,
+    "fired": {
+      "tank": 32,
+      "destroyer": 15
+    },
+    "hits": [
+      {
+        "tick": 87,
+        "from": "tank",
+        "damage": 25,
+        "origin": null,
+        "active": null,
+        "originActive": false
+      }
+    ],
+    "shotCollisions": [
+      {
+        "tick": 15,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 154,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 382,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 496,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 556,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 613,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 731,
+        "owners": [
+          0,
+          1
+        ]
+      }
+    ],
+    "interceptions": [],
+    "removals": [
+      {
+        "tick": 15,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 154,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 382,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 496,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 556,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 613,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 731,
+        "owner": 0,
+        "by": 1
+      }
+    ],
+    "associatedShots": [],
+    "attempts": [],
+    "results": null,
+    "trials": 0,
+    "nextChoice": 0,
+    "threat": 3
+  },
+  {
+    "seed": 7103,
+    "distance": 200,
+    "control": false,
+    "ticks": 900,
+    "stop": "limite",
+    "finalClasses": [
+      "Tank",
+      "Destroyer"
+    ],
+    "finalDistance": 373.13559209560674,
+    "fired": {
+      "tank": 32,
+      "destroyer": 15
+    },
+    "hits": [
+      {
+        "tick": 89,
+        "from": "tank",
+        "damage": 25,
+        "origin": 2,
+        "active": null,
+        "originActive": false
+      },
+      {
+        "tick": 260,
+        "from": "tank",
+        "damage": 25,
+        "origin": 5,
+        "active": null,
+        "originActive": false
+      }
+    ],
+    "shotCollisions": [
+      {
+        "tick": 15,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 159,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 217,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 325,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 467,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 505,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 580,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 616,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 676,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 771,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 812,
+        "owners": [
+          1,
+          0
+        ]
+      }
+    ],
+    "interceptions": [],
+    "removals": [
+      {
+        "tick": 15,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 159,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 217,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 325,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 467,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 505,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 580,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 616,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 676,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 771,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 812,
+        "owner": 0,
+        "by": 1
+      }
+    ],
+    "associatedShots": [
+      {
+        "attempt": 1,
+        "tick": 11,
+        "category": "interceptado",
+        "endTick": 15
+      },
+      {
+        "attempt": 2,
+        "tick": 67,
+        "category": "rival_encerrada",
+        "endTick": 89
+      },
+      {
+        "attempt": 3,
+        "tick": 123,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 203
+      },
+      {
+        "attempt": 5,
+        "tick": 207,
+        "category": "interceptado",
+        "endTick": 217
+      },
+      {
+        "attempt": 5,
+        "tick": 235,
+        "category": "rival_encerrada",
+        "endTick": 260
+      },
+      {
+        "attempt": 6,
+        "tick": 291,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 371
+      },
+      {
+        "attempt": 7,
+        "tick": 347,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 427
+      },
+      {
+        "attempt": 7,
+        "tick": 375,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 455
+      },
+      {
+        "attempt": 8,
+        "tick": 431,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 511
+      },
+      {
+        "attempt": 9,
+        "tick": 487,
+        "category": "interceptado",
+        "endTick": 505
+      },
+      {
+        "attempt": 10,
+        "tick": 571,
+        "category": "interceptado",
+        "endTick": 580
+      },
+      {
+        "attempt": 10,
+        "tick": 599,
+        "category": "interceptado",
+        "endTick": 616
+      },
+      {
+        "attempt": 11,
+        "tick": 655,
+        "category": "interceptado",
+        "endTick": 676
+      },
+      {
+        "attempt": 14,
+        "tick": 795,
+        "category": "interceptado",
+        "endTick": 812
+      },
+      {
+        "attempt": 14,
+        "tick": 823,
+        "category": null
+      },
+      {
+        "attempt": 14,
+        "tick": 851,
+        "category": null
+      },
+      {
+        "attempt": 15,
+        "tick": 879,
+        "category": null
+      }
+    ],
+    "attempts": [
+      {
+        "slot": 0,
+        "tick": 6,
+        "choice": 0,
+        "ended": true,
+        "end": 16,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 41,
+        "choice": 1,
+        "ended": true,
+        "end": 76,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 35
+      },
+      {
+        "slot": 0,
+        "tick": 121,
+        "choice": 1,
+        "ended": true,
+        "end": 136,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 15
+      },
+      {
+        "slot": 0,
+        "tick": 186,
+        "choice": 1,
+        "ended": true,
+        "end": 191,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 5
+      },
+      {
+        "slot": 0,
+        "tick": 196,
+        "choice": 1,
+        "ended": true,
+        "end": 256,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 60
+      },
+      {
+        "slot": 0,
+        "tick": 281,
+        "choice": 0,
+        "ended": true,
+        "end": 316,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 35
+      },
+      {
+        "slot": 0,
+        "tick": 346,
+        "choice": 1,
+        "ended": true,
+        "end": 376,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 30
+      },
+      {
+        "slot": 0,
+        "tick": 426,
+        "choice": 1,
+        "ended": true,
+        "end": 436,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 481,
+        "choice": 1,
+        "ended": true,
+        "end": 496,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 15
+      },
+      {
+        "slot": 0,
+        "tick": 551,
+        "choice": 1,
+        "ended": true,
+        "end": 616,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 65
+      },
+      {
+        "slot": 0,
+        "tick": 646,
+        "choice": 1,
+        "ended": true,
+        "end": 656,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 661,
+        "choice": 1,
+        "ended": true,
+        "end": 676,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 15
+      },
+      {
+        "slot": 0,
+        "tick": 716,
+        "choice": 1,
+        "ended": true,
+        "end": 736,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 20
+      },
+      {
+        "slot": 0,
+        "tick": 791,
+        "choice": 1,
+        "ended": true,
+        "end": 856,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 65
+      },
+      {
+        "slot": 0,
+        "tick": 866,
+        "choice": 1,
+        "ended": true,
+        "end": 891,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 25
+      }
+    ],
+    "results": null,
+    "trials": 15,
+    "nextChoice": 1,
+    "threat": 3
+  },
+  {
+    "seed": 7103,
+    "distance": 300,
+    "control": true,
+    "ticks": 900,
+    "stop": "limite",
+    "finalClasses": [
+      "Tank",
+      "Destroyer"
+    ],
+    "finalDistance": 348.860480440984,
+    "fired": {
+      "tank": 32,
+      "destroyer": 15
+    },
+    "hits": [
+      {
+        "tick": 87,
+        "from": "tank",
+        "damage": 25,
+        "origin": null,
+        "active": null,
+        "originActive": false
+      }
+    ],
+    "shotCollisions": [
+      {
+        "tick": 19,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 154,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 326,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 382,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 496,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 556,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 613,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 731,
+        "owners": [
+          0,
+          1
+        ]
+      }
+    ],
+    "interceptions": [],
+    "removals": [
+      {
+        "tick": 19,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 154,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 326,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 382,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 496,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 556,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 613,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 731,
+        "owner": 0,
+        "by": 1
+      }
+    ],
+    "associatedShots": [],
+    "attempts": [],
+    "results": null,
+    "trials": 0,
+    "nextChoice": 0,
+    "threat": 3
+  },
+  {
+    "seed": 7103,
+    "distance": 300,
+    "control": false,
+    "ticks": 900,
+    "stop": "limite",
+    "finalClasses": [
+      "Tank",
+      "Destroyer"
+    ],
+    "finalDistance": 431.984207657668,
+    "fired": {
+      "tank": 32,
+      "destroyer": 15
+    },
+    "hits": [],
+    "shotCollisions": [
+      {
+        "tick": 19,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 160,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 199,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 218,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 255,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 312,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 749,
+        "owners": [
+          1,
+          0
+        ]
+      }
+    ],
+    "interceptions": [],
+    "removals": [
+      {
+        "tick": 19,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 160,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 199,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 218,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 255,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 312,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 749,
+        "owner": 0,
+        "by": 1
+      }
+    ],
+    "associatedShots": [
+      {
+        "attempt": 1,
+        "tick": 11,
+        "category": "interceptado",
+        "endTick": 19
+      },
+      {
+        "attempt": 2,
+        "tick": 67,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 147
+      },
+      {
+        "attempt": 3,
+        "tick": 123,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 203
+      },
+      {
+        "attempt": 4,
+        "tick": 207,
+        "category": "interceptado",
+        "endTick": 218
+      },
+      {
+        "attempt": 4,
+        "tick": 235,
+        "category": "interceptado",
+        "endTick": 255
+      },
+      {
+        "attempt": 5,
+        "tick": 291,
+        "category": "interceptado",
+        "endTick": 312
+      },
+      {
+        "attempt": 7,
+        "tick": 347,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 427
+      },
+      {
+        "attempt": 7,
+        "tick": 375,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 455
+      },
+      {
+        "attempt": 8,
+        "tick": 431,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 511
+      },
+      {
+        "attempt": 10,
+        "tick": 487,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 567
+      },
+      {
+        "attempt": 11,
+        "tick": 571,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 651
+      },
+      {
+        "attempt": 11,
+        "tick": 599,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 679
+      },
+      {
+        "attempt": 18,
+        "tick": 795,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 875
+      },
+      {
+        "attempt": 19,
+        "tick": 851,
+        "category": null
+      }
+    ],
+    "attempts": [
+      {
+        "slot": 0,
+        "tick": 6,
+        "choice": 0,
+        "ended": true,
+        "end": 16,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 51,
+        "choice": 1,
+        "ended": true,
+        "end": 76,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 25
+      },
+      {
+        "slot": 0,
+        "tick": 121,
+        "choice": 1,
+        "ended": true,
+        "end": 136,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 15
+      },
+      {
+        "slot": 0,
+        "tick": 201,
+        "choice": 1,
+        "ended": true,
+        "end": 256,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 55
+      },
+      {
+        "slot": 0,
+        "tick": 286,
+        "choice": 1,
+        "ended": true,
+        "end": 296,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 301,
+        "choice": 0,
+        "ended": true,
+        "end": 316,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 15
+      },
+      {
+        "slot": 0,
+        "tick": 346,
+        "choice": 1,
+        "ended": true,
+        "end": 376,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 30
+      },
+      {
+        "slot": 0,
+        "tick": 416,
+        "choice": 1,
+        "ended": true,
+        "end": 436,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 20
+      },
+      {
+        "slot": 0,
+        "tick": 471,
+        "choice": 1,
+        "ended": true,
+        "end": 476,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 5
+      },
+      {
+        "slot": 0,
+        "tick": 481,
+        "choice": 1,
+        "ended": true,
+        "end": 496,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 15
+      },
+      {
+        "slot": 0,
+        "tick": 551,
+        "choice": 1,
+        "ended": true,
+        "end": 616,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 65
+      },
+      {
+        "slot": 0,
+        "tick": 621,
+        "choice": 1,
+        "ended": true,
+        "end": 626,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 5
+      },
+      {
+        "slot": 0,
+        "tick": 641,
+        "choice": 1,
+        "ended": true,
+        "end": 651,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 661,
+        "choice": 1,
+        "ended": true,
+        "end": 676,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 15
+      },
+      {
+        "slot": 0,
+        "tick": 706,
+        "choice": 1,
+        "ended": true,
+        "end": 711,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 5
+      },
+      {
+        "slot": 0,
+        "tick": 716,
+        "choice": 1,
+        "ended": true,
+        "end": 736,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 20
+      },
+      {
+        "slot": 0,
+        "tick": 771,
+        "choice": 1,
+        "ended": true,
+        "end": 776,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 5
+      },
+      {
+        "slot": 0,
+        "tick": 781,
+        "choice": 0,
+        "ended": true,
+        "end": 796,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 15
+      },
+      {
+        "slot": 0,
+        "tick": 836,
+        "choice": 1,
+        "ended": true,
+        "end": 856,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 20
+      },
+      {
+        "slot": 0,
+        "tick": 891,
+        "choice": 1,
+        "end": 900,
+        "reason": "fim_observacao",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 9
+      }
+    ],
+    "results": null,
+    "trials": 20,
+    "nextChoice": 1,
+    "threat": 3
+  },
+  {
+    "seed": 7103,
+    "distance": 380,
+    "control": true,
+    "ticks": 900,
+    "stop": "limite",
+    "finalClasses": [
+      "Tank",
+      "Destroyer"
+    ],
+    "finalDistance": 365.9254849447917,
+    "fired": {
+      "tank": 32,
+      "destroyer": 15
+    },
+    "hits": [
+      {
+        "tick": 113,
+        "from": "tank",
+        "damage": 25,
+        "origin": null,
+        "active": null,
+        "originActive": false
+      },
+      {
+        "tick": 170,
+        "from": "tank",
+        "damage": 25,
+        "origin": null,
+        "active": null,
+        "originActive": false
+      }
+    ],
+    "shotCollisions": [
+      {
+        "tick": 23,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 78,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 136,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 326,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 382,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 496,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 556,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 613,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 731,
+        "owners": [
+          0,
+          1
+        ]
+      }
+    ],
+    "interceptions": [],
+    "removals": [
+      {
+        "tick": 23,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 78,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 136,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 326,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 382,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 496,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 556,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 613,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 731,
+        "owner": 0,
+        "by": 1
+      }
+    ],
+    "associatedShots": [],
+    "attempts": [],
+    "results": null,
+    "trials": 0,
+    "nextChoice": 0,
+    "threat": 3
+  },
+  {
+    "seed": 7103,
+    "distance": 380,
+    "control": false,
+    "ticks": 900,
+    "stop": "limite",
+    "finalClasses": [
+      "Tank",
+      "Destroyer"
+    ],
+    "finalDistance": 462.64152797519904,
+    "fired": {
+      "tank": 32,
+      "destroyer": 15
+    },
+    "hits": [
+      {
+        "tick": 333,
+        "from": "tank",
+        "damage": 25,
+        "origin": null,
+        "active": null,
+        "originActive": false
+      }
+    ],
+    "shotCollisions": [
+      {
+        "tick": 23,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 84,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 160,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 196,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 254,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 524,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 564,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 680,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 753,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 807,
+        "owners": [
+          1,
+          0
+        ]
+      }
+    ],
+    "interceptions": [],
+    "removals": [
+      {
+        "tick": 23,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 84,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 160,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 196,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 254,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 524,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 564,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 680,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 753,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 807,
+        "owner": 0,
+        "by": 1
+      }
+    ],
+    "associatedShots": [
+      {
+        "attempt": 1,
+        "tick": 11,
+        "category": "interceptado",
+        "endTick": 23
+      },
+      {
+        "attempt": 2,
+        "tick": 67,
+        "category": "interceptado",
+        "endTick": 84
+      },
+      {
+        "attempt": 3,
+        "tick": 151,
+        "category": "interceptado",
+        "endTick": 160
+      },
+      {
+        "attempt": 3,
+        "tick": 179,
+        "category": "interceptado",
+        "endTick": 196
+      },
+      {
+        "attempt": 6,
+        "tick": 291,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 371
+      },
+      {
+        "attempt": 7,
+        "tick": 347,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 427
+      },
+      {
+        "attempt": 7,
+        "tick": 375,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 455
+      },
+      {
+        "attempt": 8,
+        "tick": 431,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 511
+      },
+      {
+        "attempt": 9,
+        "tick": 487,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 567
+      },
+      {
+        "attempt": 10,
+        "tick": 571,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 651
+      },
+      {
+        "attempt": 10,
+        "tick": 599,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 679
+      },
+      {
+        "attempt": 11,
+        "tick": 627,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 707
+      },
+      {
+        "attempt": 12,
+        "tick": 655,
+        "category": "interceptado",
+        "endTick": 680
+      },
+      {
+        "attempt": 14,
+        "tick": 739,
+        "category": "interceptado",
+        "endTick": 753
+      },
+      {
+        "attempt": 14,
+        "tick": 767,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 847
+      },
+      {
+        "attempt": 14,
+        "tick": 795,
+        "category": "interceptado",
+        "endTick": 807
+      },
+      {
+        "attempt": 15,
+        "tick": 823,
+        "category": null
+      },
+      {
+        "attempt": 16,
+        "tick": 851,
+        "category": null
+      }
+    ],
+    "attempts": [
+      {
+        "slot": 0,
+        "tick": 6,
+        "choice": 0,
+        "ended": true,
+        "end": 16,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 51,
+        "choice": 1,
+        "ended": true,
+        "end": 76,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 25
+      },
+      {
+        "slot": 0,
+        "tick": 136,
+        "choice": 1,
+        "ended": true,
+        "end": 201,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 65
+      },
+      {
+        "slot": 0,
+        "tick": 226,
+        "choice": 1,
+        "ended": true,
+        "end": 231,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 5
+      },
+      {
+        "slot": 0,
+        "tick": 236,
+        "choice": 1,
+        "ended": true,
+        "end": 256,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 20
+      },
+      {
+        "slot": 0,
+        "tick": 291,
+        "choice": 0,
+        "ended": true,
+        "end": 316,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 25
+      },
+      {
+        "slot": 0,
+        "tick": 346,
+        "choice": 1,
+        "ended": true,
+        "end": 376,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 30
+      },
+      {
+        "slot": 0,
+        "tick": 421,
+        "choice": 1,
+        "ended": true,
+        "end": 436,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 15
+      },
+      {
+        "slot": 0,
+        "tick": 481,
+        "choice": 1,
+        "ended": true,
+        "end": 501,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 20
+      },
+      {
+        "slot": 0,
+        "tick": 556,
+        "choice": 1,
+        "ended": true,
+        "end": 616,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 60
+      },
+      {
+        "slot": 0,
+        "tick": 626,
+        "choice": 1,
+        "ended": true,
+        "end": 631,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 5
+      },
+      {
+        "slot": 0,
+        "tick": 646,
+        "choice": 1,
+        "ended": true,
+        "end": 661,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 15
+      },
+      {
+        "slot": 0,
+        "tick": 666,
+        "choice": 1,
+        "ended": true,
+        "end": 676,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 726,
+        "choice": 1,
+        "ended": true,
+        "end": 796,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 70
+      },
+      {
+        "slot": 0,
+        "tick": 821,
+        "choice": 1,
+        "ended": true,
+        "end": 831,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 836,
+        "choice": 1,
+        "ended": true,
+        "end": 856,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 20
+      },
+      {
+        "slot": 0,
+        "tick": 896,
+        "choice": 1,
+        "end": 900,
+        "reason": "fim_observacao",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 4
+      }
+    ],
+    "results": null,
+    "trials": 17,
+    "nextChoice": 1,
+    "threat": 3
+  },
+  {
+    "seed": 7104,
+    "distance": 200,
+    "control": true,
+    "ticks": 900,
+    "stop": "limite",
+    "finalClasses": [
+      "Tank",
+      "Destroyer"
+    ],
+    "finalDistance": 392.0587767955139,
+    "fired": {
+      "tank": 43,
+      "destroyer": 15
+    },
+    "hits": [
+      {
+        "tick": 29,
+        "from": "destroyer",
+        "damage": 96.25,
+        "origin": null,
+        "active": null,
+        "originActive": false
+      },
+      {
+        "tick": 205,
+        "from": "tank",
+        "damage": 25,
+        "origin": null,
+        "active": null,
+        "originActive": false
+      },
+      {
+        "tick": 476,
+        "from": "tank",
+        "damage": 25,
+        "origin": null,
+        "active": null,
+        "originActive": false
+      },
+      {
+        "tick": 896,
+        "from": "tank",
+        "damage": 25,
+        "origin": null,
+        "active": null,
+        "originActive": false
+      }
+    ],
+    "shotCollisions": [
+      {
+        "tick": 16,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 72,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 312,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 434,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 505,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 554,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 630,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 678,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 801,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 863,
+        "owners": [
+          0,
+          1
+        ]
+      }
+    ],
+    "interceptions": [],
+    "removals": [
+      {
+        "tick": 16,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 72,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 312,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 434,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 505,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 554,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 630,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 678,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 801,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 863,
+        "owner": 0,
+        "by": 1
+      }
+    ],
+    "associatedShots": [],
+    "attempts": [],
+    "results": null,
+    "trials": 0,
+    "nextChoice": 0,
+    "threat": 3
+  },
+  {
+    "seed": 7104,
+    "distance": 200,
+    "control": false,
+    "ticks": 900,
+    "stop": "limite",
+    "finalClasses": [
+      "Tank",
+      "Destroyer"
+    ],
+    "finalDistance": 548.8319854300028,
+    "fired": {
+      "tank": 43,
+      "destroyer": 15
+    },
+    "hits": [
+      {
+        "tick": 28,
+        "from": "destroyer",
+        "damage": 96.25,
+        "origin": null,
+        "active": null,
+        "originActive": false
+      }
+    ],
+    "shotCollisions": [
+      {
+        "tick": 16,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 167,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 290,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 325,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 373,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 439,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 501,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 617,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 761,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 856,
+        "owners": [
+          0,
+          1
+        ]
+      }
+    ],
+    "interceptions": [],
+    "removals": [
+      {
+        "tick": 16,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 167,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 290,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 325,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 373,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 439,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 501,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 617,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 761,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 856,
+        "owner": 0,
+        "by": 1
+      }
+    ],
+    "associatedShots": [
+      {
+        "attempt": 1,
+        "tick": 11,
+        "category": "interceptado",
+        "endTick": 16
+      },
+      {
+        "attempt": 2,
+        "tick": 53,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 133
+      },
+      {
+        "attempt": 2,
+        "tick": 74,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 154
+      },
+      {
+        "attempt": 4,
+        "tick": 158,
+        "category": "interceptado",
+        "endTick": 167
+      },
+      {
+        "attempt": 4,
+        "tick": 179,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 259
+      },
+      {
+        "attempt": 5,
+        "tick": 242,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 322
+      },
+      {
+        "attempt": 7,
+        "tick": 326,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 406
+      },
+      {
+        "attempt": 7,
+        "tick": 347,
+        "category": "interceptado",
+        "endTick": 373
+      },
+      {
+        "attempt": 7,
+        "tick": 368,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 448
+      },
+      {
+        "attempt": 9,
+        "tick": 431,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 511
+      },
+      {
+        "attempt": 10,
+        "tick": 494,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 574
+      },
+      {
+        "attempt": 10,
+        "tick": 515,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 595
+      },
+      {
+        "attempt": 10,
+        "tick": 536,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 616
+      },
+      {
+        "attempt": 13,
+        "tick": 662,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 742
+      },
+      {
+        "attempt": 14,
+        "tick": 746,
+        "category": "interceptado",
+        "endTick": 761
+      },
+      {
+        "attempt": 14,
+        "tick": 767,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 847
+      },
+      {
+        "attempt": 14,
+        "tick": 788,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 868
+      },
+      {
+        "attempt": 15,
+        "tick": 830,
+        "category": "interceptado",
+        "endTick": 856
+      },
+      {
+        "attempt": 16,
+        "tick": 851,
+        "category": null
+      }
+    ],
+    "attempts": [
+      {
+        "slot": 0,
+        "tick": 6,
+        "choice": 0,
+        "ended": true,
+        "end": 16,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 41,
+        "choice": 1,
+        "ended": true,
+        "end": 76,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 35
+      },
+      {
+        "slot": 0,
+        "tick": 121,
+        "choice": 1,
+        "ended": true,
+        "end": 136,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 15
+      },
+      {
+        "slot": 0,
+        "tick": 151,
+        "choice": 1,
+        "ended": true,
+        "end": 196,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 45
+      },
+      {
+        "slot": 0,
+        "tick": 236,
+        "choice": 1,
+        "ended": true,
+        "end": 246,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 251,
+        "choice": 0,
+        "ended": true,
+        "end": 261,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 306,
+        "choice": 1,
+        "ended": true,
+        "end": 376,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 70
+      },
+      {
+        "slot": 0,
+        "tick": 411,
+        "choice": 1,
+        "ended": true,
+        "end": 421,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 426,
+        "choice": 1,
+        "ended": true,
+        "end": 441,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 15
+      },
+      {
+        "slot": 0,
+        "tick": 491,
+        "choice": 1,
+        "ended": true,
+        "end": 556,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 65
+      },
+      {
+        "slot": 0,
+        "tick": 566,
+        "choice": 1,
+        "ended": true,
+        "end": 576,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 601,
+        "choice": 1,
+        "ended": true,
+        "end": 616,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 15
+      },
+      {
+        "slot": 0,
+        "tick": 651,
+        "choice": 1,
+        "ended": true,
+        "end": 676,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 25
+      },
+      {
+        "slot": 0,
+        "tick": 726,
+        "choice": 1,
+        "ended": true,
+        "end": 796,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 70
+      },
+      {
+        "slot": 0,
+        "tick": 826,
+        "choice": 1,
+        "ended": true,
+        "end": 841,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 15
+      },
+      {
+        "slot": 0,
+        "tick": 846,
+        "choice": 1,
+        "ended": true,
+        "end": 856,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      }
+    ],
+    "results": null,
+    "trials": 16,
+    "nextChoice": 1,
+    "threat": 3
+  },
+  {
+    "seed": 7104,
+    "distance": 300,
+    "control": true,
+    "ticks": 900,
+    "stop": "limite",
+    "finalClasses": [
+      "Tank",
+      "Destroyer"
+    ],
+    "finalDistance": 438.68015151230213,
+    "fired": {
+      "tank": 43,
+      "destroyer": 14
+    },
+    "hits": [],
+    "shotCollisions": [
+      {
+        "tick": 34,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 73,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 134,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 257,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 333,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 379,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 505,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 554,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 676,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 753,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 799,
+        "owners": [
+          0,
+          1
+        ]
+      }
+    ],
+    "interceptions": [],
+    "removals": [
+      {
+        "tick": 34,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 73,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 134,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 257,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 333,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 379,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 505,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 554,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 676,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 753,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 799,
+        "owner": 0,
+        "by": 1
+      }
+    ],
+    "associatedShots": [],
+    "attempts": [],
+    "results": null,
+    "trials": 0,
+    "nextChoice": 0,
+    "threat": 3
+  },
+  {
+    "seed": 7104,
+    "distance": 300,
+    "control": false,
+    "ticks": 900,
+    "stop": "limite",
+    "finalClasses": [
+      "Tank",
+      "Destroyer"
+    ],
+    "finalDistance": 590.4155789441006,
+    "fired": {
+      "tank": 43,
+      "destroyer": 14
+    },
+    "hits": [],
+    "shotCollisions": [
+      {
+        "tick": 34,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 73,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 212,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 261,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 387,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 461,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 637,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 649,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 734,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 772,
+        "owners": [
+          1,
+          0
+        ]
+      }
+    ],
+    "interceptions": [],
+    "removals": [
+      {
+        "tick": 34,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 73,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 212,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 261,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 387,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 461,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 637,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 649,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 734,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 772,
+        "owner": 0,
+        "by": 1
+      }
+    ],
+    "associatedShots": [
+      {
+        "attempt": 1,
+        "tick": 11,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 91
+      },
+      {
+        "attempt": 2,
+        "tick": 53,
+        "category": "interceptado",
+        "endTick": 73
+      },
+      {
+        "attempt": 2,
+        "tick": 74,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 154
+      },
+      {
+        "attempt": 3,
+        "tick": 116,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 196
+      },
+      {
+        "attempt": 3,
+        "tick": 137,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 217
+      },
+      {
+        "attempt": 6,
+        "tick": 305,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 385
+      },
+      {
+        "attempt": 7,
+        "tick": 368,
+        "category": "interceptado",
+        "endTick": 387
+      },
+      {
+        "attempt": 8,
+        "tick": 431,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 511
+      },
+      {
+        "attempt": 8,
+        "tick": 452,
+        "category": "interceptado",
+        "endTick": 461
+      },
+      {
+        "attempt": 8,
+        "tick": 473,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 553
+      },
+      {
+        "attempt": 8,
+        "tick": 494,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 574
+      },
+      {
+        "attempt": 10,
+        "tick": 557,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 637
+      },
+      {
+        "attempt": 12,
+        "tick": 641,
+        "category": "interceptado",
+        "endTick": 649
+      },
+      {
+        "attempt": 12,
+        "tick": 662,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 742
+      },
+      {
+        "attempt": 13,
+        "tick": 725,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 805
+      },
+      {
+        "attempt": 15,
+        "tick": 767,
+        "category": "interceptado",
+        "endTick": 772
+      },
+      {
+        "attempt": 15,
+        "tick": 788,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 868
+      },
+      {
+        "attempt": 17,
+        "tick": 851,
+        "category": null
+      },
+      {
+        "attempt": 17,
+        "tick": 872,
+        "category": null
+      },
+      {
+        "attempt": 17,
+        "tick": 893,
+        "category": null
+      }
+    ],
+    "attempts": [
+      {
+        "slot": 0,
+        "tick": 6,
+        "choice": 0,
+        "ended": true,
+        "end": 16,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 51,
+        "choice": 1,
+        "ended": true,
+        "end": 76,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 25
+      },
+      {
+        "slot": 0,
+        "tick": 116,
+        "choice": 1,
+        "ended": true,
+        "end": 141,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 25
+      },
+      {
+        "slot": 0,
+        "tick": 181,
+        "choice": 1,
+        "ended": true,
+        "end": 196,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 15
+      },
+      {
+        "slot": 0,
+        "tick": 246,
+        "choice": 1,
+        "ended": true,
+        "end": 256,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 291,
+        "choice": 0,
+        "ended": true,
+        "end": 316,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 25
+      },
+      {
+        "slot": 0,
+        "tick": 356,
+        "choice": 1,
+        "ended": true,
+        "end": 376,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 20
+      },
+      {
+        "slot": 0,
+        "tick": 431,
+        "choice": 1,
+        "ended": true,
+        "end": 496,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 65
+      },
+      {
+        "slot": 0,
+        "tick": 531,
+        "choice": 1,
+        "ended": true,
+        "end": 536,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 5
+      },
+      {
+        "slot": 0,
+        "tick": 541,
+        "choice": 1,
+        "ended": true,
+        "end": 561,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 20
+      },
+      {
+        "slot": 0,
+        "tick": 611,
+        "choice": 1,
+        "ended": true,
+        "end": 616,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 5
+      },
+      {
+        "slot": 0,
+        "tick": 621,
+        "choice": 1,
+        "ended": true,
+        "end": 676,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 55
+      },
+      {
+        "slot": 0,
+        "tick": 721,
+        "choice": 1,
+        "ended": true,
+        "end": 726,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 5
+      },
+      {
+        "slot": 0,
+        "tick": 731,
+        "choice": 1,
+        "ended": true,
+        "end": 741,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 751,
+        "choice": 1,
+        "ended": true,
+        "end": 796,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 45
+      },
+      {
+        "slot": 0,
+        "tick": 831,
+        "choice": 1,
+        "ended": true,
+        "end": 841,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 846,
+        "choice": 1,
+        "end": 900,
+        "reason": "fim_observacao",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 54
+      }
+    ],
+    "results": null,
+    "trials": 17,
+    "nextChoice": 1,
+    "threat": 3
+  },
+  {
+    "seed": 7104,
+    "distance": 380,
+    "control": true,
+    "ticks": 900,
+    "stop": "limite",
+    "finalClasses": [
+      "Tank",
+      "Destroyer"
+    ],
+    "finalDistance": 379.5851073043293,
+    "fired": {
+      "tank": 43,
+      "destroyer": 15
+    },
+    "hits": [
+      {
+        "tick": 120,
+        "from": "tank",
+        "damage": 25,
+        "origin": null,
+        "active": null,
+        "originActive": false
+      },
+      {
+        "tick": 231,
+        "from": "tank",
+        "damage": 25,
+        "origin": null,
+        "active": null,
+        "originActive": false
+      },
+      {
+        "tick": 266,
+        "from": "tank",
+        "damage": 25,
+        "origin": null,
+        "active": null,
+        "originActive": false
+      },
+      {
+        "tick": 475,
+        "from": "tank",
+        "damage": 25,
+        "origin": null,
+        "active": null,
+        "originActive": false
+      },
+      {
+        "tick": 504,
+        "from": "tank",
+        "damage": 25,
+        "origin": null,
+        "active": null,
+        "originActive": false
+      }
+    ],
+    "shotCollisions": [
+      {
+        "tick": 35,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 73,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 135,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 331,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 371,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 433,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 506,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 569,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 625,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 632,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 686,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 694,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 793,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 859,
+        "owners": [
+          0,
+          1
+        ]
+      }
+    ],
+    "interceptions": [],
+    "removals": [
+      {
+        "tick": 35,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 73,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 135,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 331,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 371,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 433,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 506,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 569,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 625,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 632,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 686,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 694,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 793,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 859,
+        "owner": 0,
+        "by": 1
+      }
+    ],
+    "associatedShots": [],
+    "attempts": [],
+    "results": null,
+    "trials": 0,
+    "nextChoice": 0,
+    "threat": 3
+  },
+  {
+    "seed": 7104,
+    "distance": 380,
+    "control": false,
+    "ticks": 900,
+    "stop": "limite",
+    "finalClasses": [
+      "Tank",
+      "Destroyer"
+    ],
+    "finalDistance": 454.0532761922285,
+    "fired": {
+      "tank": 43,
+      "destroyer": 15
+    },
+    "hits": [
+      {
+        "tick": 272,
+        "from": "tank",
+        "damage": 25,
+        "origin": 4,
+        "active": null,
+        "originActive": false
+      },
+      {
+        "tick": 593,
+        "from": "tank",
+        "damage": 25,
+        "origin": null,
+        "active": null,
+        "originActive": false
+      }
+    ],
+    "shotCollisions": [
+      {
+        "tick": 37,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 74,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 141,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 205,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 333,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 400,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 415,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 463,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 511,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 585,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 820,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 854,
+        "owners": [
+          0,
+          1
+        ]
+      }
+    ],
+    "interceptions": [],
+    "removals": [
+      {
+        "tick": 37,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 74,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 141,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 205,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 333,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 400,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 415,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 463,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 511,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 585,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 820,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 854,
+        "owner": 0,
+        "by": 1
+      }
+    ],
+    "associatedShots": [
+      {
+        "attempt": 1,
+        "tick": 11,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 91
+      },
+      {
+        "attempt": 2,
+        "tick": 74,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 154
+      },
+      {
+        "attempt": 4,
+        "tick": 200,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 280
+      },
+      {
+        "attempt": 4,
+        "tick": 221,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 301
+      },
+      {
+        "attempt": 4,
+        "tick": 242,
+        "category": "rival_encerrada",
+        "endTick": 272
+      },
+      {
+        "attempt": 5,
+        "tick": 263,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 343
+      },
+      {
+        "attempt": 6,
+        "tick": 305,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 385
+      },
+      {
+        "attempt": 7,
+        "tick": 368,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 448
+      },
+      {
+        "attempt": 8,
+        "tick": 431,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 511
+      },
+      {
+        "attempt": 8,
+        "tick": 452,
+        "category": "interceptado",
+        "endTick": 463
+      },
+      {
+        "attempt": 8,
+        "tick": 473,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 553
+      },
+      {
+        "attempt": 8,
+        "tick": 494,
+        "category": "interceptado",
+        "endTick": 511
+      },
+      {
+        "attempt": 9,
+        "tick": 515,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 595
+      },
+      {
+        "attempt": 10,
+        "tick": 536,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 616
+      },
+      {
+        "attempt": 12,
+        "tick": 620,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 700
+      },
+      {
+        "attempt": 12,
+        "tick": 641,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 721
+      },
+      {
+        "attempt": 12,
+        "tick": 662,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 742
+      },
+      {
+        "attempt": 16,
+        "tick": 788,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 868
+      },
+      {
+        "attempt": 16,
+        "tick": 809,
+        "category": "interceptado",
+        "endTick": 820
+      },
+      {
+        "attempt": 16,
+        "tick": 830,
+        "category": "interceptado",
+        "endTick": 854
+      },
+      {
+        "attempt": 16,
+        "tick": 851,
+        "category": null
+      },
+      {
+        "attempt": 17,
+        "tick": 893,
+        "category": null
+      }
+    ],
+    "attempts": [
+      {
+        "slot": 0,
+        "tick": 6,
+        "choice": 0,
+        "ended": true,
+        "end": 16,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 56,
+        "choice": 1,
+        "ended": true,
+        "end": 76,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 20
+      },
+      {
+        "slot": 0,
+        "tick": 126,
+        "choice": 1,
+        "ended": true,
+        "end": 136,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 196,
+        "choice": 1,
+        "ended": true,
+        "end": 256,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 60
+      },
+      {
+        "slot": 0,
+        "tick": 261,
+        "choice": 1,
+        "ended": true,
+        "end": 266,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 5
+      },
+      {
+        "slot": 0,
+        "tick": 291,
+        "choice": 0,
+        "ended": true,
+        "end": 316,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 25
+      },
+      {
+        "slot": 0,
+        "tick": 366,
+        "choice": 1,
+        "ended": true,
+        "end": 376,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 426,
+        "choice": 1,
+        "ended": true,
+        "end": 496,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 70
+      },
+      {
+        "slot": 0,
+        "tick": 511,
+        "choice": 1,
+        "ended": true,
+        "end": 521,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 526,
+        "choice": 1,
+        "ended": true,
+        "end": 541,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 15
+      },
+      {
+        "slot": 0,
+        "tick": 546,
+        "choice": 1,
+        "ended": true,
+        "end": 556,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 611,
+        "choice": 1,
+        "ended": true,
+        "end": 676,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 65
+      },
+      {
+        "slot": 0,
+        "tick": 691,
+        "choice": 1,
+        "ended": true,
+        "end": 701,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 711,
+        "choice": 1,
+        "ended": true,
+        "end": 716,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 5
+      },
+      {
+        "slot": 0,
+        "tick": 726,
+        "choice": 1,
+        "ended": true,
+        "end": 741,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 15
+      },
+      {
+        "slot": 0,
+        "tick": 786,
+        "choice": 1,
+        "ended": true,
+        "end": 856,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 70
+      },
+      {
+        "slot": 0,
+        "tick": 891,
+        "choice": 1,
+        "ended": true,
+        "end": 896,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 5
+      }
+    ],
+    "results": null,
+    "trials": 17,
+    "nextChoice": 0,
+    "threat": 3
+  },
+  {
+    "seed": 7105,
+    "distance": 200,
+    "control": true,
+    "ticks": 900,
+    "stop": "limite",
+    "finalClasses": [
+      "Tank",
+      "Destroyer"
+    ],
+    "finalDistance": 434.41086369749274,
+    "fired": {
+      "tank": 32,
+      "destroyer": 14
+    },
+    "hits": [
+      {
+        "tick": 506,
+        "from": "tank",
+        "damage": 25,
+        "origin": null,
+        "active": null,
+        "originActive": false
+      }
+    ],
+    "shotCollisions": [
+      {
+        "tick": 15,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 269,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 311,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 803,
+        "owners": [
+          1,
+          0
+        ]
+      }
+    ],
+    "interceptions": [],
+    "removals": [
+      {
+        "tick": 15,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 269,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 311,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 803,
+        "owner": 0,
+        "by": 1
+      }
+    ],
+    "associatedShots": [],
+    "attempts": [],
+    "results": null,
+    "trials": 0,
+    "nextChoice": 0,
+    "threat": 3
+  },
+  {
+    "seed": 7105,
+    "distance": 200,
+    "control": false,
+    "ticks": 900,
+    "stop": "limite",
+    "finalClasses": [
+      "Tank",
+      "Destroyer"
+    ],
+    "finalDistance": 361.33492531121425,
+    "fired": {
+      "tank": 32,
+      "destroyer": 15
+    },
+    "hits": [
+      {
+        "tick": 31,
+        "from": "destroyer",
+        "damage": 107.8,
+        "origin": null,
+        "active": null,
+        "originActive": false
+      },
+      {
+        "tick": 263,
+        "from": "tank",
+        "damage": 25,
+        "origin": 5,
+        "active": null,
+        "originActive": false
+      }
+    ],
+    "shotCollisions": [
+      {
+        "tick": 15,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 160,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 199,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 523,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 692,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 748,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 802,
+        "owners": [
+          1,
+          0
+        ]
+      }
+    ],
+    "interceptions": [],
+    "removals": [
+      {
+        "tick": 15,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 160,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 199,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 523,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 692,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 748,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 802,
+        "owner": 0,
+        "by": 1
+      }
+    ],
+    "associatedShots": [
+      {
+        "attempt": 1,
+        "tick": 11,
+        "category": "interceptado",
+        "endTick": 15
+      },
+      {
+        "attempt": 2,
+        "tick": 67,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 147
+      },
+      {
+        "attempt": 4,
+        "tick": 123,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 203
+      },
+      {
+        "attempt": 5,
+        "tick": 207,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 287
+      },
+      {
+        "attempt": 5,
+        "tick": 235,
+        "category": "rival_encerrada",
+        "endTick": 263
+      },
+      {
+        "attempt": 8,
+        "tick": 375,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 455
+      },
+      {
+        "attempt": 9,
+        "tick": 431,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 511
+      },
+      {
+        "attempt": 10,
+        "tick": 487,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 567
+      },
+      {
+        "attempt": 11,
+        "tick": 515,
+        "category": "interceptado",
+        "endTick": 523
+      },
+      {
+        "attempt": 11,
+        "tick": 543,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 623
+      },
+      {
+        "attempt": 13,
+        "tick": 599,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 679
+      },
+      {
+        "attempt": 14,
+        "tick": 655,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 735
+      },
+      {
+        "attempt": 18,
+        "tick": 795,
+        "category": "interceptado",
+        "endTick": 802
+      },
+      {
+        "attempt": 19,
+        "tick": 851,
+        "category": null
+      }
+    ],
+    "attempts": [
+      {
+        "slot": 0,
+        "tick": 6,
+        "choice": 0,
+        "ended": true,
+        "end": 16,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 41,
+        "choice": 1,
+        "ended": true,
+        "end": 76,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 35
+      },
+      {
+        "slot": 0,
+        "tick": 111,
+        "choice": 1,
+        "ended": true,
+        "end": 116,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 5
+      },
+      {
+        "slot": 0,
+        "tick": 121,
+        "choice": 1,
+        "ended": true,
+        "end": 136,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 15
+      },
+      {
+        "slot": 0,
+        "tick": 201,
+        "choice": 1,
+        "ended": true,
+        "end": 256,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 55
+      },
+      {
+        "slot": 0,
+        "tick": 276,
+        "choice": 0,
+        "ended": true,
+        "end": 291,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 15
+      },
+      {
+        "slot": 0,
+        "tick": 296,
+        "choice": 1,
+        "ended": true,
+        "end": 316,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 20
+      },
+      {
+        "slot": 0,
+        "tick": 356,
+        "choice": 1,
+        "ended": true,
+        "end": 376,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 20
+      },
+      {
+        "slot": 0,
+        "tick": 411,
+        "choice": 1,
+        "ended": true,
+        "end": 436,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 25
+      },
+      {
+        "slot": 0,
+        "tick": 486,
+        "choice": 1,
+        "ended": true,
+        "end": 491,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 5
+      },
+      {
+        "slot": 0,
+        "tick": 496,
+        "choice": 1,
+        "ended": true,
+        "end": 556,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 60
+      },
+      {
+        "slot": 0,
+        "tick": 581,
+        "choice": 1,
+        "ended": true,
+        "end": 591,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 596,
+        "choice": 1,
+        "ended": true,
+        "end": 616,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 20
+      },
+      {
+        "slot": 0,
+        "tick": 651,
+        "choice": 1,
+        "ended": true,
+        "end": 656,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 5
+      },
+      {
+        "slot": 0,
+        "tick": 666,
+        "choice": 1,
+        "ended": true,
+        "end": 676,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 716,
+        "choice": 1,
+        "ended": true,
+        "end": 721,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 5
+      },
+      {
+        "slot": 0,
+        "tick": 726,
+        "choice": 1,
+        "ended": true,
+        "end": 736,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 776,
+        "choice": 0,
+        "ended": true,
+        "end": 796,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 20
+      },
+      {
+        "slot": 0,
+        "tick": 831,
+        "choice": 1,
+        "ended": true,
+        "end": 856,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 25
+      },
+      {
+        "slot": 0,
+        "tick": 886,
+        "choice": 1,
+        "end": 900,
+        "reason": "fim_observacao",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 14
+      }
+    ],
+    "results": null,
+    "trials": 20,
+    "nextChoice": 1,
+    "threat": 3
+  },
+  {
+    "seed": 7105,
+    "distance": 300,
+    "control": true,
+    "ticks": 900,
+    "stop": "limite",
+    "finalClasses": [
+      "Tank",
+      "Destroyer"
+    ],
+    "finalDistance": 434.4108618467629,
+    "fired": {
+      "tank": 32,
+      "destroyer": 14
+    },
+    "hits": [
+      {
+        "tick": 506,
+        "from": "tank",
+        "damage": 25,
+        "origin": null,
+        "active": null,
+        "originActive": false
+      }
+    ],
+    "shotCollisions": [
+      {
+        "tick": 19,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 154,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 193,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 326,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 803,
+        "owners": [
+          1,
+          0
+        ]
+      }
+    ],
+    "interceptions": [],
+    "removals": [
+      {
+        "tick": 19,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 154,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 193,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 326,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 803,
+        "owner": 0,
+        "by": 1
+      }
+    ],
+    "associatedShots": [],
+    "attempts": [],
+    "results": null,
+    "trials": 0,
+    "nextChoice": 0,
+    "threat": 3
+  },
+  {
+    "seed": 7105,
+    "distance": 300,
+    "control": false,
+    "ticks": 900,
+    "stop": "limite",
+    "finalClasses": [
+      "Tank",
+      "Destroyer"
+    ],
+    "finalDistance": 528.9904439200692,
+    "fired": {
+      "tank": 32,
+      "destroyer": 14
+    },
+    "hits": [],
+    "shotCollisions": [
+      {
+        "tick": 19,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 101,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 141,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 200,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 237,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 277,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 330,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 465,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 523,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 559,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 692,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 731,
+        "owners": [
+          0,
+          1
+        ]
+      }
+    ],
+    "interceptions": [],
+    "removals": [
+      {
+        "tick": 19,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 101,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 141,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 200,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 237,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 277,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 330,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 465,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 523,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 559,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 692,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 731,
+        "owner": 0,
+        "by": 1
+      }
+    ],
+    "associatedShots": [
+      {
+        "attempt": 1,
+        "tick": 11,
+        "category": "interceptado",
+        "endTick": 19
+      },
+      {
+        "attempt": 2,
+        "tick": 67,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 147
+      },
+      {
+        "attempt": 7,
+        "tick": 263,
+        "category": "interceptado",
+        "endTick": 277
+      },
+      {
+        "attempt": 7,
+        "tick": 291,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 371
+      },
+      {
+        "attempt": 8,
+        "tick": 347,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 427
+      },
+      {
+        "attempt": 9,
+        "tick": 375,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 455
+      },
+      {
+        "attempt": 10,
+        "tick": 431,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 511
+      },
+      {
+        "attempt": 11,
+        "tick": 515,
+        "category": "interceptado",
+        "endTick": 523
+      },
+      {
+        "attempt": 11,
+        "tick": 543,
+        "category": "interceptado",
+        "endTick": 559
+      },
+      {
+        "attempt": 12,
+        "tick": 599,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 679
+      },
+      {
+        "attempt": 17,
+        "tick": 795,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 875
+      },
+      {
+        "attempt": 17,
+        "tick": 823,
+        "category": null
+      },
+      {
+        "attempt": 17,
+        "tick": 851,
+        "category": null
+      },
+      {
+        "attempt": 17,
+        "tick": 879,
+        "category": null
+      }
+    ],
+    "attempts": [
+      {
+        "slot": 0,
+        "tick": 6,
+        "choice": 0,
+        "ended": true,
+        "end": 16,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 56,
+        "choice": 1,
+        "ended": true,
+        "end": 76,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 20
+      },
+      {
+        "slot": 0,
+        "tick": 116,
+        "choice": 1,
+        "ended": true,
+        "end": 121,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 5
+      },
+      {
+        "slot": 0,
+        "tick": 126,
+        "choice": 1,
+        "ended": true,
+        "end": 136,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 181,
+        "choice": 1,
+        "ended": true,
+        "end": 186,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 5
+      },
+      {
+        "slot": 0,
+        "tick": 191,
+        "choice": 0,
+        "ended": true,
+        "end": 196,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 5
+      },
+      {
+        "slot": 0,
+        "tick": 256,
+        "choice": 1,
+        "ended": true,
+        "end": 316,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 60
+      },
+      {
+        "slot": 0,
+        "tick": 341,
+        "choice": 1,
+        "ended": true,
+        "end": 351,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 361,
+        "choice": 1,
+        "ended": true,
+        "end": 376,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 15
+      },
+      {
+        "slot": 0,
+        "tick": 421,
+        "choice": 1,
+        "ended": true,
+        "end": 436,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 15
+      },
+      {
+        "slot": 0,
+        "tick": 491,
+        "choice": 1,
+        "ended": true,
+        "end": 556,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 65
+      },
+      {
+        "slot": 0,
+        "tick": 596,
+        "choice": 1,
+        "ended": true,
+        "end": 601,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 5
+      },
+      {
+        "slot": 0,
+        "tick": 606,
+        "choice": 1,
+        "ended": true,
+        "end": 616,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 671,
+        "choice": 1,
+        "ended": true,
+        "end": 681,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 686,
+        "choice": 1,
+        "ended": true,
+        "end": 691,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 5
+      },
+      {
+        "slot": 0,
+        "tick": 716,
+        "choice": 1,
+        "ended": true,
+        "end": 736,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 20
+      },
+      {
+        "slot": 0,
+        "tick": 791,
+        "choice": 1,
+        "end": 900,
+        "reason": "fim_observacao",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 109
+      }
+    ],
+    "results": null,
+    "trials": 17,
+    "nextChoice": 1,
+    "threat": 3
+  },
+  {
+    "seed": 7105,
+    "distance": 380,
+    "control": true,
+    "ticks": 900,
+    "stop": "limite",
+    "finalClasses": [
+      "Tank",
+      "Destroyer"
+    ],
+    "finalDistance": 433.3627065352039,
+    "fired": {
+      "tank": 32,
+      "destroyer": 14
+    },
+    "hits": [
+      {
+        "tick": 169,
+        "from": "tank",
+        "damage": 25,
+        "origin": null,
+        "active": null,
+        "originActive": false
+      }
+    ],
+    "shotCollisions": [
+      {
+        "tick": 22,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 80,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 136,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 212,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 251,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 802,
+        "owners": [
+          1,
+          0
+        ]
+      }
+    ],
+    "interceptions": [],
+    "removals": [
+      {
+        "tick": 22,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 80,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 136,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 212,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 251,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 802,
+        "owner": 0,
+        "by": 1
+      }
+    ],
+    "associatedShots": [],
+    "attempts": [],
+    "results": null,
+    "trials": 0,
+    "nextChoice": 0,
+    "threat": 3
+  },
+  {
+    "seed": 7105,
+    "distance": 380,
+    "control": false,
+    "ticks": 900,
+    "stop": "limite",
+    "finalClasses": [
+      "Tank",
+      "Destroyer"
+    ],
+    "finalDistance": 565.9847862065807,
+    "fired": {
+      "tank": 32,
+      "destroyer": 15
+    },
+    "hits": [],
+    "shotCollisions": [
+      {
+        "tick": 23,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 84,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 163,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 198,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 256,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 391,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 579,
+        "owners": [
+          1,
+          0
+        ]
+      },
+      {
+        "tick": 618,
+        "owners": [
+          0,
+          1
+        ]
+      },
+      {
+        "tick": 673,
+        "owners": [
+          0,
+          1
+        ]
+      }
+    ],
+    "interceptions": [],
+    "removals": [
+      {
+        "tick": 23,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 84,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 163,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 198,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 256,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 391,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 579,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 618,
+        "owner": 0,
+        "by": 1
+      },
+      {
+        "tick": 673,
+        "owner": 0,
+        "by": 1
+      }
+    ],
+    "associatedShots": [
+      {
+        "attempt": 1,
+        "tick": 11,
+        "category": "interceptado",
+        "endTick": 23
+      },
+      {
+        "attempt": 2,
+        "tick": 67,
+        "category": "interceptado",
+        "endTick": 84
+      },
+      {
+        "attempt": 3,
+        "tick": 151,
+        "category": "interceptado",
+        "endTick": 163
+      },
+      {
+        "attempt": 3,
+        "tick": 179,
+        "category": "interceptado",
+        "endTick": 198
+      },
+      {
+        "attempt": 5,
+        "tick": 235,
+        "category": "interceptado",
+        "endTick": 256
+      },
+      {
+        "attempt": 8,
+        "tick": 375,
+        "category": "interceptado",
+        "endTick": 391
+      },
+      {
+        "attempt": 8,
+        "tick": 403,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 483
+      },
+      {
+        "attempt": 8,
+        "tick": 431,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 511
+      },
+      {
+        "attempt": 10,
+        "tick": 487,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 567
+      },
+      {
+        "attempt": 12,
+        "tick": 543,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 623
+      },
+      {
+        "attempt": 14,
+        "tick": 627,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 707
+      },
+      {
+        "attempt": 14,
+        "tick": 655,
+        "category": "interceptado",
+        "endTick": 673
+      },
+      {
+        "attempt": 17,
+        "tick": 795,
+        "category": "expirou_parede_ou_removido",
+        "endTick": 875
+      },
+      {
+        "attempt": 18,
+        "tick": 851,
+        "category": null
+      }
+    ],
+    "attempts": [
+      {
+        "slot": 0,
+        "tick": 6,
+        "choice": 0,
+        "ended": true,
+        "end": 16,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 56,
+        "choice": 1,
+        "ended": true,
+        "end": 76,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 20
+      },
+      {
+        "slot": 0,
+        "tick": 151,
+        "choice": 1,
+        "ended": true,
+        "end": 196,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 45
+      },
+      {
+        "slot": 0,
+        "tick": 201,
+        "choice": 1,
+        "ended": true,
+        "end": 206,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 5
+      },
+      {
+        "slot": 0,
+        "tick": 226,
+        "choice": 1,
+        "ended": true,
+        "end": 236,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 241,
+        "choice": 0,
+        "ended": true,
+        "end": 256,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 15
+      },
+      {
+        "slot": 0,
+        "tick": 306,
+        "choice": 1,
+        "ended": true,
+        "end": 316,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 371,
+        "choice": 1,
+        "ended": true,
+        "end": 436,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 65
+      },
+      {
+        "slot": 0,
+        "tick": 461,
+        "choice": 1,
+        "ended": true,
+        "end": 471,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 476,
+        "choice": 1,
+        "ended": true,
+        "end": 496,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 20
+      },
+      {
+        "slot": 0,
+        "tick": 531,
+        "choice": 1,
+        "ended": true,
+        "end": 536,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 5
+      },
+      {
+        "slot": 0,
+        "tick": 541,
+        "choice": 1,
+        "ended": true,
+        "end": 556,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 15
+      },
+      {
+        "slot": 0,
+        "tick": 606,
+        "choice": 1,
+        "ended": true,
+        "end": 611,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 5
+      },
+      {
+        "slot": 0,
+        "tick": 616,
+        "choice": 1,
+        "ended": true,
+        "end": 676,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 60
+      },
+      {
+        "slot": 0,
+        "tick": 701,
+        "choice": 1,
+        "ended": true,
+        "end": 711,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 716,
+        "choice": 1,
+        "ended": true,
+        "end": 736,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 20
+      },
+      {
+        "slot": 0,
+        "tick": 786,
+        "choice": 1,
+        "ended": true,
+        "end": 796,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 10
+      },
+      {
+        "slot": 0,
+        "tick": 831,
+        "choice": 0,
+        "ended": true,
+        "end": 856,
+        "reason": "desvio",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 25
+      },
+      {
+        "slot": 0,
+        "tick": 891,
+        "choice": 1,
+        "end": 900,
+        "reason": "fim_observacao",
+        "dealt": 0,
+        "taken": 0,
+        "defensive": 0,
+        "durationTicks": 9
+      }
+    ],
+    "results": null,
+    "trials": 19,
+    "nextChoice": 1,
+    "threat": 3
+  }
+]

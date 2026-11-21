@@ -27,6 +27,10 @@ Em **Configurar**, escolha o cenário da próxima partida. Além do FFA aberto, 
 
 A opção **Reiniciar ao morrer** define como a rodada funciona. Ligada, a morte de qualquer jogador encerra a rodada e todos recomeçam no nível 1 após quatro segundos. Desligada, a arena continua e cada eliminação entre jogadores vale um ponto no placar da sala. Quem caiu pode renascer.
 
+## Classes
+
+Consulte o [guia de classes](docs/CLASSES.md) para ver os níveis, as rotas de evolução e como testar o Hunter localmente.
+
 ## Controles
 
 | Ação | PC | Celular |
