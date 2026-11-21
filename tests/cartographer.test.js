@@ -466,7 +466,7 @@ test('terceira fase avisa as duas paredes, conserva duas rotas externas e abre a
 test('um bot consegue atravessar as duas linhas ativas sem destruir o pilar extra',()=>{
   const w=new api.Arena(7103,2,['Smasher','Tank',45,'cartographer']),b=w.boss,[bot,other]=w.tanks;
   b.hp=b.spec.hp*.33;
-  idle(bot,b.x+95,b.y-530);
+  idle(bot,b.x+64,b.y-530);
   idle(other,b.x+750,b.y-480);other.protect=100;
   stepUntil(w,()=>w.maze);
   const wall=w.maze;
@@ -564,4 +564,41 @@ test('a mira mantém o pilar quando a linha até o chefe abre brevemente',()=>{
   assert.equal(aim(2).pillar,pillar);
   wall.damage(pillar,pillar.hp);
   assert.equal(aim(2.05),null);
+});
+
+test('a torreta encontra uma parte visível do tanque num ângulo em que o tiro central raspa a parede',()=>{
+  const w=lab(),b=w.boss,[player,other]=w.tanks;
+  idle(player,b.x+600,b.y-650);idle(other,b.x+750,b.y-650);
+  player.protect=other.protect=100;
+  stepUntil(w,()=>w.maze);
+  const wall=w.maze,pillar=wall.segments[1],centerAngle=-Math.PI/6,range=125;
+  idle(player,pillar.center+range*Math.cos(centerAngle),pillar.y+range*Math.sin(centerAngle));
+  player.protect=0;
+  assert.equal(wall.firstContact(pillar.center,pillar.y,player.x,player.y,2,pillar),null);
+  assert.ok(wall.firstContact(pillar.center,pillar.y,player.x,player.y,4.125,pillar));
+  stepUntil(w,()=>w.shots.some(p=>p.pillarSource===pillar),150);
+  const shot=w.shots.find(p=>p.pillarSource===pillar);
+  assert.ok(Math.abs(shot.angle-centerAngle)>.04);
+  assert.equal(shot.age,0);
+  stepUntil(w,()=>shot.contacts?.has(player.id),30);
+  assert.equal(w.maze,wall);
+});
+
+test('a perfuração do canhão principal aumenta durante o combate e a fase 3 atravessa um Tank básico',()=>{
+  const shots=[];
+  for(const health of [1,.70,.35]){
+    const w=new api.Arena(7103,2,['Tank','Tank',45,'cartographer']),b=w.boss,[player,other]=w.tanks;
+    b.hp=b.spec.hp*health;
+    idle(player,b.x+220,b.y+29);idle(other,b.x+900,b.y+195);
+    player.protect=0;player.stats[2]=0;other.protect=100;
+    b.turret.aim=0;
+    stepUntil(w,()=>w.shots.some(p=>p.owner===b&&!p.pillarSource),120);
+    const shot=w.shots.find(p=>p.owner===b&&!p.pillarSource);
+    const {dur,damage,speed}=shot;
+    stepUntil(w,()=>shot.contacts?.has(player.id),45);
+    shots.push({dur,damage,speed,alive:shot.alive});
+  }
+  assert.deepEqual(shots.map(s=>s.dur),[3.6,4.8,6]);
+  assert.ok(shots.every(s=>s.damage===shots[0].damage&&s.speed===shots[0].speed));
+  assert.deepEqual(shots.map(s=>s.alive),[false,false,true]);
 });
