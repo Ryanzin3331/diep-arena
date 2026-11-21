@@ -1792,6 +1792,8 @@ class CartographerBarrier {
     const main={y:this.y,gates:[leftRoute,gapX,rightRoute]};
     this.gapX=gapX;
     this.gates=main.gates;
+    this.rows=[main];
+    this.navigation=new Map();
     this.starts=time+CARTOGRAPHER_WARNING;
     this.ends=null;
     this.revision=0;
@@ -1805,6 +1807,7 @@ class CartographerBarrier {
     this.segments=spans.map(([from,to])=>makeSegment(main,from,to));
     if(this.stage===3){
       const flank={y:boss.y-CARTOGRAPHER_EXTRA_OFFSET,gates:[leftRoute,boss.x-70,boss.x+290,rightRoute]};
+      this.rows.push(flank);
       this.segments.push(makeSegment(flank,20,200,true));
       this.nextPillarShot=time;
     }
@@ -1837,27 +1840,88 @@ class CartographerBarrier {
   damage(segment,amount){
     if(!segment||segment.hp<=0)return;
     segment.hp=Math.max(0,segment.hp-amount);
-    if(segment.hp===0){segment.row.gates.push(segment.center);this.revision++;}
+    if(segment.hp===0){
+      segment.row.gates.push(segment.center);
+      this.revision++;
+      this.navigation.clear();
+    }
+  }
+  pillarAim(t,boss,reach,minimum,time){
+    const previous=t.cartographerAim;
+    const held=previous?.field===this&&previous.pillar.hp>0?previous:null;
+    const blocked=this.hit(t.x,t.y,boss.x,boss.y,2)!==null;
+    const visible=(pillar,gap)=>gap<reach&&gap>minimum&&
+      this.firstContact(t.x,t.y,pillar.center,pillar.y,2)?.pillar===pillar;
+    if(held){
+      const clear=visible(held.pillar,Math.hypot(t.x-held.pillar.center,t.y-held.pillar.y));
+      if(blocked&&clear)held.until=time+.5;
+      if(time<held.until)return {pillar:held.pillar,clear};
+    }
+    delete t.cartographerAim;
+    if(!blocked)return null;
+    let pillar=null,distance=reach;
+    for(const segment of this.segments){
+      const gap=Math.hypot(t.x-segment.center,t.y-segment.y);
+      if(gap<distance&&visible(segment,gap)){pillar=segment;distance=gap;}
+    }
+    if(!pillar)return null;
+    t.cartographerAim={field:this,pillar,until:time+.5};
+    return {pillar,clear:true};
+  }
+  navigationFor(radius){
+    const cached=this.navigation.get(radius);
+    if(cached)return cached;
+    const points=this.rows.flatMap(row=>{
+      const clearance=34+radius+12;
+      return row.gates.flatMap(gate=>[[gate,row.y-clearance],[gate,row.y+clearance]]);
+    });
+    const links=points.map(([x,y],i)=>points.map(([tx,ty],j)=>i!==j&&this.hit(x,y,tx,ty,radius)===null?
+      Math.hypot(tx-x,ty-y):Infinity));
+    const navigation={points,links};
+    this.navigation.set(radius,navigation);
+    return navigation;
+  }
+  routeAround(e,x,y,radius){
+    const {points,links}=this.navigationFor(radius);
+    const distance=points.map(([tx,ty])=>this.hit(e.x,e.y,tx,ty,radius)===null?Math.hypot(tx-e.x,ty-e.y):Infinity);
+    const prior=points.map(()=>-1),visited=new Set();
+    let finish=-1,cost=Infinity;
+    while(visited.size<points.length){
+      let next=-1,best=cost;
+      for(let i=0;i<points.length;i++)if(!visited.has(i)&&distance[i]<best){next=i;best=distance[i];}
+      if(next<0)break;
+      visited.add(next);
+      const [px,py]=points[next],total=best+Math.hypot(x-px,y-py);
+      if(total<cost&&this.hit(px,py,x,y,radius)===null){finish=next;cost=total;}
+      for(const [i,edge] of links[next].entries())if(best+edge<distance[i]){
+        distance[i]=best+edge;prior[i]=next;
+      }
+    }
+    const steps=[];
+    for(let i=finish;i>=0;i=prior[i])steps.unshift(points[i]);
+    return steps;
   }
   waypoint(e,x,y,time){
     const r=e.r+.005;
     x=clamp(x,r,this.size-r);y=clamp(y,r,this.size-r);
-    const contact=this.firstContact(e.x,e.y,x,y,r);
-    if(!contact)return [x,y];
-    const row=contact.row,side=e.y<=row.y?-1:1,goalSide=y<=row.y?-1:1,clear=34+r+12;
-    const near=row.y+side*clear,far=row.y-side*clear;
     let route=e.cartographerRoute;
-    if(route?.field!==this||route.row!==row||route.side!==side||route.revision!==this.revision||route.goalSide!==goalSide||time>=route.until){
-      let gate=null,cost=Infinity;
-      for(const candidate of row.gates){
-        if(this.hit(e.x,e.y,candidate,near,r)!==null||this.hit(candidate,near,candidate,far,r)!==null)continue;
-        const distance=Math.hypot(e.x-candidate,e.y-near)+Math.hypot(x-candidate,y-far);
-        if(distance<cost){cost=distance;gate=candidate;}
-      }
-      route=e.cartographerRoute={field:this,row,side,revision:this.revision,goalSide,gate,until:time+.65};
+    if(route?.field===this&&route.revision===this.revision&&route.radius>=r){
+      while(route.steps.length&&Math.hypot(e.x-route.steps[0][0],e.y-route.steps[0][1])<6)route.steps.shift();
+      const next=route.steps[0],last=route.steps.at(-1);
+      // Finish crossing a gate before steering diagonally toward the goal again.
+      if(next&&this.hit(e.x,e.y,...next,r)===null&&
+        (time<route.until||this.hit(...last,x,y,r)===null))return next;
     }
-    if(route.gate===null)return [e.x,near];
-    return this.hit(e.x,e.y,route.gate,far,r)===null?[route.gate,far]:[route.gate,near];
+    if(this.hit(e.x,e.y,x,y,r)===null){delete e.cartographerRoute;return [x,y];}
+    const radius=Math.ceil(r),steps=this.routeAround(e,x,y,radius);
+    if(steps.length){
+      route=e.cartographerRoute={field:this,revision:this.revision,radius,steps,until:time+.65};
+      return route.steps[0];
+    }
+    // A moving target can briefly be inside the expanded wall.
+    const contact=this.hit(e.x,e.y,x,y,r);
+    const progress=Math.max(0,contact-.03);
+    return [e.x+(x-e.x)*progress,e.y+(y-e.y)*progress];
   }
 }
 const GUARDIAN={
@@ -3772,7 +3836,10 @@ class Arena {
   clearCartographerBarrier(b){
     if(b.barrier&&this.maze===b.barrier){
       this.maze=null;
-      for(const t of this.tanks)delete t.cartographerRoute;
+      for(const t of this.tanks){
+        delete t.cartographerRoute;
+        delete t.cartographerAim;
+      }
       for(const p of this.shots){
         if(p.cartographerRoute)delete p.cartographerRoute;
         if(p.pillarSource&&p.alive)this.removeShot(p);
@@ -6362,14 +6429,9 @@ function botThink(w,t){
     }
     mode=2;detail=defender?(ram?"Aproveitando uma abertura no Defender":c.ram?"Esperando uma abertura nas armadilhas":
       c.style==="sniper"?"Disparando de longe contra o Defender":"Contornando as armadilhas do Defender"):"Atacando "+boss.name;
-    if(maze instanceof CartographerBarrier&&weapon?.kind==="bullet"&&maze.hit(t.x,t.y,boss.x,boss.y,2)!==null){
-      let reach=Math.min(vision,bulletSpeed(t,weapon)*weapon.life);
-      for(const segment of maze.segments){
-        const gap=Math.hypot(t.x-segment.center,t.y-segment.y);
-        if(gap>=reach||gap<=t.r*weapon.length+35||maze.firstContact(t.x,t.y,segment.center,segment.y,2)?.pillar!==segment)continue;
-        reach=gap;cartographerPillar=segment;
-      }
-      if(cartographerPillar){aimX=cartographerPillar.center;aimY=cartographerPillar.y;fire=true;}
+    if(maze instanceof CartographerBarrier&&weapon?.kind==="bullet"){
+      const target=maze.pillarAim(t,boss,Math.min(vision,bulletSpeed(t,weapon)*weapon.life),t.r*weapon.length+35,w.time);
+      if(target){cartographerPillar=target.pillar;aimX=cartographerPillar.center;aimY=cartographerPillar.y;fire=target.clear;}
     }
   }else if(w.fourTeams&&t.front&&(t.front.kind==="defense"||atHome||!food||
     Math.hypot(t.x-t.front.x,t.y-t.front.y)>515&&(t.level>=10||Math.hypot(food.x-t.x,food.y-t.y)>280))){
@@ -6533,7 +6595,7 @@ function botThink(w,t){
       targetX=targetEntity.x;targetY=targetEntity.y;
       moving=1;
       detail=maze instanceof CartographerBarrier&&targetEntity===boss?
-        (cartographerPillar?"Atirando no pilar ao buscar uma passagem":"Buscando a abertura na barreira"):
+        (cartographerPillar&&fire?"Atirando no pilar ao buscar uma passagem":"Buscando a abertura na barreira"):
         canFight?"Contornando a parede para alcançar "+enemy.name:"Buscando passagem até as formas";
     }
     const tx=targetX,ty=targetY;

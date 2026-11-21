@@ -11,7 +11,7 @@ No **FFA aberto**, abra **Configurar**, escolha uma frequência em **Chefes na p
 - Cada pilar ativo abriga uma torreta Auto com intervalo nominal de 1,12 s. Ela mira na posição atual de alvos visíveis e lança balas leves. A perda do pilar ou a expiração remove a torreta e os projéteis dela ainda em voo.
 - Na pausa de dois segundos após a expiração ou o cancelamento, o chefe pode se afastar da ameaça visível mais próxima em qualquer direção. O percurso leva até 1,8 s e fica dentro de um diâmetro do ponto inicial, com espaço para contornar as duas extremidades. O chefe interrompe o deslocamento se um tanque entrar na trajetória. O tracejado marca a geometria a partir da posição em que ele parou.
 - A torreta cinza dupla gira continuamente na direção de alvos visíveis, inclusive durante a recarga. Ao alinhar a mira, dispara um projétil comum pelo próximo canhão. O intervalo nominal entre tiros é de 0,53 s. As paredes ocultam o alvo e bloqueiam o tiro.
-- Os bots aproveitam as passagens e podem atirar num pilar acessível enquanto se deslocam. A rota é mantida em cache por até 0,65 s. A destruição de um trecho invalida o cache do traçado.
+- Os bots calculam a rota pelas aberturas das duas linhas levando em conta o raio do casco. Continuam pela passagem escolhida até sair do outro lado ou até a rota deixar de ser segura. Derrubar um pilar libera novas rotas imediatamente. A mira conserva o pilar por até 0,5 s quando a visão do chefe abre de passagem, e só dispara enquanto o pilar estiver acessível.
 
 ## Fases
 

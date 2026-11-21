@@ -12,7 +12,7 @@ const ctx={angle:0,save(){rotations.push(this.angle);},restore(){this.angle=rota
     const c=Math.cos(this.angle),s=Math.sin(this.angle),tip=x+w,mid=y+h/2;
     marks.push({x:c*tip-s*mid,y:s*tip+c*mid,angle:this.angle,length:w,baseX:c*x-s*mid,baseY:s*x+c*mid});
   }};
-const api=vm.runInNewContext(core+drawing+';({Arena,C,CARTOGRAPHER,CARTOGRAPHER_PILLAR_TURRET,shuffleBosses,rngFrom,paintCartographerTurret})',{TextEncoder,ctx});
+const api=vm.runInNewContext(core+drawing+';({Arena,C,CARTOGRAPHER,CartographerBarrier,CARTOGRAPHER_PILLAR_TURRET,angleDelta,shuffleBosses,rngFrom,paintCartographerTurret})',{TextEncoder,ctx});
 
 function lab(){return new api.Arena(7103,2,['Destroyer','Tank',45,'cartographer']);}
 function idle(t,x,y){Object.assign(t,{x,y,px:x,py:y,human:true,vx:0,vy:0,kx:0,ky:0});}
@@ -115,7 +115,7 @@ test('rota em cache se mantém e bots da Arena atravessam para atacar o chefe',(
   const barrier=w.maze, target=[b.x,b.y];
   barrier.waypoint(bot,...target,w.time);
   const cached=bot.cartographerRoute;
-  assert.ok(cached?.gate);
+  assert.ok(cached?.steps.length);
   barrier.waypoint(bot,...target,w.time+.02);
   assert.equal(bot.cartographerRoute,cached);
   bot.human=false;bot.protect=0;
@@ -520,4 +520,48 @@ test('um pilar na segunda fase alcança um tanque visível pelo lado de trás a 
     if(stage===1)assert.equal(shots.length,0);
     else assert.ok(shots.some(angle=>Math.abs(angle-Math.PI/2)<.15));
   }
+});
+
+test('rotas do Cartógrafo atravessam as passagens sem ficar invertendo a direção',()=>{
+  for(const stage of [1,2,3]){
+    const boss={x:1150,y:1500,stage};
+    const wall=new api.CartographerBarrier(boss,2300,0);
+    for(const radius of [19,31,45])for(const start of [-440,-110,0,100,265,440])for(const direction of [1,-1]){
+      const fromY=direction>0?-535:40,toY=direction>0?30:-540;
+      const bot={x:boss.x+start,y:boss.y+fromY,r:radius,vx:0,vy:0};
+      const x=boss.x+(direction>0?30:95),y=boss.y+toY;
+      let previousAim,turns=0;
+      for(let tick=0;tick<600&&Math.hypot(x-bot.x,y-bot.y)>=8;tick++){
+        const [tx,ty]=wall.waypoint(bot,x,y,tick/60),dx=tx-bot.x,dy=ty-bot.y;
+        const distance=Math.hypot(dx,dy),aim=Math.atan2(dy,dx);
+        if(previousAim!==undefined&&Math.abs(api.angleDelta(aim,previousAim))>2.1)turns++;
+        previousAim=aim;
+        const step=Math.min(1,2.8/Math.max(.001,distance));
+        wall.move(bot,bot.x+dx*step,bot.y+dy*step);
+        assert.equal(wall.hit(bot.x,bot.y,bot.x,bot.y,radius),null);
+      }
+      const route=`fase ${stage}, raio ${radius}, partida ${start}, sentido ${direction}`;
+      assert.ok(Math.hypot(x-bot.x,y-bot.y)<8,route);
+      assert.ok(turns<=1,route);
+    }
+  }
+});
+
+test('a mira mantém o pilar quando a linha até o chefe abre brevemente',()=>{
+  const boss={x:1150,y:1500,stage:2};
+  const wall=new api.CartographerBarrier(boss,2300,0),pillar=wall.segments[0];
+  const bot={x:pillar.center,y:wall.y-140},aim=time=>wall.pillarAim(bot,boss,600,75,time);
+  assert.equal(aim(1).pillar,pillar);
+  bot.x=wall.gapX;
+  assert.equal(wall.hit(bot.x,bot.y,boss.x,boss.y,2),null);
+  assert.equal(aim(1.1).pillar,pillar);
+  bot.x=pillar.center;
+  assert.equal(aim(1.3).pillar,pillar);
+  bot.x=wall.gapX;
+  assert.equal(aim(1.7).pillar,pillar);
+  assert.equal(aim(1.81),null);
+  bot.x=pillar.center;
+  assert.equal(aim(2).pillar,pillar);
+  wall.damage(pillar,pillar.hp);
+  assert.equal(aim(2.05),null);
 });
