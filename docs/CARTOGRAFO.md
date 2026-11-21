@@ -2,12 +2,14 @@
 
 No **Laboratório**, selecione **Cartógrafo** em **Chefe do desafio** e clique em **Invocar Cartógrafo**. O desenho em Canvas usa um hexágono azul-acinzentado, contorno escuro e dois canhões cinza. A silhueta usa formas chapadas, como as referências, e preserva a grade e a barra de vida do simulador. O desenho e a mecânica da barreira são originais do Diep Arena. [Guardian](https://diepio.fandom.com/wiki/Guardian) · [Fallen Booster](https://diepio.fandom.com/wiki/Fallen_Booster)
 
+No **FFA aberto**, abra **Configurar**, escolha uma frequência em **Chefes na próxima partida**, ligue **Bosses de evento** e reinicie. O Cartógrafo é um dos oito chefes desse sorteio. É possível invocá-lo diretamente no Laboratório.
+
 ## Barreira
 
 - O contorno tracejado avisa 1,5 s antes de subir. A abertura tem 150 unidades e também dá para contornar as extremidades. Se um casco ocupar o traçado, o chefe adia a construção por até um segundo e cancela o ciclo se o espaço continuar ocupado.
 - Paredes e pilares bloqueiam cascos e projéteis. Cada pilar tem 135 HP. Destruí-lo com tiros derruba o trecho que ele sustenta. A sobra expira depois de sete segundos e é removida quando o encontro acaba.
 - Cada pilar ativo abriga uma torreta Auto com alcance de mira de 245 unidades e intervalo nominal de 1,12 s. Ela lança balas leves contra alvos visíveis. A perda do pilar ou a expiração remove a torreta e os projéteis dela ainda em voo.
-- Na pausa de dois segundos após a expiração ou o cancelamento, o chefe escolhe um ponto lateral afastado da ameaça visível mais próxima. O percurso leva até 1,8 s e fica limitado à região inicial, com espaço para contornar as duas extremidades. O tracejado marca a geometria a partir da posição em que ele parou.
+- Na pausa de dois segundos após a expiração ou o cancelamento, o chefe pode se afastar da ameaça visível mais próxima em qualquer direção. O percurso leva até 1,8 s e fica dentro de um diâmetro do ponto inicial, com espaço para contornar as duas extremidades. O chefe interrompe o deslocamento se um tanque entrar na trajetória. O tracejado marca a geometria a partir da posição em que ele parou.
 - A torreta cinza dupla gira continuamente na direção de alvos visíveis, inclusive durante a recarga. Ao alinhar a mira, dispara um projétil comum pelo próximo canhão. O intervalo nominal entre tiros é de 0,53 s. As paredes ocultam o alvo e bloqueiam o tiro.
 - O Cartógrafo tem 1.350 HP. A próxima barreira avisada abaixo de 675 HP espelha a abertura da esquerda para a direita.
 - Os bots aproveitam as passagens e podem atirar num pilar acessível enquanto se deslocam. A rota é mantida em cache por até 0,65 s. A destruição de um trecho invalida o cache do traçado.
@@ -25,7 +27,7 @@ Abra o [cenário local](http://127.0.0.1:8770/cartografo-fixture.html). Você co
 
 A seleção do Laboratório e o cenário jogável foram conferidos no Chromium. A silhueta, a grade, o aviso e a passagem ficaram legíveis com zoom afastado e em viewport de 390 px. Nessa viewport, tiros manuais derrubaram um pilar e reduziram a vida do chefe abaixo de 50%. O Destroyer atravessou a segunda abertura com a barreira ativa.
 
-As regressões Node cobrem aviso, ocupação por tanques, colisão de cascos e projéteis, destruição parcial, espelhamento, expiração, término do encontro e um bot que atravessa a barreira ativa e causa dano ao Cartógrafo. A revisão de movimento confirmou dois ciclos consecutivos, saídas livres e deslizamento após cancelamento por ocupação. No Chromium, conferi o deslizamento entre os ciclos, o alinhamento do segundo tracejado com a parede erguida e os pilares azul-acinzentados com zoom afastado. A rotação de chefes do FFA segue com o mesmo catálogo.
+As regressões Node cobrem aviso, ocupação por tanques, colisão de cascos e projéteis, destruição parcial, espelhamento, expiração, término do encontro e um bot que atravessa a barreira ativa e causa dano ao Cartógrafo. A revisão de movimento cobre dois ciclos consecutivos, deslizamento em dois eixos, interrupção por um tanque na rota e saídas livres. Os testes do FFA cobrem a entrada no sorteio de eventos e a remoção da barreira ao encerrar a partida.
 
 ## Comparação da torreta
 

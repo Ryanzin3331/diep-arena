@@ -1751,7 +1751,7 @@ function slideAlongWalls(field,e,x,y,startX,startY){
 }
 
 const CARTOGRAPHER_PILLAR_HP=135, CARTOGRAPHER_WARNING=1.5, CARTOGRAPHER_WALL_TIME=7;
-const CARTOGRAPHER_PAUSE=2, CARTOGRAPHER_SLIDE=1.8, CARTOGRAPHER_END_ROUTE=425;
+const CARTOGRAPHER_PAUSE=2, CARTOGRAPHER_SLIDE=1.8, CARTOGRAPHER_END_ROUTE=425, CARTOGRAPHER_WALL_OFFSET=190;
 const CARTOGRAPHER_TURN=2.8, CARTOGRAPHER_SHOT_GAP=.53;
 const CARTOGRAPHER_PILLAR_TURRET={radius:15,range:245,gap:1.12,
   // 58.5 units clears the expanded square even along its diagonal.
@@ -1772,7 +1772,7 @@ function gunMuzzle(mount,g,radius,shotRadius){
 }
 class CartographerBarrier {
   constructor(boss,size,time){
-    this.y=boss.y-190;
+    this.y=boss.y-CARTOGRAPHER_WALL_OFFSET;
     this.size=size;
     this.rects=[]; // Static Maze tiles are rendered separately from this pattern.
     this.mirrored=boss.hp<boss.spec.hp/2;
@@ -1905,8 +1905,9 @@ const CARTOGRAPHER={name:"Cartógrafo",hp:1350,reward:30000,body:34,r:75,color:"
   range:810,guns:[-.39,.39].map(offset=>gun(0,{offset,width:.38,length:1.51,speed:.83,damage:1.23,pen:1.8,life:1.2,recoil:0,spread:0}))};
 const ROTATING_BOSSES={...CLASSIC_BOSSES,treeTopper:TREE_TOPPER,decade:DECADE};
 const BOSS_SPECS={...ROTATING_BOSSES,cartographer:CARTOGRAPHER};
-function shuffleBosses(random,previous,events=false){
+function shuffleBosses(random,previous,events=false,scope){
   const bosses=Object.keys(events?ROTATING_BOSSES:CLASSIC_BOSSES);
+  if(events&&scope==="open")bosses.push("cartographer");
   for(let i=bosses.length-1;i>0;i--){
     const j=Math.floor(random()*(i+1));
     [bosses[i],bosses[j]]=[bosses[j],bosses[i]];
@@ -2277,7 +2278,7 @@ class Arena {
     this.boss=null;this.bossRewardedTo=null;
     this.bossRandom=rngFrom(seed^0x5f90b345);
     this.eventBosses=eventBosses;
-    this.bossQueue=this.bossInterval?shuffleBosses(this.bossRandom,undefined,eventBosses):[];
+    this.bossQueue=this.bossInterval?shuffleBosses(this.bossRandom,undefined,eventBosses,this.profileRoster):[];
     this.tick=0; this.time=0; this.serial=0; this.events=[];
     this.history=new MatchHistory();
     this.tanks=[]; this.shapes=[]; this.shots=[]; this.bits=[];
@@ -3093,6 +3094,7 @@ class Arena {
     }
   }
   beginClosing(){
+    if(this.boss?.spec===CARTOGRAPHER)this.clearCartographerBarrier(this.boss);
     this.closing??={startsAt:this.time+1.6,closers:[],active:false,last:null,lastTower:null, tanksDone:false,summary:""};
   }
   spawnClosers(){
@@ -3696,7 +3698,8 @@ class Arena {
     return e.spec===FALLEN_BOOSTER||e.spec===FALLEN_OVERLORD||e.provokedBases?.get(team)>this.time;
   }
   spawnBoss(kind){
-    if(this.boss?.alive||this.maze||this.domination||this.mothership||this.tag||this.survival||this.convoy||kind==="cartographer"&&!this.bossTrial)return null;
+    if(this.boss?.alive||this.maze||this.domination||this.mothership||this.tag||this.survival||this.convoy)return null;
+    if(kind==="cartographer"&&!this.bossTrial&&(this.profileRoster!=="open"||!this.bossInterval||!this.eventBosses))return null;
     const spec=BOSS_SPECS[kind]??GUARDIAN;
     const angle=this.bossTrial?Math.PI/2:TAU*rngFrom(this.seed^0x25e1dace^this.tick)();
     const orbit=this.bossTrial?430:this.nest*.87;
@@ -3725,7 +3728,7 @@ class Arena {
     }
     if(spec===FALLEN_OVERLORD)Object.assign(this.boss,{aim:angle+Math.PI/8,ports:new Uint8Array(4),
       cruiseAngle:angle-Math.PI/2,phase:"ronda",target:null,polygons:[],nextDrone:this.time+.125});
-    if(spec===CARTOGRAPHER)Object.assign(this.boss,{aim:-Math.PI/2,stats:Array(8).fill(0),barrierHomeX:x,
+    if(spec===CARTOGRAPHER)Object.assign(this.boss,{aim:-Math.PI/2,stats:Array(8).fill(0),barrierHomeX:x,barrierHomeY:y,
       nextBarrier:this.time+.25,turret:cartographerTurret(-Math.PI/2,this.time+.9)});
     if(spec===TREE_TOPPER||spec===DECADE)Object.assign(this.boss,{
       stats:[0,0,0,0,0,0,0,0],turrets:Array.from({length:spec===TREE_TOPPER?5:1},(_,i)=>({aim:angle+i*TAU/5,ready:this.time+i*.16})),
@@ -3790,17 +3793,21 @@ class Arena {
     b.nextBarrier=this.time+CARTOGRAPHER_PAUSE;
     const threat=this.cartographerTarget(b);
     if(!threat)return;
-    const offset=threat.x-b.x, diameter=2*b.r, margin=CARTOGRAPHER_END_ROUTE+b.r;
-    const side=offset===0?b.direction:-Math.sign(offset);
-    const distance=clamp(diameter-Math.abs(offset)*.15,b.r,diameter);
-    const to=clamp(b.x+side*distance,Math.max(margin,b.barrierHomeX-diameter),Math.min(this.size-margin,b.barrierHomeX+diameter));
+    const diameter=2*b.r, margin=CARTOGRAPHER_END_ROUTE+b.r;
+    const away=Math.atan2(b.y-threat.y,b.x-threat.x);
+    const distance=clamp(diameter-Math.hypot(threat.x-b.x,threat.y-b.y)*.15,b.r,diameter);
+    const homeDx=b.x+Math.cos(away)*distance-b.barrierHomeX;
+    const homeDy=b.y+Math.sin(away)*distance-b.barrierHomeY;
+    const homeScale=diameter/Math.max(diameter,Math.hypot(homeDx,homeDy));
+    const dx=clamp(b.barrierHomeX+homeDx*homeScale,margin,this.size-margin)-b.x;
+    const dy=clamp(b.barrierHomeY+homeDy*homeScale,CARTOGRAPHER_WALL_OFFSET+34+b.r,this.size-b.r)-b.y;
     let fraction=1;
     for(const t of this.tanks){
       if(!t.alive)continue;
-      const contact=impact(b.x-t.x,b.y-t.y,to-b.x,0,b.r+t.r+12);
+      const contact=impact(b.x-t.x,b.y-t.y,dx,dy,b.r+t.r+12);
       if(contact!==null)fraction=Math.min(fraction,Math.max(0,contact-.02));
     }
-    if(Math.abs(to-b.x)*fraction>=8)b.barrierSlide={from:b.x,to:b.x+(to-b.x)*fraction,started:this.time};
+    if(Math.hypot(dx,dy)*fraction>=8)b.barrierSlide={x:b.x,y:b.y,dx:dx*fraction,dy:dy*fraction,started:this.time};
   }
   advanceCartographer(b){
     const now=this.time;
@@ -3808,10 +3815,15 @@ class Arena {
     const slide=b.barrierSlide;
     if(slide){
       const t=clamp((now-slide.started)/CARTOGRAPHER_SLIDE,0,1);
-      b.x=slide.from+(slide.to-slide.from)*t*t*(3-2*t);
-      if(t===1)b.barrierSlide=null;
+      const progress=t*t*(3-2*t),x=slide.x+slide.dx*progress,y=slide.y+slide.dy*progress;
+      const occupied=this.tanks.some(tank=>tank.alive&&impact(b.x-tank.x,b.y-tank.y,x-b.x,y-b.y,b.r+tank.r)!==null);
+      if(occupied)b.barrierSlide=null;
+      else {
+        b.x=x;b.y=y;
+        if(t===1)b.barrierSlide=null;
+      }
     }
-    b.vx=(b.x-b.px)/DT;
+    b.vx=(b.x-b.px)/DT;b.vy=(b.y-b.py)/DT;
     if(now>=b.nextBarrier&&!b.barrier){
       b.barrier=new CartographerBarrier(b,this.size,now);
       this.note("Cartógrafo está marcando uma barreira");
@@ -5154,7 +5166,7 @@ class Arena {
       const next=this.bossQueue[0];
       if(this.spawnBoss(next)){
         this.bossQueue.shift();
-        if(!this.bossQueue.length)this.bossQueue=shuffleBosses(this.bossRandom,next,this.eventBosses);
+        if(!this.bossQueue.length)this.bossQueue=shuffleBosses(this.bossRandom,next,this.eventBosses,this.profileRoster);
       }
     }
     if(this.hasBases&&this.tick%90===0)this.restockBaseDrones();
@@ -8530,6 +8542,9 @@ function updateInterface(force=false){
   el("bossField").hidden=mode==="lab"||el("arenaMap").value.startsWith("maze")||["domination","mothership","tag","survival","convoy"].includes(el("arenaMap").value);
   el("eventBossField").hidden=el("bossField").hidden;
   el("eventBosses").disabled=el("bossSchedule").value==="off";
+  const eventBossOption=el("eventBosses").options[1];
+  const eventBossLabel=el("arenaMap").value==="open"?"Ligados · 8 chefes":"Ligados · 7 chefes";
+  if(eventBossOption.textContent!==eventBossLabel)eventBossOption.textContent=eventBossLabel;
   el("shipStartField").hidden=mode==="lab"||el("arenaMap").value!=="mothership";
   el("restart").textContent=mode==="lab"?"Iniciar duelo":"Reiniciar";
   el("scenarioLabel").textContent=mode==="lab"?(world.bossTrial?"2 contra 1":"1 contra 1"):{open:"Arena aberta",survival:"Uma vida",teams:"Azul × Vermelho","four-teams":"Quatro bases",domination:"Dominação",convoy:"Dois times · duas rodadas",mothership:"Naves-mãe",tag:"Quatro equipes",maze:"Maze fixo","maze-seed":"Maze por seed"}[world.mapKind];
@@ -8554,7 +8569,7 @@ function updateInterface(force=false){
     world.shipResult?world.shipResult.startsWith("Empate")?"EMPATE":TEAMS[1-world.finalShip.team].name.toUpperCase()+" VENCEU":
     world.duelEnded?(world.survival?"SURVIVAL ENCERRADO":world.bossTrial?"DESAFIO ENCERRADO":"DUELO ENCERRADO"):paused?"PAUSADO":mode==="lab"?(world.bossTrial?"DESAFIO DE CHEFE":"DUELO"):
     world.survival?"SURVIVAL":world.convoy?"COMBOIO":
-    world.tag?"TAG AO VIVO":world.domination?"DOMINAÇÃO":world.mothership?"MOTHERSHIP":world.maze?"MAZE AO VIVO":
+    world.tag?"TAG AO VIVO":world.domination?"DOMINAÇÃO":world.mothership?"MOTHERSHIP":world.mapKind.startsWith("maze")?"MAZE AO VIVO":
     world.fourTeams?"4 TEAMS AO VIVO":world.teams?"2 TEAMS AO VIVO":"FFA AO VIVO");
   el("pause").textContent=paused?"Retomar":"Pausar";el("pause").disabled=world.duelEnded;
   el("step").disabled=!paused||world.duelEnded||!!replay;

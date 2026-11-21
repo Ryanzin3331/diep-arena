@@ -21,10 +21,7 @@ function stepUntil(arena,predicate,ticks=900){
   assert.ok(predicate());
 }
 
-test('Cartógrafo é exclusivo do Laboratório e o aviso precede a colisão',()=>{
-  const open=new api.Arena(7103,0);
-  assert.equal(open.spawnBoss('cartographer'),null);
-  assert.ok(!api.shuffleBosses(api.rngFrom(7103),undefined,true).includes('cartographer'));
+test('o aviso precede a colisão no Laboratório',()=>{
   const w=lab(),b=w.boss,y=b.y-190;
   idle(w.tanks[0],b.x+105,y);
   idle(w.tanks[1],b.x+600,y);
@@ -45,6 +42,32 @@ test('Cartógrafo é exclusivo do Laboratório e o aviso precede a colisão',()=
   barrier.move(tank,tank.x,y+60);
   assert.equal(tank.y,y+60);
   assert.notEqual(barrier.hit(b.x+235,y-140,b.x+235,y+100,4),null);
+});
+
+test('Cartógrafo entra no sorteio de chefes de evento do FFA e limpa a barreira no encerramento',()=>{
+  const create=(seed,map,events,catalog='arena',scope=null)=>new api.Arena(seed,8,null,'both',true,map,catalog,1,events,null,scope);
+  for(const w of [create(7103,'open',false),create(7103,'teams',true),
+    create(7103,'maze',true),create(7103,'open',true,'off'),create(7103,'open',true,'off','multiplayer')]){
+    assert.ok(!w.bossQueue.includes('cartographer'));
+    assert.equal(w.spawnBoss('cartographer'),null);
+  }
+  let seed=1;
+  while(seed<100&&api.shuffleBosses(api.rngFrom(seed^0x5f90b345),undefined,true,'open')[0]!=='cartographer')seed++;
+  const w=create(seed,'open',true);
+  assert.equal(w.bossQueue.length,8);
+  assert.equal(w.bossQueue[0],'cartographer');
+  assert.ok(!api.shuffleBosses(api.rngFrom(7103),'cartographer',true,'open').slice(0,1).includes('cartographer'));
+  w.tick=Math.round(w.nextBossAt*60)-1;
+  w.step(null);
+  assert.equal(w.boss.spec,api.CARTOGRAPHER);
+  assert.equal(w.mapKind,'open');
+  assert.equal(w.nextBossAt,480);
+  for(const [i,t] of w.tanks.entries())idle(t,w.boss.x+700+i*95,w.boss.y+300);
+  stepUntil(w,()=>w.maze);
+  assert.equal(w.maze,w.boss.barrier);
+  w.beginClosing();
+  assert.equal(w.maze,null);
+  assert.equal(w.boss.barrier,null);
 });
 
 test('projéteis reais derrubam só o trecho do pilar e a próxima fase espelha a passagem',()=>{
@@ -77,8 +100,9 @@ test('projéteis reais derrubam só o trecho do pilar e a próxima fase espelha 
   assert.equal(w.maze,null);
   stepUntil(w,()=>w.maze);
   assert.equal(w.maze.gapX,b.x+105);
-  assert.notEqual(w.maze.hit(b.x-105,y-80,b.x-105,y+80,player.r),null);
-  assert.equal(w.maze.hit(b.x+105,y-80,b.x+105,y+80,player.r),null);
+  const nextY=w.maze.y;
+  assert.notEqual(w.maze.hit(b.x-105,nextY-80,b.x-105,nextY+80,player.r),null);
+  assert.equal(w.maze.hit(b.x+105,nextY-80,b.x+105,nextY+80,player.r),null);
   w.kill(b,player,'teste');
   assert.equal(w.maze,null);assert.equal(b.barrier,null);
 });
@@ -123,21 +147,24 @@ test('entre dois ciclos afasta-se da ameaça e congela o traçado no aviso e na 
   assert.ok(Math.abs(b.x-home)>0&&Math.abs(b.x-home)<2*b.r);
   assert.equal(b.barrier,null);
   stepUntil(w,()=>!b.barrierSlide);
-  const stop=b.x;
+  const stop=b.x,stopY=b.y;
   assert.ok(stop>home&&stop-home<=2*b.r);
+  assert.ok(stopY>y&&Math.hypot(stop-home,stopY-y)<=2*b.r+1e-8);
   assert.equal(b.barrier,null);
   stepUntil(w,()=>b.barrier);
   const second=b.barrier, shape=()=>JSON.stringify(second.segments.map(({pillar,walls})=>[pillar,walls]));
   const pattern=shape();
   assert.notEqual(second,first);
   assert.equal(second.gapX,stop-105);
+  assert.equal(second.y,stopY-190);
   assert.equal(b.x,stop);
   assert.equal(b.vx,0);
   stepUntil(w,()=>w.maze);
   assert.equal(w.maze,second);
   assert.equal(shape(),pattern);
   assert.equal(b.x,stop);
-  assert.equal(b.y,y);
+  assert.equal(b.y,stopY);
+  assert.equal(b.vy,0);
   for(const gate of second.gates){
     const radius=w.tanks[0].r;
     assert.ok(gate>=radius&&gate<=w.size-radius);
@@ -329,10 +356,25 @@ test('ameaças nos lados opostos produzem deslocamentos opostos',()=>{
     const w=lab(),b=w.boss,[player,other]=w.tanks,home=b.x;
     idle(player,home+side*315,b.y-300);player.protect=0;other.protect=10;
     w.startCartographerPause(b);
-    assert.equal(Math.sign(b.barrierSlide.to-home),-side);
-    assert.ok(Math.abs(b.barrierSlide.to-home)<2*b.r);
+    assert.equal(Math.sign(b.barrierSlide.dx),-side);
+    assert.ok(b.barrierSlide.dy>0&&Math.hypot(b.barrierSlide.dx,b.barrierSlide.dy)<2*b.r);
     b.barrierSlide=null;player.protect=10;
     w.startCartographerPause(b);
     assert.equal(b.barrierSlide,null);
   }
+});
+
+test('a fuga vertical se interrompe quando um tanque entra na rota',()=>{
+  const w=lab(),b=w.boss,[threat,blocker]=w.tanks,homeY=b.y;
+  idle(threat,b.x,b.y+220);threat.protect=0;
+  idle(blocker,b.x+500,b.y);blocker.protect=10;
+  w.startCartographerPause(b);
+  assert.ok(Math.abs(b.barrierSlide.dx)<1e-8&&b.barrierSlide.dy<0);
+  stepUntil(w,()=>b.y<homeY-10);
+  idle(blocker,b.x,b.y-b.r-blocker.r-2);
+  const blockerY=blocker.y;
+  stepUntil(w,()=>!b.barrierSlide,15);
+  assert.ok(b.y>blockerY+b.r+blocker.r-1e-8);
+  stepUntil(w,()=>b.barrier);
+  assert.equal(b.barrier.y,b.y-190);
 });
