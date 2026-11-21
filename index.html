@@ -1070,6 +1070,86 @@ function pruneThreatShots(memory,time){
 }
 // Evidence belongs to an opponent and a visible threat, not its internal class.
 function tacticalEvent(m,time,text){if(!m)return;m.tacticalEvents??=[];m.tacticalEvents.push({time,text});if(m.tacticalEvents.length>12)m.tacticalEvents.shift();}
+function chooseDodgeTiming(memory){
+  const rows=memory?.dodgeResults;
+  if(!rows||!rows[0].count)return 0;
+  const [basic,early]=rows;
+  if(!early.count)return 1;
+  const trials=basic.count+early.count;
+  if(trials%6===0)return Math.floor(trials/6)%2;
+  return early.safe/early.count>basic.safe/basic.count?1:0;
+}
+function heavyDodgeWindow(t,p,max,timing){
+  const dx=p.x-t.x,dy=p.y-t.y;
+  const vx=p.vx+(p.kx||0),vy=p.vy+(p.ky||0);
+  const closest=-(dx*vx+dy*vy)/Math.max(1,vx*vx+vy*vy);
+  const earliest=(Math.hypot(dx,dy)-(t.r+p.r+10+t.trait*1.4))/(Math.hypot(vx,vy)+max);
+  if(closest<=.22||earliest<=.22)return .61;
+  return timing===0?.32:.61;
+}
+function stepDodgeReference(a,command){
+  a.px=a.x;a.py=a.y;
+  a.vx+=(command.x-a.vx)*.094;a.vy+=(command.y-a.vy)*.094;
+  a.x+=(a.vx+a.kx)*DT;a.y+=(a.vy+a.ky)*DT;a.kx*=.905;a.ky*=.905;
+}
+function dodgeContact(w,t,p,command){
+  const a={x:t.x,y:t.y,vx:t.vx,vy:t.vy,kx:t.kx,ky:t.ky};
+  for(let elapsed=0;elapsed+DT<=.61&&p.age+elapsed+DT<p.life;elapsed+=DT){
+    stepDodgeReference(a,command);
+    const x=p.x+p.vx*elapsed,y=p.y+p.vy*elapsed;
+    if(w.maze?.hit(a.px,a.py,a.x,a.y,t.r)!=null||w.maze?.hit(x,y,x+p.vx*DT,y+p.vy*DT,p.r)!=null)return null;
+    const hit=impact(x-a.px,y-a.py,p.vx*DT-(a.x-a.px),p.vy*DT-(a.y-a.py),t.r+p.r);
+    if(hit!==null)return elapsed+hit*DT;
+  }
+  return null;
+}
+function beginDodgeAttempt(w,t,p,timing,straight,best){
+  if(t.dodgeAttempt||t.protect>0||t.dodgeSeen?.has(p))return;
+  const dx=best.x-straight.x,dy=best.y-straight.y;
+  if(Math.hypot(dx,dy)<1)return;
+  const contact=dodgeContact(w,t,p,straight);
+  if(contact===null||contact<=0)return;
+  const better=dodgeContact(w,t,p,best);
+  if(better!==null&&better<=contact)return;
+  t.dodgeSeen??=new WeakSet();
+  t.dodgeSeen.add(p);
+  t.dodgeAttempt={p,timing,until:w.time+1,x:t.x,y:t.y,vx:t.vx,vy:t.vy,kx:t.kx,ky:t.ky,
+    straight,dx,dy,executed:false,crossed:false};
+}
+function finishDodgeAttempt(t,safe){
+  const a=t.dodgeAttempt;
+  t.dodgeAttempt=null;
+  if(!a?.executed)return;
+  const rows=t.learning.dodgeResults??=[{count:0,safe:0},{count:0,safe:0}];
+  const result=rows[a.timing];
+  result.count++;
+  if(safe)result.safe++;
+}
+function advanceDodgeReference(w,t){
+  const a=t.dodgeAttempt;
+  if(!a)return;
+  const first=a.px===undefined;
+  stepDodgeReference(a,a.straight);
+  if(Math.min(a.x,a.y,w.size-a.x,w.size-a.y)<t.r||w.maze?.hit(a.px,a.py,a.x,a.y,t.r)!=null){
+    t.dodgeAttempt=null;
+    return;
+  }
+  if(first){
+    a.executed=(t.x-a.x)*a.dx+(t.y-a.y)*a.dy>.01*Math.hypot(a.dx,a.dy);
+    if(!a.executed)t.dodgeAttempt=null;
+  }
+}
+function resolveDodgeAttempt(w,t){
+  const a=t.dodgeAttempt;
+  if(!a)return;
+  const p=a.p;
+  if(!t.alive||!p.alive||p.wallTime!=null||w.time>a.until){t.dodgeAttempt=null;return;}
+  // The live projectile must cross the no-dodge reference before it clears the bot.
+  const hit=impact(p.px-a.px,p.py-a.py,(p.x-p.px)-(a.x-a.px),(p.y-p.py)-(a.y-a.py),t.r+p.r);
+  if(hit!==null)a.crossed=true;
+  const dx=p.x-t.x,dy=p.y-t.y;
+  if(a.crossed&&Math.hypot(dx,dy)>t.r+p.r+4&&dx*(p.vx-t.vx)+dy*(p.vy-t.vy)>0)finishDodgeAttempt(t,true);
+}
 function observeHeavyShot(w,t,p,nearby=w.sense.nearby(t.x,t.y,range(t))){
   if(!localDiscoveryArena(w)||!t.learning||p.kind!=="bullet"||!p.owner?.profileId||p.owner===t||!perceived(w,t,p)||!perceived(w,t,p.owner))return;
   if(p.age>.25||Math.hypot(p.x-p.owner.x,p.y-p.owner.y)>p.owner.r*3.5||p.r<p.owner.r*.75)return;
@@ -1178,6 +1258,7 @@ function respawnLearning(previous,adaptiveBuilds){
   if(previous.swarmTrials!==undefined)memory.swarmTrials=previous.swarmTrials;
   if(previous.lastTacticalResult)memory.lastTacticalResult={...previous.lastTacticalResult};
   if(previous.tacticalEvents)memory.tacticalEvents=previous.tacticalEvents.map(e=>({...e}));
+  if(previous.dodgeResults)memory.dodgeResults=previous.dodgeResults.map(row=>({...row}));
   if(previous.threats)memory.threats=new Map(previous.threats);
   if(previous.swarmThreats)memory.swarmThreats=new Map(previous.swarmThreats);
   if(previous.swarmEpisodes)memory.swarmEpisodes=new Map(previous.swarmEpisodes);
@@ -4687,6 +4768,7 @@ class Arena {
           const tactic=p.kind==="drone"||p.kind===NECRO_DRONE||p.kind===FACTORY_MINION?undefined:p.learningTarget===e.id?p.sourceTactic:0;
           this.combatHit(p.owner,e,p.sourceClass??p.owner.cls,e.cls,p.damage*load,0,tactic,p.heavyAttempt,p);
         }
+        if(e.dodgeAttempt?.p===p&&load>0)finishDodgeAttempt(e,false);
         e.hp-=p.damage*load;e.damaged=e.hit=this.time;
         if(e.type==="boss")this.bossDamage(e,p.owner);
         if(e.mini)this.pressureSurvivalMini(e,p.owner,p.damage*load);
@@ -4742,6 +4824,7 @@ class Arena {
       else if(t.human&&humanIntent)t.intent=humanIntent;
       else if(!t.human&&(this.tick+t.id)%5===0) botThink(this,t);
       this.advanceTank(t);
+      if(t.dodgeAttempt)advanceDodgeReference(this,t);
     }
     for(const e of this.shapes)if(e.alive){
       if(this.survival&&sq(e.x-this.mid)+sq(e.y-this.mid)>(this.survival.radius+e.r)**2)e.alive=false;
@@ -4768,6 +4851,7 @@ class Arena {
     for(const e of this.shots) if(e.alive) this.ballistic.add(e,(e.x+e.px)/2,(e.y+e.py)/2,e.r+Math.hypot(e.x-e.px,e.y-e.py)/2);
     this.collidingBodies();
     if(!this.duelEnded&&!this.closing)this.collidingShots();
+    for(const t of this.tanks)if(t.dodgeAttempt)resolveDodgeAttempt(this,t);
     if(this.tag)this.finishTagTick();
     if(this.survival)this.finishSurvivalTick();
     if(this.convoy)this.advanceConvoy();
@@ -6064,6 +6148,15 @@ function botThink(w,t){
     path=Math.atan2(tagDetour.y-t.y,tagDetour.x-t.x);
     detail="Procurando rivais por outra rota";
   }
+  const dodgeTiming=chooseDodgeTiming(t.learning);
+  let dodgeWindows=null;
+  if(t.learning&&localDiscoveryArena(w))for(const p of threatening){
+    if(p.kind==="bullet"&&p.owner?.type==="tank"&&p.r>=p.owner.r*.75){
+      (dodgeWindows??=new Map()).set(p,heavyDodgeWindow(t,p,max,dodgeTiming));
+    }
+  }
+  // Track which heavy shot changed the winning vector, leaving the movement costs intact.
+  const withoutShot=dodgeWindows&&!t.dodgeAttempt?new Map([...dodgeWindows.keys()].map(p=>[p,{value:Infinity}])):null;
   const shipSpeed=ownShip?.retreating?Math.hypot(ownShip.vx,ownShip.vy):0;
   for(const [offset,power] of [[0,moving],[.67,1],[-.67,1],[1.39,1],[-1.39,1],[2.25,.92],[-2.25,.92],[Math.PI,1],[0,.45],[0,0]]){
     if(Math.abs(offset)<.01&&power>moving)continue;
@@ -6101,24 +6194,19 @@ function botThink(w,t){
     if(sniperCover&&!sniperSight(xf,yf,aimX,aimY,sniperCover))value+=.65;
     if(offset===0&&power===moving)straightShapeCost=shapeCost;
     if(t.stuck && Math.abs(offset)<.6) value+=3.1;
+    const dodgeCosts=withoutShot?new Map():null;
     for(const p of threatening){
       const dx=p.x-t.x,dy=p.y-t.y;
       const px=p.vx+(p.kx||0)-vx*max,py=p.vy+(p.ky||0)-vy*max;
-      // Local novice reaction: shorten prediction for visible heavy bullets.
-      // At emergency range keep the existing prediction and scoring untouched.
-      let riskWindow=.61;
-      if(localDiscoveryArena(w)&&t.learning&&p.kind==="bullet"&&p.owner?.type==="tank"&&p.r>=p.owner.r*.75){
-        const pvx=p.vx+(p.kx||0),pvy=p.vy+(p.ky||0);
-        const toward=-(dx*pvx+dy*pvy)/Math.max(1,pvx*pvx+pvy*pvy);
-        const earliest=(Math.hypot(dx,dy)-(t.r+p.r+10+t.trait*1.4))/(Math.hypot(pvx,pvy)+max);
-        if(toward>.22&&earliest>.22)riskWindow=.32;
-      }
+      const riskWindow=dodgeWindows?.get(p)??.61;
       const horizon=clamp(-(dx*px+dy*py)/Math.max(1,px*px+py*py),0,riskWindow);
       const r=t.r+p.r+10+t.trait*1.4;
       const gap=Math.hypot(dx+px*horizon,dy+py*horizon)-r;
       if(gap<32){
         const weight=p.damage??p.f.body;
-        value+=(1-gap/32)*clamp(weight/9,.34,4)*(1.4-horizon)*(1+(1-hp)*.7)*(cautious?1.24:1);
+        const cost=(1-gap/32)*clamp(weight/9,.34,4)*(1.4-horizon)*(1+(1-hp)*.7)*(cautious?1.24:1);
+        value+=cost;
+        if(dodgeCosts&&withoutShot.has(p))dodgeCosts.set(p,cost);
       }
     }
     if(enemy&&(!c.ram||retreat)){
@@ -6126,6 +6214,10 @@ function botThink(w,t){
       if(ne<145 && (retreat||C[enemy.cls].ram)) value+=(145-ne)/24;
     }
     value+=.11*(1-vx*t.intent.x-vy*t.intent.y);
+    if(withoutShot)for(const [p,alternative] of withoutShot){
+      const cost=value-(dodgeCosts.get(p)??0);
+      if(cost<alternative.value)Object.assign(alternative,{value:cost,x:vx*max,y:vy*max});
+    }
     if(value<best){
       best=value;bestX=vx;bestY=vy;bestOffset=offset;bestShapeCost=shapeCost;
     }
@@ -6268,6 +6360,10 @@ function botThink(w,t){
       if(!m.swarmAttempt){m.swarmTrials=(m.swarmTrials??0)+1;m.swarmAttempt={id:m.swarmTrials,rivalId:enemy.id,choice:swarmCandidate.choice,basis:tacticalBasis(m.swarmTrials-1,m.swarmResults),dealt:0,taken:0,threat:false,until:w.time+2};tacticalEvent(m,w.time,"Iniciou enxame · "+(swarmCandidate.choice===0?"afastamento":"lateral")+" · "+m.swarmAttempt.basis);}
       if(observedSwarms.has(enemy.profileId))m.swarmAttempt.threat=true;
     }
+  }
+  if(withoutShot)for(const [p,alternative] of withoutShot){
+    beginDodgeAttempt(w,t,p,dodgeTiming,alternative,{x:bestX*max,y:bestY*max});
+    if(t.dodgeAttempt)break;
   }
   t.intent={x:bestX,y:bestY,aim,aimX,aimY,fire,alt,guardDrones,droneCover,droneCutoff};
   if(c.radial){
