@@ -15,7 +15,20 @@ el("labBoss").value="cartographer";
 el("seed").value=7103;
 reuseBotMemory=false;
 el("reuseBotMemory").value="off";
-const initialArena=restart("cartographer");`);
+const initialArena=restart("cartographer");
+if(new URLSearchParams(location.search).has("quadros")){
+  const jump=document.createElement("button");
+  jump.textContent="Próximo tiro do chefe";
+  el("step").after(jump);
+  jump.onclick=()=>{
+    paused=true;cleanseInputs();
+    for(let i=0;i<180&&!world.duelEnded;i++){
+      stepGame();
+      if(world.shots.some(p=>p.owner===world.boss&&p.cartographerShot&&!p.pillarSource&&p.bornTick===world.tick))break;
+    }
+    updateInterface(true);
+  };
+}`);
 replace('  if(bossTrial&&world.boss){focusId=world.boss.id;follow="chosen";camera.x=world.boss.x;camera.y=world.boss.y;}',`  if(bossTrial==="cartographer"){
     const player=world.tanks[0],boss=world.boss;
     mode="play";pending=false;

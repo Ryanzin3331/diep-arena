@@ -2,8 +2,17 @@
 
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const fs=require('node:fs'),vm=require('node:vm');
-const core=fs.readFileSync('index.html','utf8').split('<script id="core">')[1].split('</script>')[0];
-const api=vm.runInNewContext(core+';({Arena,C,CARTOGRAPHER,CartographerBarrier,shuffleBosses,rngFrom})',{TextEncoder});
+const html=fs.readFileSync('index.html','utf8');
+const core=html.split('<script id="core">')[1].split('</script>')[0];
+const drawing=html.slice(html.indexOf('function circle('),html.indexOf('function paintDefender('));
+const marks=[], rotations=[];
+const ctx={angle:0,save(){rotations.push(this.angle);},restore(){this.angle=rotations.pop();},rotate(a){this.angle+=a;},
+  beginPath(){},fill(){},stroke(){},arc(){},
+  rect(x,y,w,h){
+    const c=Math.cos(this.angle),s=Math.sin(this.angle),tip=x+w,mid=y+h/2;
+    marks.push({x:c*tip-s*mid,y:s*tip+c*mid,angle:this.angle,length:w});
+  }};
+const api=vm.runInNewContext(core+drawing+';({Arena,C,CARTOGRAPHER,CARTOGRAPHER_PILLAR_TURRET,shuffleBosses,rngFrom,paintCartographerTurret})',{TextEncoder,ctx});
 
 function lab(){return new api.Arena(7103,2,['Destroyer','Tank',45,'cartographer']);}
 function idle(t,x,y){Object.assign(t,{x,y,px:x,py:y,human:true,vx:0,vy:0,kx:0,ky:0});}
@@ -118,14 +127,15 @@ test('entre dois ciclos afasta-se da ameaça e congela o traçado no aviso e na 
   assert.ok(stop>home&&stop-home<=2*b.r);
   assert.equal(b.barrier,null);
   stepUntil(w,()=>b.barrier);
-  const second=b.barrier, pattern=JSON.stringify(second.segments);
+  const second=b.barrier, shape=()=>JSON.stringify(second.segments.map(({pillar,walls})=>[pillar,walls]));
+  const pattern=shape();
   assert.notEqual(second,first);
   assert.equal(second.gapX,stop-105);
   assert.equal(b.x,stop);
   assert.equal(b.vx,0);
   stepUntil(w,()=>w.maze);
   assert.equal(w.maze,second);
-  assert.equal(JSON.stringify(second.segments),pattern);
+  assert.equal(shape(),pattern);
   assert.equal(b.x,stop);
   assert.equal(b.y,y);
   for(const gate of second.gates){
@@ -163,7 +173,7 @@ test('a torreta gira durante a recarga e dispara barris alternados no ângulo de
   const shots=[],spawn=w.spawnShot;
   w.spawnShot=function(owner,gun,mount){
     const fired=spawn.call(this,owner,gun,mount);
-    if(fired&&owner===b)shots.push({time:this.time,gun,aim:mount.aim,heading:this.shots.at(-1).angle});
+    if(fired&&owner===b&&!mount.pillar)shots.push({time:this.time,gun,mount:{...mount},p:this.shots.at(-1)});
     return fired;
   };
   const aim=b.turret.aim;
@@ -171,15 +181,35 @@ test('a torreta gira durante a recarga e dispara barris alternados no ângulo de
   assert.notEqual(b.turret.aim,aim);
   assert.ok(Math.abs(b.turret.aim-aim)<.75);
   assert.equal(shots.length,0);
-  stepUntil(w,()=>shots.length>=3,220);
+  marks.length=0;
+  api.paintCartographerTurret(b.turret,b.spec.guns,b.r,0,b.r*.62,w.time,.5);
+  assert.ok(marks[0].angle>b.turret.previousAim&&marks[0].angle<b.turret.aim);
+  for(let i=0;i<3;i++){
+    stepUntil(w,()=>shots.length>i,220);
+    const shot=shots[i],barrel=b.spec.guns.indexOf(shot.gun);
+    marks.length=0;
+    api.paintCartographerTurret(b.turret,b.spec.guns,b.r,0,b.r*.62,w.time,1);
+    const tip=marks[barrel];
+    assert.ok(Math.hypot(tip.x+b.x-shot.p.x,tip.y+b.y-shot.p.y)<1e-8);
+    assert.equal(tip.angle,shot.p.angle);
+    assert.equal(shot.p.px,shot.p.x);
+    assert.equal(shot.p.age,0);
+    assert.equal(shot.mount.aim,shot.p.angle);
+    const lengths=marks.map(mark=>mark.length);
+    marks.length=0;
+    api.paintCartographerTurret(b.turret,b.spec.guns,b.r,0,b.r*.62,w.time+.035,1);
+    assert.ok(marks[barrel].length<lengths[barrel]);
+    assert.equal(marks[1-barrel].length,lengths[1-barrel]);
+    w.step(null);
+    assert.ok(Math.hypot(shot.p.x-shot.p.px,shot.p.y-shot.p.py)>0);
+  }
   assert.deepEqual(shots.map(s=>b.spec.guns.indexOf(s.gun)),[0,1,0]);
-  assert.ok(shots.every(s=>s.aim===s.heading));
   assert.ok(shots[1].time-shots[0].time>=.53-1e-8&&shots[1].time-shots[0].time<.55);
 });
 
 test('a cobertura bloqueia a mira e derrubar o pilar volta a expor o jogador',()=>{
   const w=lab(),b=w.boss,[player,other]=w.tanks,y=b.y-190;
-  idle(player,b.x+155,y-170);idle(other,b.x+650,y-150);
+  idle(player,b.x+155,y-300);idle(other,b.x+650,y-150);
   player.protect=other.protect=4;
   stepUntil(w,()=>w.maze);
   player.protect=0;other.protect=10;
@@ -192,12 +222,54 @@ test('a cobertura bloqueia a mira e derrubar o pilar volta a expor o jogador',()
     player.aim=Math.PI/2;
     assert.ok(w.spawnShot(player,api.C.Destroyer.guns[0]));
     const p=w.shots.at(-1);
-    stepUntil(w,()=>!p.alive,40);
+    stepUntil(w,()=>!p.alive,55);
   }
   assert.equal(wall.segments[1].hp,0);
   assert.equal(wall.hit(b.x,b.y,player.x,player.y,2),null);
   stepUntil(w,()=>player.hp<hp,170);
   assert.equal(w.maze,wall);
+});
+
+test('a torreta do pilar emite pela boca e deixa de existir com seu trecho',()=>{
+  const w=lab(),b=w.boss,[player,other]=w.tanks,y=b.y-190,x=b.x+155;
+  idle(player,x,y-145);idle(other,b.x+650,y-150);
+  player.protect=other.protect=10;
+  stepUntil(w,()=>w.maze);
+  const wall=w.maze,pillar=wall.segments[1];
+  player.protect=0;
+  idle(player,x+240,y+10); // In range across the wall, but outside its footprint.
+  for(let i=0;i<90;i++){
+    w.step(null);
+    assert.ok(!w.shots.some(p=>p.pillarSource===pillar));
+  }
+  idle(player,x,y-145);
+  stepUntil(w,()=>w.shots.some(p=>p.pillarSource===pillar));
+  const shot=w.shots.find(p=>p.pillarSource===pillar),{radius,guns}=api.CARTOGRAPHER_PILLAR_TURRET;
+  marks.length=0;
+  api.paintCartographerTurret(pillar.turret,guns,radius,0,radius,w.time,1,pillar);
+  assert.ok(Math.hypot(x+marks[0].x-shot.x,y+marks[0].y-shot.y)<1e-8);
+  assert.equal(shot.age,0);
+  assert.equal(shot.angle,marks[0].angle);
+  assert.ok(shot.damage<7);
+  assert.equal(wall.hit(shot.x,shot.y,shot.x,shot.y,shot.r),null);
+  for(let i=0;i<4&&pillar.hp>0;i++){
+    player.aim=Math.PI/2;
+    assert.ok(w.spawnShot(player,api.C.Destroyer.guns[0]));
+    const p=w.shots.at(-1);
+    stepUntil(w,()=>!p.alive,35);
+  }
+  assert.equal(pillar.hp,0);
+  assert.equal(wall.segments[0].hp,135);
+  assert.equal(wall.hit(x,y-100,x,y+100,player.r),null);
+  wall.move(player,x,y+100);
+  assert.equal(player.y,y+100);
+  for(let i=0;i<95;i++){
+    w.step(null);
+    assert.ok(!w.shots.some(p=>p.alive&&p.pillarSource===pillar));
+  }
+  stepUntil(w,()=>w.maze!==wall);
+  assert.equal(b.barrier,null);
+  assert.ok(!w.shots.some(p=>p.pillarSource));
 });
 
 test('ameaças nos lados opostos produzem deslocamentos opostos',()=>{

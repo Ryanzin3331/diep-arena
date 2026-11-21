@@ -35,5 +35,7 @@ function measure(html){
     playerHP:Number(player.hp.toFixed(1)),bossHP:Number(b.hp.toFixed(1))};
 }
 
-console.log(JSON.stringify({before:measure(execFileSync('git',['show','7514562:index.html'],{encoding:'utf8'})),
-  after:measure(fs.readFileSync('index.html','utf8'))},null,2));
+const comparison=process.argv[2];
+const fromCommit=commit=>execFileSync('git',['show',commit+':index.html'],{encoding:'utf8'});
+console.log(JSON.stringify({before:measure(fromCommit('7514562')),
+  after:measure(comparison?fromCommit(comparison):fs.readFileSync('index.html','utf8'))},null,2));

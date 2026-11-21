@@ -1753,6 +1753,24 @@ function slideAlongWalls(field,e,x,y,startX,startY){
 const CARTOGRAPHER_PILLAR_HP=135, CARTOGRAPHER_WARNING=1.5, CARTOGRAPHER_WALL_TIME=7;
 const CARTOGRAPHER_PAUSE=2, CARTOGRAPHER_SLIDE=1.8, CARTOGRAPHER_END_ROUTE=425;
 const CARTOGRAPHER_TURN=2.8, CARTOGRAPHER_SHOT_GAP=.53;
+const CARTOGRAPHER_PILLAR_TURRET={radius:15,range:245,gap:1.12,
+  guns:[gun(0,{width:.55,speed:.63,damage:.60,pen:.65,life:.61,recoil:0,spread:0})]};
+function cartographerTurret(aim,ready){return {aim,previousAim:aim,ready,barrel:0,fired:[]};}
+function turretRecoil(radius,time,fired){
+  const age=time-(fired??-Infinity);
+  return age>0&&age<.14?radius*.12*Math.min(age/.035,(.14-age)/.105):0;
+}
+function barrelGeometry(g,radius,angle,pillar){
+  const width=radius*g.width;
+  const tip=pillar?(pillar.pillar.w/2+width*.5+3)/Math.max(Math.abs(Math.cos(angle)),Math.abs(Math.sin(angle))):radius*g.length;
+  return {width,tip,offset:radius*g.offset};
+}
+function gunMuzzle(mount,g,radius,shotRadius){
+  const angle=mount.aim+g.angle,cos=Math.cos(angle),sin=Math.sin(angle);
+  const {tip,offset}=barrelGeometry(g,radius,angle,mount.pillar);
+  const length=tip+(g.kind==="decadeBullet"?shotRadius:0);
+  return {angle,cos,sin,x:mount.x+cos*length-sin*offset,y:mount.y+sin*length+cos*offset};
+}
 class CartographerBarrier {
   constructor(boss,size,time){
     this.y=boss.y-190;
@@ -1767,16 +1785,16 @@ class CartographerBarrier {
     const spans=this.mirrored?[[-340,30],[180,340]]:[[-340,-180],[-30,340]];
     this.segments=spans.map(([from,to])=>{
       const left=boss.x+from,right=boss.x+to,center=(left+right)/2;
-      return {hp:CARTOGRAPHER_PILLAR_HP,center,
+      return {hp:CARTOGRAPHER_PILLAR_HP,center,turret:cartographerTurret(-Math.PI/2,Infinity),
         pillar:{x:center-34,y:this.y-34,w:68,h:68},
         walls:[{x:left,y:this.y-16,w:center-34-left,h:32},{x:center+34,y:this.y-16,w:right-center-34,h:32}]};
     });
   }
-  firstContact(x,y,tx,ty,r=0){
+  firstContact(x,y,tx,ty,r=0,ownPillar=null){
     let nearest=null;
     for(const segment of this.segments){
       if(segment.hp<=0)continue;
-      const pillar=rectImpact(segment.pillar,x,y,tx,ty,r);
+      const pillar=segment===ownPillar?null:rectImpact(segment.pillar,x,y,tx,ty,r);
       if(pillar&&(!nearest||pillar.time<nearest.time))nearest={time:pillar.time,pillar:segment};
       for(const wall of segment.walls){
         const hit=rectImpact(wall,x,y,tx,ty,r);
@@ -2005,13 +2023,15 @@ function snapshotUnit(t){
   const {type,id,name,cls,x,y,r,aim,hp,hit,team,slot,human,protect}=t;
   if(type==="boss")return {type,id,name,cls,x,y,r,aim,hp,hit,alive:true,spec:t.spec,phase:t.phase,nextVolley:t.nextVolley,
     turretAngles:t.turrets?.map(turret=>turret.aim),
-    ...(t.turret?{turretAim:t.turret.aim}:{}),
-    ...(t.barrier?{barrier:{ends:t.barrier.ends,segments:t.barrier.segments.map(segment=>({...segment}))}}:{})};
+    ...(t.turret?{turret:snapshotCartographerTurret(t.turret)}:{}),
+    ...(t.barrier?{barrier:{starts:t.barrier.starts,ends:t.barrier.ends,segments:t.barrier.segments.map(segment=>
+      ({...segment,turret:snapshotCartographerTurret(segment.turret)}))}}:{})};
   return {type,id,name,cls,x,y,r,aim,hp,hit,team,slot,human,protect,skin:t.skin,alive:true,
     ...(customTankColor(t)?{playerColor:t.playerColor}:{}),
     maxHp:hull(t),stats:t.stats.slice(),cool:t.cool.slice(),
     ...(t.autoTurrets?{turretAngles:t.autoTurrets.map(m=>m.aim)}:{})};
 }
+function snapshotCartographerTurret(turret){return {aim:turret.aim,previousAim:turret.aim,fired:turret.fired.slice()};}
 function snapshotEffects(items,stride,write){
   const data=new Float32Array(items.length*stride);
   let index=0;
@@ -3707,7 +3727,7 @@ class Arena {
     if(spec===FALLEN_OVERLORD)Object.assign(this.boss,{aim:angle+Math.PI/8,ports:new Uint8Array(4),
       cruiseAngle:angle-Math.PI/2,phase:"ronda",target:null,polygons:[],nextDrone:this.time+.125});
     if(spec===CARTOGRAPHER)Object.assign(this.boss,{aim:-Math.PI/2,stats:Array(8).fill(0),barrierHomeX:x,
-      nextBarrier:this.time+.25,turret:{aim:-Math.PI/2,ready:this.time+.9,barrel:0}});
+      nextBarrier:this.time+.25,turret:cartographerTurret(-Math.PI/2,this.time+.9)});
     if(spec===TREE_TOPPER||spec===DECADE)Object.assign(this.boss,{
       stats:[0,0,0,0,0,0,0,0],turrets:Array.from({length:spec===TREE_TOPPER?5:1},(_,i)=>({aim:angle+i*TAU/5,ready:this.time+i*.16})),
       nextDeploy:this.time+1,deployerIndex:0,target:null
@@ -3729,19 +3749,42 @@ class Arena {
     if(b.barrier&&this.maze===b.barrier){
       this.maze=null;
       for(const t of this.tanks)delete t.cartographerRoute;
-      for(const p of this.shots)if(p.cartographerRoute)delete p.cartographerRoute;
+      for(const p of this.shots){
+        if(p.cartographerRoute)delete p.cartographerRoute;
+        if(p.pillarSource&&p.alive)this.removeShot(p);
+      }
     }
     b.barrier=null;
     b.barrierSlide=null;
   }
-  cartographerTarget(b){
-    let target=null,distance=b.spec.range;
+  cartographerTarget(b,mount=b,range=b.spec.range){
+    let target=null,distance=range;
     for(const t of this.tanks){
-      const gap=Math.hypot(t.x-b.x,t.y-b.y);
-      if(gap>=distance||!this.bossCanTarget(b,t)||this.maze?.hit(b.x,b.y,t.x,t.y,2)!=null)continue;
+      const gap=Math.hypot(t.x-mount.x,t.y-mount.y);
+      if(gap>=distance||!this.bossCanTarget(b,t)||this.maze?.firstContact(mount.x,mount.y,t.x,t.y,2,mount.pillar))continue;
       target=t;distance=gap;
     }
     return target;
+  }
+  advanceCartographerTurret(b,turret,mount,guns,range,gap){
+    turret.previousAim=turret.aim;
+    const target=this.cartographerTarget(b,mount,range);
+    if(!target)return;
+    const g=guns[turret.barrel];
+    const [x,y]=lead(mount,target,bulletSpeed(b,g),.75);
+    const turn=angleDelta(Math.atan2(y-mount.y,x-mount.x),turret.aim);
+    turret.aim=angleDelta(turret.aim+clamp(turn,-CARTOGRAPHER_TURN*DT,CARTOGRAPHER_TURN*DT),0);
+    if(this.time<turret.ready||Math.abs(turn)>.15)return;
+    mount.aim=turret.aim;
+    const radius=mount.r,shotRadius=radius*g.width/2;
+    const muzzle=gunMuzzle(mount,g,radius,shotRadius);
+    const distance=Math.hypot(x-muzzle.x,y-muzzle.y);
+    if(this.maze?.hit(muzzle.x,muzzle.y,muzzle.x+muzzle.cos*distance,muzzle.y+muzzle.sin*distance,shotRadius)!=null)return;
+    if(this.spawnShot(b,g,mount)){
+      turret.fired[turret.barrel]=this.time;
+      turret.ready=this.time+gap;
+      turret.barrel=(turret.barrel+1)%guns.length;
+    }
   }
   startCartographerPause(b){
     this.clearCartographerBarrier(b);
@@ -3777,25 +3820,21 @@ class Arena {
     const barrier=b.barrier;
     if(barrier?.ends===null&&now>=barrier.starts){
       const occupied=this.tanks.some(t=>t.alive&&barrier.hit(t.x,t.y,t.x,t.y,t.r+3)!==null);
-      if(!occupied){barrier.ends=now+CARTOGRAPHER_WALL_TIME;this.maze=barrier;}
+      if(!occupied){
+        barrier.ends=now+CARTOGRAPHER_WALL_TIME;
+        this.maze=barrier;
+        for(const [i,segment] of barrier.segments.entries())segment.turret.ready=now+.45+i*.22;
+      }
       else if(now>=barrier.starts+1)this.startCartographerPause(b);
     }else if(barrier?.ends!=null&&now>=barrier.ends){
       this.startCartographerPause(b);
     }
-    const target=this.cartographerTarget(b),turret=b.turret;
-    if(!target)return;
-    const [x,y]=lead(b,target,bulletSpeed(b,b.spec.guns[0]),.75);
-    const turn=angleDelta(Math.atan2(y-b.y,x-b.x),turret.aim);
-    turret.aim=angleDelta(turret.aim+clamp(turn,-CARTOGRAPHER_TURN*DT,CARTOGRAPHER_TURN*DT),0);
-    if(now<turret.ready||Math.abs(turn)>.15)return;
-    const g=b.spec.guns[turret.barrel];
-    const c=Math.cos(turret.aim),s=Math.sin(turret.aim),offset=g.offset*b.r;
-    const muzzleX=b.x+c*g.length*b.r-s*offset,muzzleY=b.y+s*g.length*b.r+c*offset;
-    const distance=Math.hypot(x-muzzleX,y-muzzleY);
-    if(this.maze?.hit(muzzleX,muzzleY,muzzleX+c*distance,muzzleY+s*distance,b.r*g.width/2)!=null)return;
-    if(this.spawnShot(b,g,{x:b.x,y:b.y,r:b.r,aim:turret.aim})){
-      turret.ready=now+CARTOGRAPHER_SHOT_GAP;
-      turret.barrel=1-turret.barrel;
+    this.advanceCartographerTurret(b,b.turret,{x:b.x,y:b.y,r:b.r,cartographerShot:true},b.spec.guns,b.spec.range,CARTOGRAPHER_SHOT_GAP);
+    if(!b.barrier||this.maze!==b.barrier)return;
+    const {radius,guns,range,gap}=CARTOGRAPHER_PILLAR_TURRET;
+    for(const segment of b.barrier.segments){
+      if(segment.hp<=0)continue;
+      this.advanceCartographerTurret(b,segment.turret,{x:segment.center,y:b.barrier.y,r:radius,pillar:segment,cartographerShot:true},guns,range,gap);
     }
   }
   advanceFallen(b){
@@ -4174,16 +4213,14 @@ class Arena {
   }
   spawnShot(t,g,mount=t){
     if(this.shots.length>3000) return;
-    const a=mount.aim+g.angle, ca=Math.cos(a),sa=Math.sin(a);
     const radius=mount.r??t.r;
     const r=g.kind==="trap"?radius*g.width*.69:radius*g.width*(g.count>1?.35:.5);
-    const muzzle=radius*g.length+(g.kind==="decadeBullet"?r:0);
-    let x=mount.x+ca*muzzle-sa*radius*g.offset;
-    let y=mount.y+sa*muzzle+ca*radius*g.offset;
+    let {angle:a,cos:ca,sin:sa,x,y}=gunMuzzle(mount,g,radius,r);
     const speed=bulletSpeed(t,g);
     const isDrone=isSpawnedDrone(g.kind);
     const blockedAtBase=this.baseImpact(t,mount.x,mount.y,x,y,r);
-    const wall=this.maze?.hit(mount.x,mount.y,x,y,r)??blockedAtBase;
+    const wall=(mount.pillar?this.maze?.firstContact(mount.x,mount.y,x,y,r,mount.pillar)?.time:
+      this.maze?.hit(mount.x,mount.y,x,y,r))??blockedAtBase;
     if(wall!=null&&this.hasBases){
       if(t.spec===DEFENDER)this.provokeDefenderBases(t,mount.x,mount.y,x,y,r);
       return;
@@ -4199,6 +4236,8 @@ class Arena {
       damage:(7+3*t.stats[5])*g.damage,dur:(2+1.5*t.stats[4])*g.pen,age:0,speed};
     const care=mount.parent?mount.parent.careWindow:t.careWindow;
     if(care)child.careWindow=care;
+    if(mount.cartographerShot){child.cartographerShot=true;child.bornTick=this.tick;}
+    if(mount.pillar)child.pillarSource=mount.pillar;
     if(g.kind===SKIMMER_MISSILE){
       child.spin=t.intent.alt?-1:1;
       child.sideSpeed=bulletSpeed(t,skimmerSide);
@@ -4798,6 +4837,8 @@ class Arena {
     p.vy+=pushY*correction;
   }
   advanceShot(p){
+    // Keep the first visible state at the muzzle before advancing the sweep.
+    if(p.cartographerShot&&p.bornTick===this.tick)return;
     if(!p.owner.alive&&(isSpawnedDrone(p.kind)||p.kind===NECRO_DRONE)){
       this.removeShot(p);return;
     }
@@ -5080,8 +5121,11 @@ class Arena {
         if(this.duelEnded||this.closing&&!this.closing.active)return;
       }
       if(p.wallTime!=null){
-        if(p.cartographerPillar&&p.owner.type==="tank"&&this.maze instanceof CartographerBarrier)
-          this.maze.damage(p.cartographerPillar,p.damage*Math.min(1,p.dur/2));
+        const segment=p.cartographerPillar;
+        if(segment?.hp>0&&p.owner.type==="tank"&&this.maze instanceof CartographerBarrier){
+          this.maze.damage(segment,p.damage*Math.min(1,p.dur/2));
+          if(segment.hp===0)for(const shot of this.shots)if(shot.alive&&shot.pillarSource===segment)this.removeShot(shot);
+        }
         this.removeShot(p);
       }
     }
@@ -7262,6 +7306,23 @@ function poly(cx,cy,r,sides,turn,context=ctx){
 }
 function circle(x,y,r,context=ctx){context.beginPath();context.arc(x,y,r,0,TAU);}
 function paint(fill,stroke="#273c3292",width=2.5,context=ctx){context.fillStyle=fill;context.fill();context.strokeStyle=stroke;context.lineWidth=width;context.stroke();}
+function paintAutoBarrel(context,g,radius,aim,recoil,line,pillar=null){
+  const {width,tip,offset}=barrelGeometry(g,radius,aim+g.angle,pillar);
+  context.save();context.rotate(g.angle);context.beginPath();
+  context.rect(0,offset-width/2,tip-recoil,width);
+  paint("#999999","#737373",line,context);context.restore();
+}
+function paintAutoMount(context,radius,line){
+  circle(0,0,radius,context);paint("#999999","#737373",line,context);
+}
+function paintCartographerTurret(turret,guns,radius,hullAim,hub,time,blend,pillar=null){
+  const aim=turret.previousAim+angleDelta(turret.aim,turret.previousAim)*blend;
+  const line=pillar?2.8:5;
+  ctx.save();ctx.rotate(aim-hullAim);
+  for(const [i,g] of guns.entries())paintAutoBarrel(ctx,g,radius,aim,turretRecoil(radius,time,turret.fired[i]),line,pillar);
+  paintAutoMount(ctx,hub,line);
+  ctx.restore();
+}
 function paintDefender(b,time){
   const r=b.r,metal="#999999",rim="#737373";
   ctx.lineJoin="round";
@@ -7299,7 +7360,7 @@ function paintSummoner(b,time){
   ctx.beginPath();ctx.rect(-side,-side,side*2,side*2);
   paint(time-b.hit<.06?"#fff1be":b.spec.color,"#bfaf50",r*.069);
 }
-function paintBoss(b,x,y,selected,time){
+function paintBoss(b,x,y,selected,time,blend=1,animationTime=time){
   const fallen=b.spec===FALLEN_BOOSTER;
   ctx.save();ctx.translate(x,y);ctx.rotate(b.aim);
   if(selected){
@@ -7309,13 +7370,7 @@ function paintBoss(b,x,y,selected,time){
   if(b.spec===CARTOGRAPHER){
     poly(0,0,b.r,6,Math.PI/6);
     paint(time-b.hit<.06?"#d4e5ea":b.spec.color,"#354c5b",6);
-    ctx.save();ctx.rotate((b.turretAim??b.turret.aim)-b.aim);
-    for(const g of b.spec.guns){
-      ctx.beginPath();ctx.rect(0,b.r*(g.offset-g.width/2),b.r*g.length,b.r*g.width);
-      paint("#a0a4a7","#46545d",5);
-    }
-    circle(0,0,b.r*.62);paint("#999999","#46545d",5);
-    ctx.restore();
+    paintCartographerTurret(b.turret,b.spec.guns,b.r,b.aim,b.r*.62,animationTime,blend);
   }else if(b.spec===TREE_TOPPER||b.spec===DECADE){
     paintEventBoss(b,time);
   }else if(b.spec===FALLEN_OVERLORD){
@@ -7424,9 +7479,8 @@ function paintTankBody(ctx,t,x,y,selected,time,spinTime,color){
       ctx.save();
       ctx.translate(Math.cos(outward)*r*AUTO_MOUNT_OFFSET,Math.sin(outward)*r*AUTO_MOUNT_OFFSET);
       ctx.rotate(aim-t.aim);
-      ctx.beginPath();ctx.rect(0,-radius*g.width/2,radius*g.length-recoil,radius*g.width);
-      paint("#999999","#737373",2.8,ctx);
-      circle(0,0,radius,ctx);paint("#999999","#737373",2.8,ctx);
+      paintAutoBarrel(ctx,g,radius,aim,recoil,2.8);
+      paintAutoMount(ctx,radius,2.8);
       ctx.restore();
     }
   }else for(let i=0;i<spec.guns.length;i++){
@@ -7908,7 +7962,7 @@ function paintConvoy(cargo,x,y){
   poly(0,0,r*.25,4,Math.PI/4);paint(color,TEAMS[cargo.attack].line,2);
   ctx.restore();
 }
-function paintCartographerBarrier(barrier,zoom){
+function paintCartographerBarrier(barrier,zoom,time,blend){
   ctx.save();
   const warning=barrier.ends===null;
   for(const segment of barrier.segments){
@@ -7923,6 +7977,10 @@ function paintCartographerBarrier(barrier,zoom){
       for(const wall of walls){ctx.fillRect(wall.x,wall.y,wall.w,wall.h);ctx.strokeRect(wall.x,wall.y,wall.w,wall.h);}
       ctx.fillStyle=CARTOGRAPHER.color;ctx.strokeStyle="#354c5b";
       ctx.fillRect(pillar.x,pillar.y,pillar.w,pillar.h);ctx.strokeRect(pillar.x,pillar.y,pillar.w,pillar.h);
+      const {guns,radius}=CARTOGRAPHER_PILLAR_TURRET;
+      ctx.save();ctx.translate(segment.center,pillar.y+pillar.h/2);
+      paintCartographerTurret(segment.turret,guns,radius,0,radius,time,blend,segment);
+      ctx.restore();
       if(segment.hp<CARTOGRAPHER_PILLAR_HP){
         ctx.fillStyle="#475e55";ctx.fillRect(pillar.x+9,pillar.y+pillar.h+7,pillar.w-18,5);
         ctx.fillStyle="#c6daaa";ctx.fillRect(pillar.x+9,pillar.y+pillar.h+7,(pillar.w-18)*segment.hp/CARTOGRAPHER_PILLAR_HP,5);
@@ -7933,6 +7991,7 @@ function paintCartographerBarrier(barrier,zoom){
 }
 function drawArena(scene,lens,blend,marked,recorded,network=false){
   const [left,top]=coordinates(0,0,lens),[right,bottom]=coordinates(w,h,lens);
+  const animationTime=scene.animationTime??Math.max(0,scene.time-DT*(1-blend));
   ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.fillStyle="#c5d4c1";ctx.fillRect(0,0,w,h);
   ctx.save();ctx.translate(w/2,h/2);ctx.scale(lens.zoom,lens.zoom);ctx.translate(-lens.x,-lens.y);
@@ -8003,7 +8062,7 @@ function drawArena(scene,lens,blend,marked,recorded,network=false){
       ctx.strokeRect(wall.x+.5,wall.y+.5,MAZE_CELL-1,MAZE_CELL-1);
     }
   }
-  if(scene.boss?.barrier)paintCartographerBarrier(scene.boss.barrier,lens.zoom);
+  if(scene.boss?.barrier)paintCartographerBarrier(scene.boss.barrier,lens.zoom,animationTime,blend);
   ctx.restore();
   ctx.strokeStyle="#607f68";ctx.lineWidth=3;ctx.strokeRect(0,0,world.size,world.size);
   const visible=(x,y,r)=>x+r>=left&&x-r<=right&&y+r>=top&&y-r<=bottom;
@@ -8036,6 +8095,7 @@ function drawArena(scene,lens,blend,marked,recorded,network=false){
     }
     for(const p of scene.shots){
       if(!visible(p.x,p.y,p.r))continue;
+      if(p.cartographerShot&&p.bornTick===scene.tick&&blend<1)continue;
       const [x,y]=tp(p,blend);
       const kind=shotAppearance(p),color=shotColor(p,scene.time);
       if(kind==="decadeBullet")decadeShots.push({x,y,r:p.r,color});
@@ -8059,13 +8119,13 @@ function drawArena(scene,lens,blend,marked,recorded,network=false){
   const b=scene.boss;
   if(b?.alive&&visible(b.x,b.y,b.r)){
     const [x,y]=recorded?[b.x,b.y]:tp(b,blend);
-    paintBoss(b,x,y,marked===b.id,scene.time);
+    paintBoss(b,x,y,marked===b.id,scene.time,blend,animationTime);
   }
   for(const {x,y,r,color} of decadeShots)paintShot(x,y,r,0,"decadeBullet",color);
   for(const tank of scene.tanks){
     if(tank.alive&&visible(tank.x,tank.y,tank.r)){
       const [x,y]=recorded&&!network?[tank.x,tank.y]:tp(tank,blend);
-      paintTank(tank,x,y,tank.id===marked,scene.time,scene.animationTime??Math.max(0,scene.time-DT*(1-blend)));
+      paintTank(tank,x,y,tank.id===marked,scene.time,animationTime);
     }
   }
   for(const t of (recorded?scene.closers:scene.closing?.closers)??[]){
@@ -8328,12 +8388,21 @@ function replayScene(state){
   state.index=i;
   const before=frames[i],after=frames[i+1];
   const blend=after?clamp((time-before.time)/(after.time-before.time),0,1):0;
+  const cartographerAim=(turret,next)=>{
+    const aim=turret.aim+angleDelta(next.aim,turret.aim)*blend;
+    const fired=Array.from({length:Math.max(turret.fired.length,next.fired.length)},(_,i)=>
+      next.fired[i]<=time?next.fired[i]:turret.fired[i]);
+    return {aim,previousAim:aim,fired};
+  };
   const interpolate=(unit,next)=>!unit||!next||unit.id!==next.id?unit:{
     ...unit,x:unit.x+(next.x-unit.x)*blend,y:unit.y+(next.y-unit.y)*blend,
     aim:unit.aim+angleDelta(next.aim,unit.aim)*blend,
     turretAngles:unit.turretAngles&&next.turretAngles?.length===unit.turretAngles.length&&unit.cls===next.cls
       ?unit.turretAngles.map((aim,i)=>aim+angleDelta(next.turretAngles[i],aim)*blend)
-      :unit.turretAngles
+      :unit.turretAngles,
+    ...(unit.turret&&next.turret?{turret:cartographerAim(unit.turret,next.turret)}:{}),
+    ...(unit.barrier&&unit.barrier.starts===next.barrier?.starts?{barrier:{...unit.barrier,
+      segments:unit.barrier.segments.map((segment,i)=>({...segment,turret:cartographerAim(segment.turret,next.barrier.segments[i].turret)}))}}:{})
   };
   const tanks=after?before.tanks.map(t=>interpolate(t,after.tanks.find(next=>next.id===t.id))):before.tanks;
   const boss=interpolate(before.boss,after?.boss),convoy=interpolate(before.convoy,after?.convoy);
