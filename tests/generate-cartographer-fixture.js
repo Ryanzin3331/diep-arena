@@ -32,8 +32,10 @@ if(new URLSearchParams(location.search).has("quadros")){
 replace('  if(bossTrial&&world.boss){focusId=world.boss.id;follow="chosen";camera.x=world.boss.x;camera.y=world.boss.y;}',`  if(bossTrial==="cartographer"){
     const player=world.tanks[0],boss=world.boss;
     mode="play";pending=false;
-    const lateral=new URLSearchParams(location.search).has("lateral");
-    const x=boss.x+(lateral?-105:105),y=boss.y-310;
+    const options=new URLSearchParams(location.search),stage=Number(options.get("fase"));
+    const lateral=options.has("lateral");
+    if(stage===2||stage===3)boss.hp=boss.spec.hp*(stage===3?.32:.66);
+    const x=boss.x+(lateral?-105:105),y=boss.y-(stage===3?535:310);
     Object.assign(player,{human:true,name:playerName,x,y,px:x,py:y,protect:0,learning:null});
     world.human=player;world.indexSense();
     camera.x=x;camera.y=y;pointer.lastAim=Math.PI/2;

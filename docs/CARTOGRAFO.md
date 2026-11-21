@@ -8,11 +8,22 @@ No **FFA aberto**, abra **Configurar**, escolha uma frequência em **Chefes na p
 
 - O contorno tracejado avisa 1,5 s antes de subir. A abertura tem 150 unidades e também dá para contornar as extremidades. Se um casco ocupar o traçado, o chefe adia a construção por até um segundo e cancela o ciclo se o espaço continuar ocupado.
 - Paredes e pilares bloqueiam cascos e projéteis. Cada pilar tem 135 HP. Destruí-lo com tiros derruba o trecho que ele sustenta. A sobra expira depois de sete segundos e é removida quando o encontro acaba.
-- Cada pilar ativo abriga uma torreta Auto com alcance de mira de 245 unidades e intervalo nominal de 1,12 s. Ela lança balas leves contra alvos visíveis. A perda do pilar ou a expiração remove a torreta e os projéteis dela ainda em voo.
+- Cada pilar ativo abriga uma torreta Auto com intervalo nominal de 1,12 s. Ela mira na posição atual de alvos visíveis e lança balas leves. A perda do pilar ou a expiração remove a torreta e os projéteis dela ainda em voo.
 - Na pausa de dois segundos após a expiração ou o cancelamento, o chefe pode se afastar da ameaça visível mais próxima em qualquer direção. O percurso leva até 1,8 s e fica dentro de um diâmetro do ponto inicial, com espaço para contornar as duas extremidades. O chefe interrompe o deslocamento se um tanque entrar na trajetória. O tracejado marca a geometria a partir da posição em que ele parou.
 - A torreta cinza dupla gira continuamente na direção de alvos visíveis, inclusive durante a recarga. Ao alinhar a mira, dispara um projétil comum pelo próximo canhão. O intervalo nominal entre tiros é de 0,53 s. As paredes ocultam o alvo e bloqueiam o tiro.
-- O Cartógrafo tem 1.350 HP. A próxima barreira avisada abaixo de 675 HP espelha a abertura da esquerda para a direita.
 - Os bots aproveitam as passagens e podem atirar num pilar acessível enquanto se deslocam. A rota é mantida em cache por até 0,65 s. A destruição de um trecho invalida o cache do traçado.
+
+## Fases
+
+A vida máxima é de 1.350 HP. A barra marca 70% e 35%, indica a fase em vigor e muda de cor com o casco. As fases avançam entre barreiras. O aviso e a construção em curso terminam com o mesmo desenho.
+
+| Fase | Vida no início da fase | Movimento e barreira | Visual |
+| --- | ---: | --- | --- |
+| 1 | 1.350 HP | Uma linha com dois pilares, abertura à esquerda e alcance de mira de 245 unidades nas torretas dos pilares. | Casco e pilares azul-acinzentados. |
+| 2 | 945 HP | Deslizamento 50% mais rápido e até 225 unidades por pausa. Abertura à direita. Os pilares acompanham alvos mais rápido e seu alcance de mira sobe para 310 unidades. | Casco azul com duas marcas âmbar e pilares âmbar. |
+| 3 | 472,5 HP | Mantém o deslizamento. Uma segunda linha curta cobre a passagem direta. O terceiro pilar pode ser derrubado para reabri-la. As torretas dos pilares disparam com pelo menos 0,22 s de intervalo entre si. | Casco cobre com três marcas, pilar extra acobreado e tracejado curto na segunda linha. |
+
+As duas linhas da fase final são avisadas e construídas juntas. As duas rotas externas continuam livres. A torreta principal mantém a antecipação e a cadência anteriores.
 
 ## Teste jogável
 
@@ -23,9 +34,9 @@ node tests/generate-cartographer-fixture.js
 node tests/serve-3c-fixture.js 8770
 ```
 
-Abra o [cenário local](http://127.0.0.1:8770/cartografo-fixture.html). Você começa pausado como Destroyer nível 45, perto do chefe, com um bot aliado. Aperte **P** para começar. Use **WASD** para mover, o **mouse** para mirar e **clique esquerdo** ou **Espaço** para disparar. Observe o tracejado, mire no quadrado para derrubar seu trecho e atravesse a passagem. Depois de baixar a vida do chefe à metade, aguarde o próximo ciclo para ver o lado da abertura mudar.
+Abra o [cenário local](http://127.0.0.1:8770/cartografo-fixture.html). Você começa pausado como Destroyer nível 45, perto do chefe, com um bot aliado. Aperte **P** para começar. Use **WASD** para mover, o **mouse** para mirar e **clique esquerdo** ou **Espaço** para disparar. Observe o tracejado, mire no quadrado para derrubar seu trecho e atravesse a passagem. Ao reduzir a vida do chefe, aguarde a próxima barreira para ver as mudanças de fase. Acrescente [`?fase=2`](http://127.0.0.1:8770/cartografo-fixture.html?fase=2) ou [`?fase=3`](http://127.0.0.1:8770/cartografo-fixture.html?fase=3) para começar com vida suficiente para testar diretamente a fase desejada.
 
-A seleção do Laboratório e o cenário jogável foram conferidos no Chromium. A silhueta, a grade, o aviso e a passagem ficaram legíveis com zoom afastado e em viewport de 390 px. Nessa viewport, tiros manuais derrubaram um pilar e reduziram a vida do chefe abaixo de 50%. O Destroyer atravessou a segunda abertura com a barreira ativa.
+Na versão de uma barreira, a seleção do Laboratório e o cenário jogável foram conferidos no Chromium. A silhueta, a grade, o aviso e a passagem ficaram legíveis com zoom afastado e em viewport de 390 px. Nessa viewport, tiros manuais derrubaram um pilar e reduziram a vida do chefe abaixo de 50%. O Destroyer atravessou a segunda abertura com a barreira ativa.
 
 As regressões Node cobrem aviso, ocupação por tanques, colisão de cascos e projéteis, destruição parcial, espelhamento, expiração, término do encontro e um bot que atravessa a barreira ativa e causa dano ao Cartógrafo. A revisão de movimento cobre dois ciclos consecutivos, deslizamento em dois eixos, interrupção por um tanque na rota e saídas livres. Os testes do FFA cobrem a entrada no sorteio de eventos e a remoção da barreira ao encerrar a partida.
 

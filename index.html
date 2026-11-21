@@ -29,7 +29,8 @@ button,select,input{font:inherit}button,select,input{border:1px solid var(--line
 @media(max-width:680px){.side #inspectCard.selected-build{grid-column:1/-1;grid-row:1}.side .build dl{grid-template-columns:1fr 1fr;gap:7px 12px}.side .build .build-row{grid-template-columns:minmax(0,1fr) auto}.side .build .stat-track{display:none}}
 .boss-hud{top:12px;left:50%;width:min(285px,45%);transform:translateX(-50%);padding:5px 9px;background:#302036f0;border:1px solid #d88ba7;border-radius:8px}
 .boss-hud button{width:100%;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:2px 6px;border:0;background:transparent;padding:2px;color:#fff1f5;font-size:11px;text-align:left}
-.boss-hud button:disabled{opacity:1;cursor:default}.boss-hud .bar{background:#684459;margin:3px 0 1px}.boss-hud .bar i{background:#f17ca7}
+.boss-hud button:disabled{opacity:1;cursor:default}.boss-hud .bar{position:relative;background:#684459;margin:3px 0 1px}.boss-hud .bar i{background:#f17ca7}
+.boss-thresholds{position:absolute;inset:0;pointer-events:none}.boss-thresholds b{position:absolute;top:0;bottom:0;width:2px;background:#f8eed9}
 .team-scores{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:9px}
 .team-scores div{display:flex;align-items:center;justify-content:space-between;gap:3px;border:1px solid currentColor;border-radius:6px;padding:4px 6px;font-size:11px}
 .team-scores b{font-size:14px;font-variant-numeric:tabular-nums}
@@ -507,7 +508,7 @@ button{-webkit-tap-highlight-color:transparent}
         </div>
         <div class="overlay boss-hud" id="bossHud" hidden>
           <button id="bossFocus" type="button"><strong id="bossName">Guardião dos Pentágonos</strong><span id="bossHp"></span></button>
-          <div class="bar"><i id="bossFill"></i></div>
+          <div class="bar"><i id="bossFill"></i><span id="bossThresholds" class="boss-thresholds" aria-hidden="true" hidden><b></b><b></b></span></div>
         </div>
         <div class="overlay dom-hud" id="domHud" aria-label="Dominadores" hidden></div>
         <div class="overlay dom-hud ship-hud" id="shipHud" aria-label="Vida das naves-mãe" hidden>
@@ -1753,6 +1754,16 @@ function slideAlongWalls(field,e,x,y,startX,startY){
 const CARTOGRAPHER_PILLAR_HP=135, CARTOGRAPHER_WARNING=1.5, CARTOGRAPHER_WALL_TIME=7;
 const CARTOGRAPHER_PAUSE=2, CARTOGRAPHER_SLIDE=1.8, CARTOGRAPHER_END_ROUTE=425, CARTOGRAPHER_WALL_OFFSET=190;
 const CARTOGRAPHER_TURN=2.8, CARTOGRAPHER_SHOT_GAP=.53;
+const CARTOGRAPHER_REPOSITION_HP=.70, CARTOGRAPHER_CROSSFIRE_HP=.35, CARTOGRAPHER_EXTRA_OFFSET=390;
+const CARTOGRAPHER_STAGE_STYLES=[
+  {hull:"#789ab0",rim:"#354c5b",accent:"#789ab0",warning:"#8e502a"},
+  {hull:"#789ab0",rim:"#354c5b",accent:"#e2b15f",warning:"#8b5a24"},
+  {hull:"#ae7657",rim:"#653b2d",accent:"#f4bc78",warning:"#903e24"}
+];
+function cartographerStage(b){
+  const health=b.hp/b.spec.hp;
+  return health<=CARTOGRAPHER_CROSSFIRE_HP?3:health<=CARTOGRAPHER_REPOSITION_HP?2:1;
+}
 const CARTOGRAPHER_PILLAR_TURRET={radius:15,range:245,gap:1.12,
   // 58.5 units clears the expanded square even along its diagonal.
   guns:[gun(0,{length:3.9,width:.55,speed:.63,damage:.60,pen:.65,life:.61,recoil:0,spread:0})]};
@@ -1774,30 +1785,39 @@ class CartographerBarrier {
   constructor(boss,size,time){
     this.y=boss.y-CARTOGRAPHER_WALL_OFFSET;
     this.size=size;
+    this.stage=boss.stage;
     this.rects=[]; // Static Maze tiles are rendered separately from this pattern.
-    this.mirrored=boss.hp<boss.spec.hp/2;
-    this.gapX=boss.x+(this.mirrored?105:-105);
-    this.gates=[boss.x-CARTOGRAPHER_END_ROUTE,this.gapX,boss.x+CARTOGRAPHER_END_ROUTE];
+    const mirrored=this.stage>=2;
+    const gapX=boss.x+(mirrored?105:-105),leftRoute=boss.x-CARTOGRAPHER_END_ROUTE,rightRoute=boss.x+CARTOGRAPHER_END_ROUTE;
+    const main={y:this.y,gates:[leftRoute,gapX,rightRoute]};
+    this.gapX=gapX;
+    this.gates=main.gates;
     this.starts=time+CARTOGRAPHER_WARNING;
     this.ends=null;
     this.revision=0;
-    const spans=this.mirrored?[[-340,30],[180,340]]:[[-340,-180],[-30,340]];
-    this.segments=spans.map(([from,to])=>{
-      const left=boss.x+from,right=boss.x+to,center=(left+right)/2;
-      return {hp:CARTOGRAPHER_PILLAR_HP,center,turret:cartographerTurret(-Math.PI/2,Infinity),
-        pillar:{x:center-34,y:this.y-34,w:68,h:68},
-        walls:[{x:left,y:this.y-16,w:center-34-left,h:32},{x:center+34,y:this.y-16,w:right-center-34,h:32}]};
-    });
+    const spans=mirrored?[[-340,30],[180,340]]:[[-340,-180],[-30,340]];
+    const makeSegment=(row,from,to,extra=false)=>{
+      const left=boss.x+from,right=boss.x+to,center=(left+right)/2,{y}=row;
+      return {hp:CARTOGRAPHER_PILLAR_HP,center,y,row,extra,turret:cartographerTurret(-Math.PI/2,Infinity),
+        pillar:{x:center-34,y:y-34,w:68,h:68},
+        walls:[{x:left,y:y-16,w:center-34-left,h:32},{x:center+34,y:y-16,w:right-center-34,h:32}]};
+    };
+    this.segments=spans.map(([from,to])=>makeSegment(main,from,to));
+    if(this.stage===3){
+      const flank={y:boss.y-CARTOGRAPHER_EXTRA_OFFSET,gates:[leftRoute,boss.x-70,boss.x+290,rightRoute]};
+      this.segments.push(makeSegment(flank,20,200,true));
+      this.nextPillarShot=time;
+    }
   }
   firstContact(x,y,tx,ty,r=0,ownPillar=null){
     let nearest=null;
     for(const segment of this.segments){
       if(segment.hp<=0)continue;
       const pillar=segment===ownPillar?null:rectImpact(segment.pillar,x,y,tx,ty,r);
-      if(pillar&&(!nearest||pillar.time<nearest.time))nearest={time:pillar.time,pillar:segment};
+      if(pillar&&(!nearest||pillar.time<nearest.time))nearest={time:pillar.time,pillar:segment,row:segment.row};
       for(const wall of segment.walls){
         const hit=rectImpact(wall,x,y,tx,ty,r);
-        if(hit&&(!nearest||hit.time<nearest.time))nearest={time:hit.time,pillar:null};
+        if(hit&&(!nearest||hit.time<nearest.time))nearest={time:hit.time,pillar:null,row:segment.row};
       }
     }
     return nearest;
@@ -1805,10 +1825,11 @@ class CartographerBarrier {
   hit(x,y,tx,ty,r=0){return this.firstContact(x,y,tx,ty,r)?.time??null;}
   move(e,x,y){
     let {x:startX,y:startY}=e;
-    if(this.hit(startX,startY,startX,startY,e.r)!==null){
+    const contact=this.firstContact(startX,startY,startX,startY,e.r);
+    if(contact){
       // A spawning form, knockback or a change in hull size can overlap a wall.
-      const above=this.y-34-e.r-.02,below=this.y+34+e.r+.02;
-      const outside=startY<=this.y?above:below;
+      const rowY=contact.row.y;
+      const outside=rowY+(startY<=rowY?-1:1)*(34+e.r+.02);
       y+=outside-startY;startY=outside;
     }
     slideAlongWalls(this,e,clamp(x,e.r,this.size-e.r),clamp(y,e.r,this.size-e.r),startX,startY);
@@ -1816,23 +1837,24 @@ class CartographerBarrier {
   damage(segment,amount){
     if(!segment||segment.hp<=0)return;
     segment.hp=Math.max(0,segment.hp-amount);
-    if(segment.hp===0){this.gates.push(segment.center);this.revision++;}
+    if(segment.hp===0){segment.row.gates.push(segment.center);this.revision++;}
   }
   waypoint(e,x,y,time){
     const r=e.r+.005;
     x=clamp(x,r,this.size-r);y=clamp(y,r,this.size-r);
-    if(this.hit(e.x,e.y,x,y,r)===null)return [x,y];
-    const side=e.y<=this.y?-1:1,goalSide=y<=this.y?-1:1,clear=34+r+12;
-    const near=this.y+side*clear,far=this.y-side*clear;
+    const contact=this.firstContact(e.x,e.y,x,y,r);
+    if(!contact)return [x,y];
+    const row=contact.row,side=e.y<=row.y?-1:1,goalSide=y<=row.y?-1:1,clear=34+r+12;
+    const near=row.y+side*clear,far=row.y-side*clear;
     let route=e.cartographerRoute;
-    if(route?.field!==this||route.revision!==this.revision||route.goalSide!==goalSide||time>=route.until){
+    if(route?.field!==this||route.row!==row||route.side!==side||route.revision!==this.revision||route.goalSide!==goalSide||time>=route.until){
       let gate=null,cost=Infinity;
-      for(const candidate of this.gates){
+      for(const candidate of row.gates){
         if(this.hit(e.x,e.y,candidate,near,r)!==null||this.hit(candidate,near,candidate,far,r)!==null)continue;
         const distance=Math.hypot(e.x-candidate,e.y-near)+Math.hypot(x-candidate,y-far);
         if(distance<cost){cost=distance;gate=candidate;}
       }
-      route=e.cartographerRoute={field:this,revision:this.revision,goalSide,gate,until:time+.65};
+      route=e.cartographerRoute={field:this,row,side,revision:this.revision,goalSide,gate,until:time+.65};
     }
     if(route.gate===null)return [e.x,near];
     return this.hit(e.x,e.y,route.gate,far,r)===null?[route.gate,far]:[route.gate,near];
@@ -2023,9 +2045,9 @@ function snapshotUnit(t){
   const {type,id,name,cls,x,y,r,aim,hp,hit,team,slot,human,protect}=t;
   if(type==="boss")return {type,id,name,cls,x,y,r,aim,hp,hit,alive:true,spec:t.spec,phase:t.phase,nextVolley:t.nextVolley,
     turretAngles:t.turrets?.map(turret=>turret.aim),
-    ...(t.turret?{turret:snapshotCartographerTurret(t.turret)}:{}),
-    ...(t.barrier?{barrier:{starts:t.barrier.starts,ends:t.barrier.ends,segments:t.barrier.segments.map(segment=>
-      ({...segment,turret:snapshotCartographerTurret(segment.turret)}))}}:{})};
+    ...(t.turret?{stage:t.stage,turret:snapshotCartographerTurret(t.turret)}:{}),
+    ...(t.barrier?{barrier:{stage:t.barrier.stage,starts:t.barrier.starts,ends:t.barrier.ends,segments:t.barrier.segments.map(
+      ({hp,center,pillar,walls,extra,turret})=>({hp,center,pillar,walls,extra,turret:snapshotCartographerTurret(turret)}))}}:{})};
   return {type,id,name,cls,x,y,r,aim,hp,hit,team,slot,human,protect,skin:t.skin,alive:true,
     ...(customTankColor(t)?{playerColor:t.playerColor}:{}),
     maxHp:hull(t),stats:t.stats.slice(),cool:t.cool.slice(),
@@ -3729,7 +3751,7 @@ class Arena {
     if(spec===FALLEN_OVERLORD)Object.assign(this.boss,{aim:angle+Math.PI/8,ports:new Uint8Array(4),
       cruiseAngle:angle-Math.PI/2,phase:"ronda",target:null,polygons:[],nextDrone:this.time+.125});
     if(spec===CARTOGRAPHER)Object.assign(this.boss,{aim:-Math.PI/2,stats:Array(8).fill(0),barrierHomeX:x,barrierHomeY:y,
-      nextBarrier:this.time+.25,turret:cartographerTurret(-Math.PI/2,this.time+.9)});
+      stage:1,nextBarrier:this.time+.25,turret:cartographerTurret(-Math.PI/2,this.time+.9)});
     if(spec===TREE_TOPPER||spec===DECADE)Object.assign(this.boss,{
       stats:[0,0,0,0,0,0,0,0],turrets:Array.from({length:spec===TREE_TOPPER?5:1},(_,i)=>({aim:angle+i*TAU/5,ready:this.time+i*.16})),
       nextDeploy:this.time+1,deployerIndex:0,target:null
@@ -3775,8 +3797,10 @@ class Arena {
     const g=guns[turret.barrel];
     const [x,y]=mount.pillar?[target.x,target.y]:lead(mount,target,bulletSpeed(b,g),.75);
     const turn=angleDelta(Math.atan2(y-mount.y,x-mount.x),turret.aim);
-    turret.aim=angleDelta(turret.aim+clamp(turn,-CARTOGRAPHER_TURN*DT,CARTOGRAPHER_TURN*DT),0);
-    if(this.time<turret.ready||Math.abs(turn)>.15)return;
+    const turnRate=(mount.pillar&&b.stage>=2?3.6:CARTOGRAPHER_TURN)*DT;
+    turret.aim=angleDelta(turret.aim+clamp(turn,-turnRate,turnRate),0);
+    const crossfire=mount.pillar&&b.barrier?.stage===3?b.barrier:null;
+    if(this.time<turret.ready||this.time<(crossfire?.nextPillarShot??0)||Math.abs(turn)>.15)return;
     mount.aim=turret.aim;
     const radius=mount.r,shotRadius=radius*g.width/2;
     const muzzle=gunMuzzle(mount,g,radius,shotRadius);
@@ -3786,28 +3810,39 @@ class Arena {
       turret.fired[turret.barrel]=this.time;
       turret.ready=this.time+gap;
       turret.barrel=(turret.barrel+1)%guns.length;
+      if(crossfire)crossfire.nextPillarShot=this.time+.22;
     }
+  }
+  advanceCartographerStage(b){
+    const stage=cartographerStage(b);
+    if(stage<=b.stage)return;
+    b.stage=stage;
+    this.note(stage===2?"Cartógrafo · Fase 2: Reposicionamento":"Cartógrafo · Fase 3: Fogo cruzado");
   }
   startCartographerPause(b){
     this.clearCartographerBarrier(b);
     b.nextBarrier=this.time+CARTOGRAPHER_PAUSE;
+    this.advanceCartographerStage(b);
     const threat=this.cartographerTarget(b);
     if(!threat)return;
-    const diameter=2*b.r, margin=CARTOGRAPHER_END_ROUTE+b.r;
+    const scale=b.stage>=2?1.5:1,diameter=2*b.r,margin=CARTOGRAPHER_END_ROUTE+b.r;
+    const reach=diameter*scale;
     const away=Math.atan2(b.y-threat.y,b.x-threat.x);
-    const distance=clamp(diameter-Math.hypot(threat.x-b.x,threat.y-b.y)*.15,b.r,diameter);
+    const distance=clamp(diameter-Math.hypot(threat.x-b.x,threat.y-b.y)*.15,b.r,diameter)*scale;
     const homeDx=b.x+Math.cos(away)*distance-b.barrierHomeX;
     const homeDy=b.y+Math.sin(away)*distance-b.barrierHomeY;
-    const homeScale=diameter/Math.max(diameter,Math.hypot(homeDx,homeDy));
+    const homeScale=reach/Math.max(reach,Math.hypot(homeDx,homeDy));
     const dx=clamp(b.barrierHomeX+homeDx*homeScale,margin,this.size-margin)-b.x;
-    const dy=clamp(b.barrierHomeY+homeDy*homeScale,CARTOGRAPHER_WALL_OFFSET+34+b.r,this.size-b.r)-b.y;
+    const dy=clamp(b.barrierHomeY+homeDy*homeScale,(b.stage===3?CARTOGRAPHER_EXTRA_OFFSET:CARTOGRAPHER_WALL_OFFSET)+34+b.r,this.size-b.r)-b.y;
     let fraction=1;
     for(const t of this.tanks){
       if(!t.alive)continue;
       const contact=impact(b.x-t.x,b.y-t.y,dx,dy,b.r+t.r+12);
       if(contact!==null)fraction=Math.min(fraction,Math.max(0,contact-.02));
     }
-    if(Math.hypot(dx,dy)*fraction>=8)b.barrierSlide={x:b.x,y:b.y,dx:dx*fraction,dy:dy*fraction,started:this.time};
+    const length=Math.hypot(dx,dy),maxDistance=Math.min(1,reach/Math.max(reach,length));
+    fraction=Math.min(fraction,maxDistance);
+    if(length*fraction>=8)b.barrierSlide={x:b.x,y:b.y,dx:dx*fraction,dy:dy*fraction,started:this.time};
   }
   advanceCartographer(b){
     const now=this.time;
@@ -3825,8 +3860,9 @@ class Arena {
     }
     b.vx=(b.x-b.px)/DT;b.vy=(b.y-b.py)/DT;
     if(now>=b.nextBarrier&&!b.barrier){
+      this.advanceCartographerStage(b);
       b.barrier=new CartographerBarrier(b,this.size,now);
-      this.note("Cartógrafo está marcando uma barreira");
+      this.note(b.stage===3?"Cartógrafo está marcando duas barreiras":"Cartógrafo está marcando uma barreira");
     }
     const barrier=b.barrier;
     if(barrier?.ends===null&&now>=barrier.starts){
@@ -3845,7 +3881,8 @@ class Arena {
     const {radius,guns,range,gap}=CARTOGRAPHER_PILLAR_TURRET;
     for(const segment of b.barrier.segments){
       if(segment.hp<=0)continue;
-      this.advanceCartographerTurret(b,segment.turret,{x:segment.center,y:b.barrier.y,r:radius,pillar:segment,cartographerShot:true},guns,range,gap);
+      this.advanceCartographerTurret(b,segment.turret,{x:segment.center,y:segment.y,r:radius,pillar:segment,cartographerShot:true},
+        guns,b.stage>=2?310:range,gap);
     }
   }
   advanceFallen(b){
@@ -6328,11 +6365,11 @@ function botThink(w,t){
     if(maze instanceof CartographerBarrier&&weapon?.kind==="bullet"&&maze.hit(t.x,t.y,boss.x,boss.y,2)!==null){
       let reach=Math.min(vision,bulletSpeed(t,weapon)*weapon.life);
       for(const segment of maze.segments){
-        const gap=Math.hypot(t.x-segment.center,t.y-maze.y);
-        if(gap>=reach||gap<=t.r*weapon.length+35||maze.firstContact(t.x,t.y,segment.center,maze.y,2)?.pillar!==segment)continue;
+        const gap=Math.hypot(t.x-segment.center,t.y-segment.y);
+        if(gap>=reach||gap<=t.r*weapon.length+35||maze.firstContact(t.x,t.y,segment.center,segment.y,2)?.pillar!==segment)continue;
         reach=gap;cartographerPillar=segment;
       }
-      if(cartographerPillar){aimX=cartographerPillar.center;aimY=maze.y;fire=true;}
+      if(cartographerPillar){aimX=cartographerPillar.center;aimY=cartographerPillar.y;fire=true;}
     }
   }else if(w.fourTeams&&t.front&&(t.front.kind==="defense"||atHome||!food||
     Math.hypot(t.x-t.front.x,t.y-t.front.y)>515&&(t.level>=10||Math.hypot(food.x-t.x,food.y-t.y)>280))){
@@ -7380,9 +7417,16 @@ function paintBoss(b,x,y,selected,time,blend=1,animationTime=time){
     ctx.setLineDash([6,6]);ctx.stroke();ctx.setLineDash([]);
   }
   if(b.spec===CARTOGRAPHER){
+    const stage=b.stage??1,style=CARTOGRAPHER_STAGE_STYLES[stage-1];
     poly(0,0,b.r,6,Math.PI/6);
-    paint(time-b.hit<.06?"#d4e5ea":b.spec.color,"#354c5b",6);
+    paint(time-b.hit<.06?"#d4e5ea":style.hull,style.rim,6);
     paintCartographerTurret(b.turret,b.spec.guns,b.r,b.aim,b.r*.62,animationTime,blend);
+    if(stage>=2){
+      for(let i=0;i<stage;i++){
+        circle((i-(stage-1)/2)*b.r*.24,b.r*.31,b.r*.071);
+        paint(style.accent,style.rim,1.5);
+      }
+    }
   }else if(b.spec===TREE_TOPPER||b.spec===DECADE){
     paintEventBoss(b,time);
   }else if(b.spec===FALLEN_OVERLORD){
@@ -7426,7 +7470,8 @@ function paintBoss(b,x,y,selected,time,blend=1,animationTime=time){
   const width=b.r*1.44, ratio=clamp(b.hp/b.spec.hp,0,1);
   const barY=y+b.r*(b.spec===FALLEN_OVERLORD?1.67:fallen||b.spec===DEFENDER||b.spec===SUMMONER||b.spec===TREE_TOPPER||b.spec===DECADE||b.spec===CARTOGRAPHER?1.22:.7);
   ctx.fillStyle=fallen?"#414754":"#5e3750";ctx.fillRect(x-width/2,barY,width,7);
-  ctx.fillStyle=b.spec.color;ctx.fillRect(x-width/2+1,barY+1,(width-2)*ratio,5);
+  ctx.fillStyle=b.spec===CARTOGRAPHER?CARTOGRAPHER_STAGE_STYLES[(b.stage??1)-1].accent:b.spec.color;
+  ctx.fillRect(x-width/2+1,barY+1,(width-2)*ratio,5);
 }
 function paintEventBoss(b,time){
   const tree=b.spec===TREE_TOPPER,r=b.r;
@@ -7976,18 +8021,20 @@ function paintConvoy(cargo,x,y){
 }
 function paintCartographerBarrier(barrier,zoom,time,blend){
   ctx.save();
-  const warning=barrier.ends===null;
+  const warning=barrier.ends===null,stage=barrier.stage??1,style=CARTOGRAPHER_STAGE_STYLES[stage-1];
   for(const segment of barrier.segments){
     if(segment.hp<=0)continue;
     const {pillar,walls}=segment;
     if(warning){
-      ctx.strokeStyle="#8e502a";ctx.lineWidth=2.2/zoom;ctx.setLineDash([10/zoom,6/zoom]);
+      ctx.strokeStyle=style.warning;ctx.lineWidth=(segment.extra?3:2.2)/zoom;
+      ctx.setLineDash(segment.extra?[3/zoom,4/zoom]:[10/zoom,6/zoom]);
       for(const rect of [...walls,pillar])ctx.strokeRect(rect.x,rect.y,rect.w,rect.h);
     }else{
       ctx.lineWidth=2.5/zoom;
-      ctx.fillStyle="#82998b";ctx.strokeStyle="#577064";
+      ctx.fillStyle=segment.extra?"#bd9678":"#82998b";ctx.strokeStyle=segment.extra?style.rim:"#577064";
       for(const wall of walls){ctx.fillRect(wall.x,wall.y,wall.w,wall.h);ctx.strokeRect(wall.x,wall.y,wall.w,wall.h);}
-      ctx.fillStyle=CARTOGRAPHER.color;ctx.strokeStyle="#354c5b";
+      ctx.fillStyle=segment.extra?style.hull:stage>=2?"#c69a5e":CARTOGRAPHER.color;
+      ctx.strokeStyle=segment.extra?style.rim:"#354c5b";
       ctx.fillRect(pillar.x,pillar.y,pillar.w,pillar.h);ctx.strokeRect(pillar.x,pillar.y,pillar.w,pillar.h);
       const {guns,radius}=CARTOGRAPHER_PILLAR_TURRET;
       ctx.save();ctx.translate(segment.center,pillar.y+pillar.h/2);
@@ -8982,11 +9029,19 @@ function updateHud(){
   const boss=world.boss;
   el("bossHud").hidden=!boss?.alive;
   if(boss?.alive){
-    el("bossName").textContent=boss.name;
+    const isCartographer=boss.spec===CARTOGRAPHER,stage=boss.stage??1;
+    const color=isCartographer?CARTOGRAPHER_STAGE_STYLES[stage-1].accent:boss.spec.color;
+    el("bossName").textContent=isCartographer?boss.name+" · Fase "+stage+"/3":boss.name;
     el("bossHp").textContent=fmt.format(Math.ceil(boss.hp))+" / "+fmt.format(boss.spec.hp)+" HP";
     el("bossFill").style.width=clamp(boss.hp/boss.spec.hp,0,1)*100+"%";
-    el("bossFill").style.backgroundColor=boss.spec.color;
-    el("bossHud").style.borderColor=boss.spec.color;
+    el("bossFill").style.backgroundColor=color;
+    el("bossHud").style.borderColor=color;
+    const thresholds=el("bossThresholds");
+    if(isCartographer&&thresholds.hidden){
+      thresholds.children[0].style.left=CARTOGRAPHER_REPOSITION_HP*100+"%";
+      thresholds.children[1].style.left=CARTOGRAPHER_CROSSFIRE_HP*100+"%";
+    }
+    thresholds.hidden=!isCartographer;
     el("bossFocus").disabled=Boolean(mode==="play"&&world.human?.alive);
   }
   updateRoomHud(focus);

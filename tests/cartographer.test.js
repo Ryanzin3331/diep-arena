@@ -378,3 +378,146 @@ test('a fuga vertical se interrompe quando um tanque entra na rota',()=>{
   stepUntil(w,()=>b.barrier);
   assert.equal(b.barrier.y,b.y-190);
 });
+
+test('70% e 35% mudam fase entre ciclos e preservam a geometria já anunciada',()=>{
+  const w=lab(),b=w.boss;
+  for(const [i,t] of w.tanks.entries()){
+    idle(t,b.x+950+i*65,b.y-450);t.protect=100;
+  }
+  stepUntil(w,()=>b.barrier);
+  const first=b.barrier;
+  b.hp=b.spec.hp*.70+.01;
+  stepUntil(w,()=>w.maze);
+  b.hp=b.spec.hp*.70;
+  assert.equal(b.stage,1);
+  assert.equal(w.maze,first);
+  stepUntil(w,()=>b.stage===2);
+  stepUntil(w,()=>b.barrier);
+  const second=b.barrier;
+  assert.equal(second.stage,2);
+  assert.equal(second.segments.length,2);
+  assert.equal(second.gapX,b.x+105);
+  b.hp=b.spec.hp*.35;
+  stepUntil(w,()=>w.maze);
+  assert.equal(b.stage,2);
+  assert.equal(w.maze,second);
+  stepUntil(w,()=>b.stage===3);
+  stepUntil(w,()=>w.maze);
+  assert.equal(w.maze.stage,3);
+  assert.equal(w.maze.segments.length,3);
+  assert.equal(w.maze.segments[2].extra,true);
+  assert.equal(w.maze.segments[2].y,w.maze.y-200);
+  assert.equal(b.spec.hp,1350);
+  b.hp=b.spec.hp*.85;
+  stepUntil(w,()=>!b.barrier);
+  assert.equal(b.stage,3);
+});
+
+test('a segunda fase aumenta em 50% o deslizamento e a terceira mantém o ganho',()=>{
+  const movement=[];
+  for(const health of [1,.70,.35]){
+    const w=lab(),b=w.boss,[player,other]=w.tanks;
+    idle(player,b.x-230,b.y-230);player.protect=0;
+    idle(other,b.x+500,b.y);other.protect=10;
+    b.hp=b.spec.hp*health;
+    w.startCartographerPause(b);
+    const {dx,dy}=b.barrierSlide;
+    assert.ok(dx>0&&dy>0);
+    stepUntil(w,()=>w.tick===54);
+    movement.push({distance:Math.hypot(dx,dy),speed:Math.hypot(b.vx,b.vy)});
+    stepUntil(w,()=>b.barrier);
+    assert.equal(b.vx,0);
+    assert.equal(b.vy,0);
+  }
+  assert.ok(Math.abs(movement[1].distance/movement[0].distance-1.5)<1e-8);
+  assert.ok(Math.abs(movement[1].speed/movement[0].speed-1.5)<1e-8);
+  assert.deepEqual(movement[2],movement[1]);
+});
+
+test('terceira fase avisa as duas paredes, conserva duas rotas externas e abre atalho derrubando o pilar extra',()=>{
+  const w=lab(),b=w.boss,[player,occupant]=w.tanks;
+  b.hp=b.spec.hp*.35;
+  idle(player,b.x+550,b.y-520);player.protect=100;
+  idle(occupant,b.x+110,b.y-390);occupant.protect=100;
+  stepUntil(w,()=>b.barrier);
+  const wall=b.barrier,extra=wall.segments[2];
+  assert.equal(wall.stage,3);
+  assert.equal(w.maze,null);
+  stepUntil(w,()=>w.time>wall.starts+.2);
+  assert.equal(w.maze,null);
+  idle(occupant,b.x+700,b.y-500);
+  stepUntil(w,()=>w.maze);
+  assert.equal(w.maze,wall);
+  for(const x of [b.x-425,b.x+425])
+    assert.equal(wall.hit(x,extra.y-120,x,wall.y+120,player.r),null);
+  assert.ok(wall.hit(wall.gapX,extra.y-100,wall.gapX,wall.y+90,player.r)!==null);
+  const x=extra.center;
+  for(let i=0;i<3&&extra.hp>0;i++){
+    idle(player,x,extra.y-140);player.aim=Math.PI/2;
+    assert.ok(w.spawnShot(player,api.C.Destroyer.guns[0]));
+    const shot=w.shots.at(-1);
+    stepUntil(w,()=>!shot.alive,40);
+  }
+  assert.equal(extra.hp,0);
+  assert.equal(wall.hit(wall.gapX,extra.y-100,wall.gapX,wall.y+90,player.r),null);
+  assert.deepEqual(Array.from(wall.segments,s=>s.hp),[135,135,0]);
+});
+
+test('um bot consegue atravessar as duas linhas ativas sem destruir o pilar extra',()=>{
+  const w=new api.Arena(7103,2,['Smasher','Tank',45,'cartographer']),b=w.boss,[bot,other]=w.tanks;
+  b.hp=b.spec.hp*.33;
+  idle(bot,b.x+95,b.y-530);
+  idle(other,b.x+750,b.y-480);other.protect=100;
+  stepUntil(w,()=>w.maze);
+  const wall=w.maze;
+  bot.human=false;bot.protect=0;
+  stepUntil(w,()=>bot.y>wall.y+bot.r,400);
+  assert.equal(w.maze,wall);
+  assert.equal(wall.segments[2].hp,135);
+  assert.ok(bot.alive);
+});
+
+test('as torretas da fase final disparam separadas, e expirar a barreira remove os tiros das duas linhas',()=>{
+  const w=lab(),b=w.boss,[player,other]=w.tanks;
+  b.hp=b.spec.hp*.35;
+  idle(player,b.x-120,b.y-295);idle(other,b.x+140,b.y-485);
+  player.protect=other.protect=100;
+  stepUntil(w,()=>w.maze);
+  const wall=w.maze, shots=[],spawn=w.spawnShot;
+  w.spawnShot=function(owner,gun,mount){
+    const fired=spawn.call(this,owner,gun,mount);
+    if(fired&&mount.pillar)shots.push({time:this.time,pillar:mount.pillar});
+    return fired;
+  };
+  player.protect=other.protect=0;
+  stepUntil(w,()=>shots.length>=5,300);
+  assert.ok(shots.some(shot=>shot.pillar===wall.segments[2]));
+  assert.ok(shots.some(shot=>shot.pillar===wall.segments[0]));
+  for(let i=1;i<shots.length;i++)assert.ok(shots[i].time-shots[i-1].time>=.22-1e-8);
+  stepUntil(w,()=>w.maze!==wall);
+  assert.ok(!w.shots.some(p=>p.alive&&p.pillarSource));
+});
+
+test('um pilar na segunda fase alcança um tanque visível pelo lado de trás a 275 unidades',()=>{
+  for(const stage of [1,2]){
+    const w=lab(),b=w.boss,[player,other]=w.tanks;
+    if(stage===2)b.hp=b.spec.hp*.70;
+    idle(player,b.x+700,b.y+380);
+    idle(other,b.x+820,b.y+480);player.protect=other.protect=100;
+    stepUntil(w,()=>w.maze);
+    const pillar=w.maze.segments[1],wall=w.maze;
+    idle(player,pillar.center,pillar.y+275);
+    player.protect=0;
+    const fired=w.spawnShot;
+    const shots=[];
+    w.spawnShot=function(owner,gun,mount){
+      const result=fired.call(this,owner,gun,mount);
+      if(result&&mount.pillar===pillar)shots.push(this.shots.at(-1).angle);
+      return result;
+    };
+    for(let i=0;i<120;i++)w.step(null);
+    assert.equal(w.maze,wall);
+    if(stage===1)assert.equal(shots.length,0);
+    else assert.ok(shots.some(angle=>Math.abs(angle-Math.PI/2)<.15));
+  }
+});
