@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="pt-BR">
+<meta charset="utf-8">
+<title>Auditoria WebRTC do Diep Arena</title>
+<style>body{font:16px system-ui;margin:14px}iframe{width:49%;height:290px;border:1px solid #999}pre{white-space:pre-wrap}</style>
+<h1>Auditoria WebRTC do Diep Arena</h1>
+<button id="run">Testar salas reais de 2, 3 e 4</button>
+<pre id="report"></pre><div id="clients"></div>
+<script>
+const report=document.querySelector("#report"), clients=document.querySelector("#clients");
+function log(message){report.textContent+=message+"\n";}
+const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+async function until(predicate,name,timeout=17000){
+  const expires=performance.now()+timeout;
+  while(performance.now()<expires){
+    if(predicate())return;
+    await sleep(40);
+  }
+  throw Error(name);
+}
+function check(condition,message){if(!condition)throw Error(message);}
+async function client(){
+  const iframe=document.createElement("iframe");
+  iframe.src="/audit-room-client.html";
+  clients.append(iframe);
+  await until(()=>iframe.contentWindow.auditRoom,"Cliente não iniciou");
+  return {iframe,api:iframe.contentWindow.auditRoom,doc:iframe.contentDocument};
+}
+function percentile(values,p){
+  const sorted=[...values].sort((a,b)=>a-b);
+  return Number(sorted[Math.max(0,Math.ceil(sorted.length*p)-1)].toFixed(1));
+}
+async function room(size){
+  log("Sala "+size+" · abrindo clientes");
+  const all=await Promise.all(Array.from({length:size},()=>client()));
+  const [host,...guests]=all;
+  try{
+    host.api.host(size,size===2?0:8,size===3);
+    await until(()=>host.api.room?.phase==="lobby","Sinalização do host falhou");
+    for(let i=0;i<guests.length;i++){
+      guests[i].api.join(host.api.room.code,"Convidado "+(i+1));
+      await until(()=>["lobby","playing"].includes(guests[i].api.room?.phase),"Convidado "+(i+1)+" falhou na sinalização");
+    }
+    await until(()=>all.every(c=>c.api.world?.tanks.filter(t=>t.human).length===size),"Elenco não sincronizou");
+    for(const guest of guests){
+      const conn=guest.api.room.conn;
+      check(conn.peerConnection instanceof guest.iframe.contentWindow.RTCPeerConnection&&conn.dataChannel.readyState==="open","Canal RTC fechado");
+    }
+    const colors=guests.map(c=>c.api.world.human.roomColor);
+    check(new Set(colors).size===guests.length&&guests.every(c=>!c.api.world.human.playerColor),"Paleta da sala");
+    const keys=["d","w","a","s"],expected=[[1,0],[0,-1],[-1,0],[0,1]];
+    try{
+      all.forEach((c,i)=>c.api.key(keys[i],true));
+      await until(()=>host.api.world.tanks.filter(t=>t.human).every(t=>t.intent.x===expected[t.slot][0]&&t.intent.y===expected[t.slot][1]),"Comandos cruzados ou ausentes",4500);
+    }finally{all.forEach((c,i)=>c.api.key(keys[i],false));}
+    log("  WebRTC aberto, "+size+" tanques, comandos independentes e paleta da sala");
+
+    all.forEach(c=>c.api.measure());
+    guests.forEach(c=>c.api.key(" ",true));
+    await sleep(4500);
+    guests.forEach(c=>c.api.key(" ",false));
+    const metrics=guests.map(({api})=>{
+      const data=api.measurement;
+      check(data.frames.length>30&&data.snapshots.length>10&&data.maxShots>0,"Amostra de fluidez incompleta");
+      return {frames:data.frames.length,frameMediana:percentile(data.frames,.5),frameP95:percentile(data.frames,.95),snapshots:data.snapshots.length,snapshotP95:percentile(data.snapshots,.95),projeteis:data.maxShots};
+    });
+    log("  4,5 s com tiro: "+JSON.stringify(metrics));
+
+    const first=guests[0], id=first.api.world.human.id;
+    host.api.killOnNextStep(1);
+    await until(()=>!first.api.world.human?.alive,"Morte do convidado não chegou");
+    if(size===3){
+      const round=host.api.room.round;
+      await until(()=>all.every(c=>c.api.room.round>round&&c.api.world.human?.alive),"Rodada não reiniciou");
+      log("  Reinício de rodada após morte confirmado");
+    }else{
+      await until(()=>!first.doc.querySelector("#enter").disabled,"Botão Renascer indisponível");
+      first.doc.querySelector("#enter").click();
+      await until(()=>first.api.world.human?.alive&&first.api.world.human.id!==id,"Renascimento não chegou");
+      log("  Renascimento individual confirmado");
+    }
+    if(size>2){
+      guests.at(-1).api.leave();
+      await until(()=>[host,...guests.slice(0,-1)].every(c=>c.api.room?.phase==="playing"&&c.api.world.tanks.filter(t=>t.human).length===size-1),"Saída encerrou a sala");
+      log("  A partida continuou após a saída de um convidado");
+    }
+  }finally{
+    all.forEach(c=>c.api.leave());
+    clients.replaceChildren();
+  }
+}
+document.querySelector("#run").onclick=async function(){
+  this.disabled=true;
+  log(navigator.userAgent);
+  for(const size of [2,3,4])try{await room(size);}catch(e){log("FALHA "+size+": "+e.message);}
+  log("Concluído");
+  this.disabled=false;
+};
+</script>
