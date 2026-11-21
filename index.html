@@ -3770,7 +3770,7 @@ class Arena {
     const target=this.cartographerTarget(b,mount,range);
     if(!target)return;
     const g=guns[turret.barrel];
-    const [x,y]=lead(mount,target,bulletSpeed(b,g),.75);
+    const [x,y]=mount.pillar?[target.x,target.y]:lead(mount,target,bulletSpeed(b,g),.75);
     const turn=angleDelta(Math.atan2(y-mount.y,x-mount.x),turret.aim);
     turret.aim=angleDelta(turret.aim+clamp(turn,-CARTOGRAPHER_TURN*DT,CARTOGRAPHER_TURN*DT),0);
     if(this.time<turret.ready||Math.abs(turn)>.15)return;

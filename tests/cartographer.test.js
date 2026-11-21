@@ -310,6 +310,20 @@ test('canhões rígidos giram em 0°, 45° e 90° e o pilar não dispara atravé
   }
 });
 
+test('a mira do pilar independe da velocidade e a do chefe ainda antecipa',()=>{
+  const w=lab(),b=w.boss,[target,other]=w.tanks;
+  idle(target,b.x,b.y-150);target.protect=0;other.protect=10;
+  const aim=(vx,pillar)=>{
+    target.vx=vx;
+    const turret={aim:-Math.PI/2,ready:Infinity,barrel:0};
+    w.advanceCartographerTurret(b,turret,{x:b.x,y:b.y,r:b.r,pillar},b.spec.guns,b.spec.range,.53);
+    return turret.aim;
+  };
+  assert.equal(aim(-130,{}),aim(130,{}));
+  assert.equal(aim(130,{}),-Math.PI/2);
+  assert.notEqual(aim(-130),aim(130));
+});
+
 test('ameaças nos lados opostos produzem deslocamentos opostos',()=>{
   for(const side of [-1,1]){
     const w=lab(),b=w.boss,[player,other]=w.tanks,home=b.x;

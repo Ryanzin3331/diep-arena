@@ -32,7 +32,8 @@ if(new URLSearchParams(location.search).has("quadros")){
 replace('  if(bossTrial&&world.boss){focusId=world.boss.id;follow="chosen";camera.x=world.boss.x;camera.y=world.boss.y;}',`  if(bossTrial==="cartographer"){
     const player=world.tanks[0],boss=world.boss;
     mode="play";pending=false;
-    const x=boss.x+105,y=boss.y-310;
+    const lateral=new URLSearchParams(location.search).has("lateral");
+    const x=boss.x+(lateral?-105:105),y=boss.y-310;
     Object.assign(player,{human:true,name:playerName,x,y,px:x,py:y,protect:0,learning:null});
     world.human=player;world.indexSense();
     camera.x=x;camera.y=y;pointer.lastAim=Math.PI/2;
