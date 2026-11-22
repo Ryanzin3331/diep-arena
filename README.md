@@ -19,6 +19,8 @@ Em **Configurar**, escolha o cenário da próxima partida. Além do FFA aberto, 
 
 O [Cartógrafo](docs/CARTOGRAFO.md) pode ser invocado no Laboratório e entra no sorteio do FFA aberto com **Bosses de evento** ligados. O [Sucateiro](docs/SUCATEIRO.md) também pode ser invocado no Laboratório e participa da rotação de eventos do FFA, do 2 Teams e do 4 Teams.
 
+No **Laboratório → Configurar → Importar chefe JSON**, abra o projeto exportado pelo Montador de Chefes, escolha as classes e o nível dos dois tanques e clique em **Invocar**. O desafio usa o visual, as fases e os comportamentos ativos no arquivo. Os projetos antigos usam 1.400 HP, 22 de dano de contato base e o tamanho da fase como raio de colisão. Para ajustar esses valores, use **Atributos de combate** no Montador. O arquivo importado fica disponível no seletor enquanto a página estiver aberta.
+
 Na [Dupla Aprendiz](docs/DUPLA-APRENDIZ.md), dois bots começam no nível 1, aprendem com o farm e enfrentam o Guardião dos Pentágonos no Laboratório.
 
 ![Duelo no Laboratório do Diep Arena com dois tanques de nível 45 e suas classes no placar](docs/images/arena-laboratorio.jpg)

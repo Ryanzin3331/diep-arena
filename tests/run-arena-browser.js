@@ -4,7 +4,7 @@ const {spawn}=require('node:child_process');
 const root=path.resolve(__dirname,'..');
 const executable=process.env.CHROME_BIN||(process.platform==='win32'?'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe':'chromium');
 const tempRoot=path.resolve(os.tmpdir()),profile=fs.mkdtempSync(path.join(tempRoot,'diep-arena-test-'));
-const files=new Set(['/tests/arena-browser.html','/tests/arena-browser.js','/memory-codec.js','/memory-store.js','/memory-idb.js','/memory-bridge.js','/memory-backup.js']);
+const files=new Set(['/boss-project.js','/tests/arena-browser.html','/tests/arena-browser.js','/memory-codec.js','/memory-store.js','/memory-idb.js','/memory-bridge.js','/memory-backup.js']);
 const hook=`window.__arenaTest={get world(){return world},get mode(){return mode},get pendingTransition(){return transitionPending},
   restart,setMode,join,recordOutcome,enterRoomWorld,pause(){paused=true},get bridge(){return indexedMemoryBridge},set bridge(value){indexedMemoryBridge=value},
   failingBridge(){return createIndexedMemoryBridge({indexedDB:{open(){throw Error('unavailable')}},codec:createMemoryCodec({classes:C,newMemory,ttl:MEMORY_TTL}),createStore:createTransactionalMemoryStore})},
