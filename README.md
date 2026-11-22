@@ -19,6 +19,8 @@ Em **Configurar**, escolha o cenário da próxima partida. Além do FFA aberto, 
 
 O [Cartógrafo](docs/CARTOGRAFO.md) pode ser invocado no Laboratório e entra no sorteio do FFA aberto com **Bosses de evento** ligados.
 
+Na [Dupla Aprendiz](docs/DUPLA-APRENDIZ.md), dois bots começam no nível 1, aprendem com o farm e enfrentam o Guardião dos Pentágonos no Laboratório.
+
 ![Duelo no Laboratório do Diep Arena com dois tanques de nível 45 e suas classes no placar](docs/images/arena-laboratorio.jpg)
 
 ## Jogar com amigos
