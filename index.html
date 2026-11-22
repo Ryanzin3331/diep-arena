@@ -2385,6 +2385,13 @@ const SCRAP_TYPES={
   pentagon:{kind:"scrapPentagon",weight:2,radius:28,sides:5,dur:6},
   alpha:{kind:"scrapAlpha",weight:5,radius:46,sides:5,dur:10,orbitHp:240}
 };
+const SCRAP_CURVE_TIME=.62;
+function scrapArcTravel(vx,vy,rate,remaining,seconds){
+  const arc=Math.min(remaining,seconds),straight=seconds-arc;
+  const turn=rate*arc,cos=Math.cos(turn),sin=Math.sin(turn);
+  const along=sin/rate+cos*straight,across=(1-cos)/rate+sin*straight;
+  return [vx*along-vy*across,vy*along+vx*across];
+}
 const SCRAP_SHOTS=new Map(Object.values(SCRAP_TYPES).map(type=>[type.kind,type]));
 const SCRAP_SCOPES=new Set(["open","teams","four-teams"]);
 const ROTATING_BOSSES={...CLASSIC_BOSSES,treeTopper:TREE_TOPPER,decade:DECADE};
@@ -4236,7 +4243,8 @@ class Arena {
       stage:1,nextBarrier:this.time+.25,turret:cartographerTurret(-Math.PI/2,this.time+.9)});
     if(spec===SUCATEIRO){
       Object.assign(this.boss,{stage:1,scrapStock:[],scrapWarning:null,scrapSpin:0,
-        scrapRadius:SUCATEIRO_VISUAL.stages[0].radiusOrbit,nextScrapGrab:this.time+.15,nextScrapShot:this.time+2.4});
+        scrapRadius:SUCATEIRO_VISUAL.stages[0].radiusOrbit,nextScrapGrab:this.time+.15,nextScrapShot:this.time+2.4,
+        stats:Array(8).fill(0),scrapTurn:1,scrapBarrel:0,nextScrapBarrel:this.time});
       if(this.bossTrial){
         const stock=["square","triangle","pentagon","square","triangle","alpha","square","triangle",
           "pentagon","triangle","pentagon","square"];
@@ -4589,7 +4597,8 @@ class Arena {
           b.scrapStock=b.scrapStock.filter(other=>!leaving.has(other));
         }
         const maxHp=meta.orbitHp??piece.f.hp, hp=Math.min(piece.hp,maxHp);
-        piece.scrap={slot,at:this.time,x:piece.x,y:piece.y,maxHp,startHp:hp,originalHp:piece.hp,
+        piece.scrap={slot,at:this.time,x:piece.x,y:piece.y,vx:piece.vx,vy:piece.vy,angle:piece.angle,
+          pullTime:.52+.075*(meta.weight-1),maxHp,startHp:hp,originalHp:piece.hp,
           originalRadius:piece.r,color:settings.fill};
         piece.hp=hp;
         piece.r=radius;
@@ -4597,6 +4606,65 @@ class Arena {
         b.scrapStock.push(piece);
         return;
       }
+    }
+  }
+  scrapperTarget(b,tank){
+    return this.bossCanTarget(b,tank)&&sq(tank.x-b.x)+sq(tank.y-b.y)<b.spec.range**2&&
+      (!this.hasBases||this.baseDistance(tank.team,tank.x,tank.y)>tank.r);
+  }
+  scrapperPiece(b,target){
+    const targetAngle=Math.atan2(target.y-b.y,target.x-b.x);
+    const range=sq(target.x-b.x)+sq(target.y-b.y);
+    let choice=null,best=Infinity;
+    for(const piece of b.scrapStock){
+      if(this.time-piece.scrap.at<piece.scrap.pullTime)continue;
+      const angle=Math.atan2(piece.y-b.y,piece.x-b.x);
+      const deviation=Math.abs(angleDelta(angle,targetAngle));
+      if(deviation>Math.PI/2.7||range<=sq(piece.x-b.x)+sq(piece.y-b.y))continue;
+      const priority=deviation-SCRAP_TYPES[piece.name].weight*.27;
+      if(priority<best){best=priority;choice=piece;}
+    }
+    return choice;
+  }
+  throwScrap(b,piece,settings,x,y,heading,target=null){
+    if(this.shots.length>=3000)return false;
+    const meta=SCRAP_TYPES[piece.name];
+    const speed=settings.speed*(b.stage===3?1.12:1);
+    let turnRate=0;
+    if(b.stage===3){
+      const turn=(piece.name==="alpha"?.34:.68)*b.scrapTurn;
+      turnRate=turn/SCRAP_CURVE_TIME;
+      const seconds=Math.hypot(target.x-x,target.y-y)/speed;
+      const [forward,lateral]=scrapArcTravel(speed,0,turnRate,SCRAP_CURVE_TIME,seconds);
+      heading-=Math.atan2(lateral,forward);
+      b.scrapTurn*=-1;
+    }
+    this.shots.push({type:"shot",kind:meta.kind,owner:b,sourceClass:b.cls,id:++this.serial,
+      alive:true,x,y,px:x,py:y,r:piece.r,angle:heading,
+      vx:Math.cos(heading)*speed,vy:Math.sin(heading)*speed,
+      scrapColor:settings.fill,scrapTarget:target?.id,scrapTurnRate:turnRate,bornTick:this.tick,
+      age:0,life:Math.min(4,920/speed),damage:settings.damage,dur:meta.dur});
+    piece.alive=false;
+    b.scrapStock=b.scrapStock.filter(other=>other!==piece);
+    delete piece.scrap;
+    b.nextScrapGrab=this.time+1.2;
+    return true;
+  }
+  fireScrapperBarrel(b,stage,target){
+    if(this.time<b.nextScrapBarrel)return;
+    const barrels=stage.parts.filter(part=>part.kind==="barrel");
+    if(!barrels.length)return;
+    const slot=b.scrapBarrel%barrels.length,part=barrels[slot];
+    const cos=Math.cos(b.aim),sin=Math.sin(b.aim);
+    const mount={x:b.x+part.x*cos-part.y*sin,y:b.y+part.x*sin+part.y*cos,
+      aim:b.aim+part.angle*Math.PI/180,scrapBarrel:slot};
+    const g=gun(0,{length:part.w/(2*b.r),width:12/b.r,speed:1.08,damage:1,pen:1.55,life:.86,recoil:0,spread:0});
+    const muzzle=gunMuzzle(mount,g,b.r,6);
+    const dx=target.x-muzzle.x,dy=target.y-muzzle.y;
+    if(sq(dx)+sq(dy)>535**2||Math.abs(angleDelta(Math.atan2(dy,dx),mount.aim))>.34)return;
+    if(this.spawnShot(b,g,mount)){
+      b.scrapBarrel++;
+      b.nextScrapBarrel=this.time+.88;
     }
   }
   advanceScrapper(b){
@@ -4613,6 +4681,16 @@ class Arena {
     while(b.stage<stages.length&&hp<=stages[b.stage].hp)b.stage++;
     const stage=stages[b.stage-1];
     if(b.stage!==previousStage){
+      if(b.scrapWarning){
+        b.scrapWarning=null;
+        b.nextScrapShot=Math.max(b.nextScrapShot,now+.25);
+        // Resume the marked piece from its frozen position without jumping around the orbit.
+        const {piece}=warning;
+        if(piece.alive){
+          const pull={x:piece.x,y:piece.y,at:now,vx:0,vy:0,angle:piece.angle,pullTime:.35};
+          Object.assign(piece.scrap,pull);
+        }
+      }
       b.r=stage.radius;
       for(const piece of b.scrapStock){
         const settings=stage.orbits[piece.name];
@@ -4633,12 +4711,12 @@ class Arena {
       b.target=null;
       for(const [id,until] of b.provoked)if(until<=now)b.provoked.delete(id);
       for(const tank of this.tanks){
-        if(!this.bossCanTarget(b,tank)||(this.hasBases&&this.baseDistance(tank.team,tank.x,tank.y)<=tank.r))continue;
+        if(!this.scrapperTarget(b,tank))continue;
         const distance=sq(tank.x-b.x)+sq(tank.y-b.y);
         if(distance<b.spec.range**2&&distance<nearest){nearest=distance;b.target=tank;}
       }
     }
-    const target=this.bossCanTarget(b,b.target)?b.target:null;
+    const target=b.target&&this.scrapperTarget(b,b.target)?b.target:null;
     const aim=b.scrapWarning?.heading??(target?Math.atan2(target.y-b.y,target.x-b.x):b.angle+b.direction*Math.PI/2);
     b.aim+=clamp(angleDelta(aim,b.aim),-2.6*DT,2.6*DT);
     b.scrapSpin+=stage.speedOrbit*Math.PI/180*(stage.clockwise?1:-1)*DT;
@@ -4647,12 +4725,15 @@ class Arena {
     for(const piece of b.scrapStock){
       const orbit=piece.scrap;
       const angle=orbit.slot+b.scrapSpin;
-      const progress=clamp((now-orbit.at)/.40,0,1);
+      const elapsed=clamp(now-orbit.at,0,orbit.pullTime);
+      const progress=elapsed/orbit.pullTime;
+      const blend=progress*progress*(3-2*progress);
       piece.px=piece.x;piece.py=piece.y;
       if(piece!==b.scrapWarning?.piece){
-        piece.x=orbit.x+(b.x+Math.cos(angle)*b.scrapRadius-orbit.x)*progress;
-        piece.y=orbit.y+(b.y+Math.sin(angle)*b.scrapRadius-orbit.y)*progress;
-        piece.angle=angle+Math.PI/4;
+        const fromX=orbit.x+orbit.vx*elapsed,fromY=orbit.y+orbit.vy*elapsed;
+        piece.x=fromX+(b.x+Math.cos(angle)*b.scrapRadius-fromX)*blend;
+        piece.y=fromY+(b.y+Math.sin(angle)*b.scrapRadius-fromY)*blend;
+        piece.angle=orbit.angle+angleDelta(angle+Math.PI/4,orbit.angle)*blend;
       }else{
         piece.x=b.scrapWarning.x;piece.y=b.scrapWarning.y;
       }
@@ -4663,40 +4744,43 @@ class Arena {
       const {piece,x,y,heading,settings}=b.scrapWarning;
       b.scrapWarning=null;
       b.nextScrapShot=now+stage.cooldown;
-      if(this.shots.length>=3000)return;
-      const meta=SCRAP_TYPES[piece.name];
-      this.shots.push({type:"shot",kind:meta.kind,owner:b,sourceClass:b.cls,id:++this.serial,
-        alive:true,x,y,px:x,py:y,r:piece.r,angle:heading,
-        vx:Math.cos(heading)*settings.speed,vy:Math.sin(heading)*settings.speed,
-        scrapColor:settings.fill,bornTick:this.tick,age:0,life:Math.min(4,920/settings.speed),
-        damage:settings.damage,dur:meta.dur});
-      piece.alive=false;
-      b.scrapStock=b.scrapStock.filter(other=>other!==piece);
-      delete piece.scrap;
-      b.nextScrapGrab=now+1.2;
+      this.throwScrap(b,piece,settings,x,y,heading);
       return;
     }
     if(now>=b.nextScrapGrab){
       b.nextScrapGrab=now+.62;
       this.captureScrap(b,stage);
     }
-    if(!target||now<b.nextScrapShot)return;
-    const targetAngle=Math.atan2(target.y-b.y,target.x-b.x);
-    let choice=null,best=Infinity;
-    for(const piece of b.scrapStock){
-      if(now-piece.scrap.at<.40)continue;
-      const angle=Math.atan2(piece.y-b.y,piece.x-b.x);
-      const deviation=Math.abs(angleDelta(angle,targetAngle));
-      // A throw away from the hull gives players an unobstructed view of its origin.
-      if(deviation>Math.PI/2.7||sq(target.x-b.x)+sq(target.y-b.y)<=sq(piece.x-b.x)+sq(piece.y-b.y))continue;
-      const priority=deviation-SCRAP_TYPES[piece.name].weight*.27;
-      if(priority<best){best=priority;choice=piece;}
+    if(!target)return;
+    if(now>=b.nextScrapShot){
+      if(b.stage===1){
+        const piece=this.scrapperPiece(b,target);
+        if(piece){
+          const {x,y}=piece,settings=stage.orbits[piece.name];
+          b.scrapWarning={piece,x,y,heading:Math.atan2(target.y-y,target.x-x),
+            until:now+stage.warning+settings.extra,settings};
+        }
+      }else{
+        const attacking=this.tanks.filter(tank=>this.scrapperTarget(b,tank)&&
+          (tank.highlightBossId===b.id&&now-tank.highlightBossTime<=2.4||
+           tank.bossTarget===b&&(tank.intent.fire||C[tank.cls].ram)));
+        attacking.sort((a,z)=>Math.hypot(a.x-b.x,a.y-b.y)-Math.hypot(z.x-b.x,z.y-b.y)||a.id-z.id);
+        let throws=0;
+        for(const foe of (attacking.length?attacking:[target])){
+          const piece=this.scrapperPiece(b,foe);
+          if(!piece)continue;
+          const {x,y}=piece,heading=Math.atan2(foe.y-y,foe.x-x);
+          if(this.throwScrap(b,piece,stage.orbits[piece.name],x,y,heading,foe))throws++;
+          if(throws===2)break;
+        }
+        if(throws){
+          b.nextScrapShot=now+stage.cooldown;
+          b.nextScrapBarrel=Math.max(b.nextScrapBarrel,now+.3);
+          return;
+        }
+      }
     }
-    if(choice){
-      const {x,y}=choice,settings=stage.orbits[choice.name];
-      b.scrapWarning={piece:choice,x,y,heading:Math.atan2(target.y-y,target.x-x),
-        until:now+stage.warning+settings.extra,settings};
-    }
+    if(b.stage>=2)this.fireScrapperBarrel(b,stage,target);
   }
   advanceGuardian(boss){
     const spec=boss.spec;
@@ -4981,6 +5065,7 @@ class Arena {
     const care=mount.parent?mount.parent.careWindow:t.careWindow;
     if(care)child.careWindow=care;
     if(mount.cartographerShot){child.cartographerShot=true;child.bornTick=this.tick;}
+    if(mount.scrapBarrel!=null){child.scrapBarrel=mount.scrapBarrel;child.bornTick=this.tick;}
     if(mount.pillar)child.pillarSource=mount.pillar;
     if(t.apprentice?.row)child.apprenticeRow=t.apprentice.row;
     if(t.apprentice?.coopDecision)child.apprenticeCoop=t.apprentice.coopDecision;
@@ -5585,7 +5670,7 @@ class Arena {
   }
   advanceShot(p){
     // Keep the first visible state at the origin before advancing the sweep.
-    if((p.cartographerShot||p.scrapColor)&&p.bornTick===this.tick)return;
+    if((p.cartographerShot||p.scrapColor||p.scrapBarrel!=null)&&p.bornTick===this.tick)return;
     if(!p.owner.alive&&(isSpawnedDrone(p.kind)||p.kind===NECRO_DRONE)){
       this.removeShot(p);return;
     }
@@ -5611,7 +5696,14 @@ class Arena {
     if(p.kind===SKIMMER_MISSILE)p.angle=angleDelta(p.angle+p.spin*5.6*DT,0);
     if(p.scrapColor)p.angle=angleDelta(p.angle+2.5*DT,0);
     if(p.kind==="firework"){p.vx+=Math.cos(p.angle)*2.75;p.vy+=Math.sin(p.angle)*2.75;}
-    const x=p.x+p.vx*DT,y=p.y+p.vy*DT;
+    const remaining=p.scrapTurnRate?SCRAP_CURVE_TIME-(p.age-DT):0;
+    let dx=p.vx*DT,dy=p.vy*DT;
+    if(remaining>0){
+      [dx,dy]=scrapArcTravel(p.vx,p.vy,p.scrapTurnRate,remaining,DT);
+      const angle=p.scrapTurnRate*Math.min(remaining,DT),cos=Math.cos(angle),sin=Math.sin(angle);
+      [p.vx,p.vy]=[p.vx*cos-p.vy*sin,p.vx*sin+p.vy*cos];
+    }
+    const x=p.x+dx,y=p.y+dy;
     if((p.kind===NECRO_DRONE||p.kind===FACTORY_MINION)&&!this.maze&&!this.hasBases){
       p.x=clamp(x,p.r,this.size-p.r);p.y=clamp(y,p.r,this.size-p.r);
     }else if(this.maze&&isDrone)this.maze.move(p,clamp(x,p.r,this.size-p.r),clamp(y,p.r,this.size-p.r));
@@ -6150,6 +6242,21 @@ function shapePathCost(t,forms,vx,vy,hp){
     if(gap<clearance&&lastGap<clearance)cost+=weight*(clearance-lastGap)/clearance;
   }
   return cost;
+}
+function scrapDodgeGap(samples,dx,dy,vx,vy,radius){
+  let bestDistance=Infinity,bestTime=0,x=dx,y=dy,lastTime=0;
+  for(const [seconds,forward,lateral] of samples){
+    const nextX=dx+forward-vx*seconds,nextY=dy+lateral-vy*seconds;
+    const sx=nextX-x,sy=nextY-y;
+    const fraction=clamp(-(x*sx+y*sy)/Math.max(1,sx*sx+sy*sy),0,1);
+    const distance=sq(x+sx*fraction)+sq(y+sy*fraction);
+    if(distance<bestDistance){
+      bestDistance=distance;
+      bestTime=lastTime+(seconds-lastTime)*fraction;
+    }
+    x=nextX;y=nextY;lastTime=seconds;
+  }
+  return [Math.sqrt(bestDistance)-radius,bestTime];
 }
 function scrapperRamRoute(w,t,boss){
   const dx=t.x-boss.x,dy=t.y-boss.y,dist=Math.hypot(dx,dy);
@@ -7355,6 +7462,12 @@ function botThink(w,t){
     t.progress={x:t.x,y:t.y,t:w.time};
   }
   const threatening=risks.sort((a,b)=>sq(a.x-t.x)+sq(a.y-t.y)-sq(b.x-t.x)-sq(b.y-t.y)).slice(0,16);
+  let scrapArcs;
+  for(const p of threatening){
+    const remaining=SCRAP_CURVE_TIME-p.age;
+    if(p.scrapTurnRate&&remaining>0)(scrapArcs??=new Map()).set(p,[.15,.30,.45,.61].map(seconds=>
+      [seconds,...scrapArcTravel(p.vx,p.vy,p.scrapTurnRate,remaining,seconds)]));
+  }
   const obstacles=forms.filter(e=>e!==ramFood).sort((a,b)=>
     (Math.hypot(a.x-t.x,a.y-t.y)-a.r)-(Math.hypot(b.x-t.x,b.y-t.y)-b.r)
   ).slice(0,12);
@@ -7417,9 +7530,14 @@ function botThink(w,t){
       const dx=p.x-t.x,dy=p.y-t.y;
       const px=p.vx+(p.kx||0)-vx*max,py=p.vy+(p.ky||0)-vy*max;
       const riskWindow=dodgeWindows?.get(p)??.61;
-      const horizon=clamp(-(dx*px+dy*py)/Math.max(1,px*px+py*py),0,riskWindow);
       const r=t.r+p.r+10+t.trait*1.4;
-      const gap=Math.hypot(dx+px*horizon,dy+py*horizon)-r;
+      const arc=scrapArcs?.get(p);
+      let horizon,gap;
+      if(arc)[gap,horizon]=scrapDodgeGap(arc,dx,dy,vx*max,vy*max,r);
+      else{
+        horizon=clamp(-(dx*px+dy*py)/Math.max(1,px*px+py*py),0,riskWindow);
+        gap=Math.hypot(dx+px*horizon,dy+py*horizon)-r;
+      }
       if(gap<32){
         const weight=p.damage??p.f.body;
         const cost=(1-gap/32)*clamp(weight/9,.34,4)*(1.4-horizon)*(1+(1-hp)*.7)*(cautious?1.24:1);
@@ -9052,7 +9170,7 @@ function drawArena(scene,lens,blend,marked,recorded,network=false){
     }
     for(const p of scene.shots){
       if(!visible(p.x,p.y,p.r))continue;
-      if((p.cartographerShot||p.scrapColor)&&p.bornTick===scene.tick&&blend<1)continue;
+      if((p.cartographerShot||p.scrapColor||p.scrapBarrel!=null)&&p.bornTick===scene.tick&&blend<1)continue;
       const [x,y]=tp(p,blend);
       const kind=shotAppearance(p),color=shotColor(p,scene.time);
       if(kind==="decadeBullet")decadeShots.push({x,y,r:p.r,color});

@@ -2,7 +2,11 @@
 
 Em **Laboratório → Chefe do desafio**, selecione **Sucateiro** e clique em **Invocar Sucateiro**. Para vê-lo numa partida normal de FFA, 2 Teams ou 4 Teams, ative o agendamento de chefes e **Bosses de evento** antes de reiniciar.
 
-O Sucateiro patrulha o ninho, atrai polígonos comuns próximos e gira o estoque ao redor do casco. As peças absorvem tiros e continuam sujeitas às colisões da arena. Quando escolhe uma peça para arremessar, ele para, congela a peça e marca a trajetória com um tracejado. A peça pode ser destruída durante o aviso. Um arremesso bem-sucedido tira a peça da órbita, e o chefe espera 1,2 s antes de voltar a coletar.
+O Sucateiro patrulha o ninho, atrai polígonos comuns próximos e gira o estoque ao redor do casco. A peça acelera e desacelera durante a captura até acompanhar a órbita, em cerca de 0,52 s para as formas pequenas, 0,60 s para os pentágonos e 0,82 s para o alfa. As peças absorvem tiros e continuam sujeitas às colisões da arena. Um arremesso tira a peça da órbita, e o chefe espera 1,2 s antes de voltar a coletar.
+
+Na fase 1, o chefe para e marca a trajetória com um tracejado. Destruir a peça destacada cancela esse ataque. Nas fases 2 e 3, o chefe segue em movimento e arremessa sem aviso. Com dois atacantes e duas peças elegíveis, lança uma em cada alvo. Os dois canhões alternam tiros de 7 de dano nominal a cada 0,88 s quando alinhados. Há um intervalo mínimo de 0,3 s após um arremesso para o próximo tiro de canhão.
+
+Na fase 3, os polígonos saem 12% mais rápidos. A direção curva nos primeiros 0,62 s e então segue em linha reta. A trajetória é definida no lançamento e o alfa faz uma curva mais aberta.
 
 | Fase | Entrada | Capacidade por peso | Tipos de peça disponíveis |
 | --- | ---: | ---: | --- |
@@ -10,14 +14,14 @@ O Sucateiro patrulha o ninho, atrai polígonos comuns próximos e gira o estoque
 | Escudo carregado | 70% | 9 | Também pentágonos azuis |
 | Sobrecarga | 35% | 12 | Também um pentágono alfa |
 
-| Peça | Peso | Máximo por tipo | Dano nominal | Velocidade em unidades/s | Aviso |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| Quadrado | 1 | 6 | 8 | 250 | 0,75 s |
-| Triângulo | 1 | 6 | 11 | 420 | 0,75 s |
-| Pentágono azul | 2 | 3 | 17 | 300 | 0,93 s |
-| Pentágono alfa | 5 | 1 | 28 | 205 | 1,20 s |
+| Peça | Peso | Máximo por tipo | Dano nominal | Velocidade base em unidades/s |
+| --- | ---: | ---: | ---: | ---: |
+| Quadrado | 1 | 6 | 8 | 250 |
+| Triângulo | 1 | 6 | 11 | 420 |
+| Pentágono azul | 2 | 3 | 17 | 300 |
+| Pentágono alfa | 5 | 1 | 28 | 205 |
 
-O dano efetivo segue as regras de colisão e resistência do jogo. O chefe começa com 2.100 HP, tem recarga de 3 s e concede 30.000 XP pelo golpe final. O alfa tem até 240 HP enquanto estiver em órbita e rende XP proporcional se for destruído nesse estado. Vencer o chefe solta as peças que sobraram, preservando o dano recebido antes e durante a órbita.
+O aviso da fase 1 dura 0,75 s. O dano efetivo segue as regras de colisão e resistência do jogo. O chefe começa com 2.100 HP, tem recarga de 3 s e concede 30.000 XP pelo golpe final. O alfa tem até 240 HP enquanto estiver em órbita e rende XP proporcional se for destruído nesse estado. Vencer o chefe solta as peças que sobraram, preservando o dano recebido antes e durante a órbita.
 
 ## Visual no Montador de Chefes
 

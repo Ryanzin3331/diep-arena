@@ -7,8 +7,8 @@ const vm=require('node:vm');
 
 const html=readFileSync('index.html','utf8');
 const core=html.split('<script id="core">')[1].split('</script>')[0];
-const {Arena,DT,C,SUCATEIRO,SUCATEIRO_VISUAL,SCRAP_TYPES,snapshotArena,shotColor,scrapperRamRoute,angleDelta}=vm.runInNewContext(
-  core+';({Arena,DT,C,SUCATEIRO,SUCATEIRO_VISUAL,SCRAP_TYPES,snapshotArena,shotColor,scrapperRamRoute,angleDelta})',{TextEncoder});
+const {Arena,DT,C,SUCATEIRO,SUCATEIRO_VISUAL,SCRAP_TYPES,snapshotArena,shotColor,scrapperRamRoute,angleDelta,scrapArcTravel}=vm.runInNewContext(
+  core+';({Arena,DT,C,SUCATEIRO,SUCATEIRO_VISUAL,SCRAP_TYPES,snapshotArena,shotColor,scrapperRamRoute,angleDelta,scrapArcTravel})',{TextEncoder});
 
 const lab=()=>new Arena(7103,2,['Destroyer','Tank',45,'sucateiro']);
 function idle(t,x,y){
@@ -121,7 +121,7 @@ test('sorteio normal inclui o Sucateiro só em modos compatíveis com chefes de 
   }
 });
 
-test('no alfa, o dano e o aviso do arremesso usam a configuração da fase final',()=>{
+test('o alfa da fase final sai sem aviso, 12% mais rápido e faz uma curva sem perder velocidade',()=>{
   const w=lab(),b=w.boss,[player,other]=w.tanks;
   w.shapes=[];
   w.formTarget=0;
@@ -129,13 +129,92 @@ test('no alfa, o dano e o aviso do arremesso usam a configuração da fase final
   w.addShape('alpha',b.x+15,b.y-265,false);
   idle(player,b.x+490,b.y);
   idle(other,200,200);
-  stepUntil(w,()=>b.scrapWarning);
-  assert.ok(Math.abs(b.scrapWarning.until-w.time-1.2)<1e-9);
-  stepUntil(w,()=>w.shots.some(p=>p.owner===b));
-  const shot=w.shots.find(p=>p.owner===b);
-  assert.equal(shot.kind,'scrapAlpha');
+  stepUntil(w,()=>w.shots.some(p=>p.kind==='scrapAlpha'));
+  const shot=w.shots.find(p=>p.kind==='scrapAlpha');
+  const speed=205*1.12,first=Math.atan2(shot.vy,shot.vx);
+  assert.equal(b.scrapWarning,null);
+  assert.equal(shot.scrapTarget,player.id);
   assert.equal(shot.damage,28);
-  assert.ok(Math.abs(Math.hypot(shot.vx,shot.vy)-205)<1e-9);
+  assert.ok(Math.abs(Math.hypot(shot.vx,shot.vy)-speed)<1e-9);
+  assert.ok(Math.hypot(b.vx,b.vy)>40);
+  const predicted=scrapArcTravel(shot.vx,shot.vy,shot.scrapTurnRate,.62,30*DT);
+  const start=[shot.x,shot.y];
+  for(let i=0;i<30;i++)w.step(null);
+  assert.ok(Math.abs(angleDelta(Math.atan2(shot.vy,shot.vx),first))>.20);
+  assert.ok(Math.abs(Math.hypot(shot.vx,shot.vy)-speed)<1e-9);
+  assert.ok(Math.hypot(shot.x-start[0]-predicted[0],shot.y-start[1]-predicted[1])<1e-6);
+});
+
+test('a fase 2 lança duas peças distintas contra dois atacantes, sem parar nem repetir o alvo',()=>{
+  const w=lab(),b=w.boss;
+  w.shapes=[];
+  w.formTarget=0;
+  b.hp=b.spec.hp*.69;
+  b.nextScrapShot=Infinity;
+  for(const [i,t] of w.tanks.entries()){
+    const side=i===0?1:-1;
+    w.addShape(i===0?'triangle':'square',b.x+side*225,b.y,false);
+    idle(t,b.x+side*440,b.y);
+  }
+  stepUntil(w,()=>b.scrapStock.length===2&&b.scrapStock.every(piece=>w.time-piece.scrap.at>=piece.scrap.pullTime));
+  for(const [i,t] of w.tanks.entries()){
+    const piece=b.scrapStock[i],heading=Math.atan2(piece.y-b.y,piece.x-b.x);
+    idle(t,b.x+440*Math.cos(heading),b.y+440*Math.sin(heading));
+    w.bossDamage(b,t);
+  }
+  b.nextScrapShot=w.time;
+  stepUntil(w,()=>w.shots.filter(p=>p.scrapColor).length>0);
+  const throws=w.shots.filter(p=>p.scrapColor);
+  assert.equal(throws.length,2);
+  assert.deepEqual(new Set(Array.from(throws,p=>p.scrapTarget)),new Set(w.tanks.map(t=>t.id)));
+  assert.ok(throws.every(p=>p.bornTick===w.tick&&p.scrapTurnRate===0));
+  assert.equal(b.scrapWarning,null);
+  assert.equal(b.scrapStock.length,0);
+  assert.ok(Math.hypot(b.vx,b.vy)>40);
+});
+
+test('os canhões ficam inativos na coleta e disparam alternando pelas bocas reais na fase 2',()=>{
+  const w=lab(),b=w.boss,[player,other]=w.tanks;
+  w.shapes=[];
+  w.formTarget=0;
+  idle(player,b.x+420,b.y);
+  idle(other,200,200);
+  for(let i=0;i<150;i++)w.step(null);
+  assert.equal(w.shots.filter(p=>p.owner===b).length,0);
+  b.hp=b.spec.hp*.69;
+  const fired=[];
+  for(let i=0;i<600&&fired.length<2;i++){
+    w.step(null);
+    for(const p of w.shots.filter(p=>p.bornTick===w.tick&&p.scrapBarrel!=null)){
+      const part=SUCATEIRO_VISUAL.stages[1].parts.filter(part=>part.kind==='barrel')[p.scrapBarrel];
+      const angle=b.aim+part.angle*Math.PI/180;
+      const x=b.x+Math.cos(b.aim)*part.x-Math.sin(b.aim)*part.y+Math.cos(angle)*part.w/2;
+      const y=b.y+Math.sin(b.aim)*part.x+Math.cos(b.aim)*part.y+Math.sin(angle)*part.w/2;
+      assert.ok(Math.hypot(p.x-x,p.y-y)<1e-8);
+      fired.push(p);
+    }
+  }
+  assert.equal(fired.length,2);
+  assert.equal(fired[0].scrapBarrel,0);
+  assert.equal(fired[1].scrapBarrel,1);
+});
+
+test('a captura ganha velocidade no meio do puxão e se encaixa na órbita sem salto',()=>{
+  const w=lab(),b=w.boss;
+  w.shapes=[];
+  w.formTarget=0;
+  for(const t of w.tanks)idle(t,200,200);
+  w.addShape('square',b.x+270,b.y,false);
+  const piece=w.shapes[0];
+  stepUntil(w,()=>piece.scrap);
+  const speeds=[];
+  for(let i=0;i<35;i++){
+    w.step(null);
+    speeds.push(Math.hypot(piece.vx,piece.vy));
+  }
+  assert.ok(speeds[0]<speeds[12]/4);
+  assert.ok(speeds[30]<speeds[12]/2);
+  assert.ok(Math.abs(Math.hypot(piece.x-b.x,piece.y-b.y)-b.scrapRadius)<1e-6);
 });
 
 test('Spike mantém uma abertura na órbita e volta ao avanço direto quando a rota libera',()=>{
