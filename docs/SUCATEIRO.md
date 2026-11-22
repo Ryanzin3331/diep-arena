@@ -4,9 +4,15 @@ Em **Laboratório → Chefe do desafio**, selecione **Sucateiro** e clique em **
 
 O Sucateiro patrulha o ninho, atrai polígonos comuns próximos e gira o estoque ao redor do casco. A peça acelera e desacelera durante a captura até acompanhar a órbita, em cerca de 0,52 s para as formas pequenas, 0,60 s para os pentágonos e 0,82 s para o alfa. As peças absorvem tiros e continuam sujeitas às colisões da arena. Um arremesso tira a peça da órbita, e o chefe espera 1,2 s antes de voltar a coletar.
 
-Na fase 1, o chefe para e marca a trajetória com um tracejado. Destruir a peça destacada cancela esse ataque. Nas fases 2 e 3, o chefe segue em movimento e arremessa sem aviso. Com dois atacantes e duas peças elegíveis, lança uma em cada alvo. Os dois canhões alternam tiros de 7 de dano nominal a cada 0,88 s quando alinhados. Há um intervalo mínimo de 0,3 s após um arremesso para o próximo tiro de canhão.
+Na fase 1, o chefe para e marca a trajetória com um tracejado. Destruir a peça destacada cancela esse ataque. Nas fases 2 e 3, o chefe segue em movimento e arremessa sem aviso. Com dois atacantes e duas peças elegíveis, lança uma em cada alvo. Os dois canhões usam o mesmo alcance de 720 unidades da mira do chefe e alternam tiros a cada 0,88 s quando alinhados. O dano nominal é de 7 na fase 2 e 10,5 na fase 3. Há um intervalo mínimo de 0,3 s após um arremesso para o próximo tiro de canhão.
 
-Na fase 3, os polígonos saem 12% mais rápidos. A direção curva nos primeiros 0,62 s e então segue em linha reta. A trajetória é definida no lançamento e o alfa faz uma curva mais aberta.
+Na fase 3, os polígonos saem 12% mais rápidos.
+
+## Carga dos polígonos
+
+A barra ciano enche em 4 s depois de a peça chegar à órbita. O dano cresce com a carga até 60% acima do valor base. A partir de 50%, o polígono ganha raios ciano e faz uma curva nos primeiros 0,62 s de voo, em qualquer fase. O alfa faz uma curva mais aberta. Na fase 1, o tracejado antecipa a trajetória real da peça escolhida.
+
+Com carga completa, a peça explode ao atingir um tanque, uma forma neutra, um tiro adversário ou uma parede. A explosão ciano tem raio de 112 unidades. O dano cai conforme a distância e respeita paredes, bases e proteção de renascimento.
 
 | Fase | Entrada | Capacidade por peso | Tipos de peça disponíveis |
 | --- | ---: | ---: | --- |

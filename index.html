@@ -2385,7 +2385,8 @@ const SCRAP_TYPES={
   pentagon:{kind:"scrapPentagon",weight:2,radius:28,sides:5,dur:6},
   alpha:{kind:"scrapAlpha",weight:5,radius:46,sides:5,dur:10,orbitHp:240}
 };
-const SCRAP_CURVE_TIME=.62;
+const SCRAP_CURVE_TIME=.62,SCRAP_CHARGE_TIME=4,SCRAP_BLAST_RADIUS=112,SCRAP_BLAST_TIME=.34;
+const SCRAP_ENERGY="#53dce9",SCRAP_ENERGY_BRIGHT="#8bfaff";
 function scrapArcTravel(vx,vy,rate,remaining,seconds){
   const arc=Math.min(remaining,seconds),straight=seconds-arc;
   const turn=rate*arc,cos=Math.cos(turn),sin=Math.sin(turn);
@@ -2508,7 +2509,7 @@ function unitColor(t,time=0){
   return RAINBOW_COLORS[index];
 }
 function shotColor(p,time){
-  if(p.scrapColor)return p.scrapColor;
+  if(p.scrapColor)return p.scrapCharge===1?SCRAP_ENERGY_BRIGHT:p.scrapCharge>=.5?SCRAP_ENERGY:p.scrapColor;
   if(p.pillarSource)return "#eaba70";
   if(p.kind===NECRO_DRONE&&p.owner.team==null)return customTankColor(p.owner)??"#edaa80";
   return p.owner.spec?.ammo??(p.owner.mini?p.owner.f.color:unitColor(p.owner,time));}
@@ -2519,9 +2520,10 @@ function snapshotUnit(t){
     turretAngles:t.turrets?.map(turret=>turret.aim),
     ...(t.spec===SUCATEIRO?{stage:t.stage,scrapRadius:t.scrapRadius,
       scrapStock:t.scrapStock.filter(piece=>piece.alive).map(({id,x,y,r,angle,name,hp,damaged,scrap})=>
-        ({id,x,y,r,angle,name,hp,damaged,scrap:{color:scrap.color,maxHp:scrap.maxHp}})),
-      scrapWarning:t.scrapWarning?.piece.alive?{id:t.scrapWarning.piece.id,x:t.scrapWarning.x,y:t.scrapWarning.y,
-        heading:t.scrapWarning.heading,until:t.scrapWarning.until}:null}:{}),
+        ({id,x,y,r,angle,name,hp,damaged,scrap:{color:scrap.color,maxHp:scrap.maxHp,charge:scrap.charge}})),
+      scrapBlasts:t.scrapBlasts.slice(),
+      scrapWarning:t.scrapWarning?.piece.alive?{id:t.scrapWarning.piece.id,plan:t.scrapWarning.plan,
+        until:t.scrapWarning.until}:null}:{}),
     ...(t.turret?{stage:t.stage,turret:snapshotCartographerTurret(t.turret)}:{}),
     ...(t.barrier?{barrier:{stage:t.barrier.stage,starts:t.barrier.starts,ends:t.barrier.ends,segments:t.barrier.segments.map(
       ({hp,center,pillar,walls,extra,turret})=>({hp,center,pillar,walls,extra,turret:snapshotCartographerTurret(turret)}))}}:{})};
@@ -4244,7 +4246,7 @@ class Arena {
     if(spec===SUCATEIRO){
       Object.assign(this.boss,{stage:1,scrapStock:[],scrapWarning:null,scrapSpin:0,
         scrapRadius:SUCATEIRO_VISUAL.stages[0].radiusOrbit,nextScrapGrab:this.time+.15,nextScrapShot:this.time+2.4,
-        stats:Array(8).fill(0),scrapTurn:1,scrapBarrel:0,nextScrapBarrel:this.time});
+        stats:Array(8).fill(0),scrapTurn:1,scrapBarrel:0,nextScrapBarrel:this.time,scrapBlasts:[]});
       if(this.bossTrial){
         const stock=["square","triangle","pentagon","square","triangle","alpha","square","triangle",
           "pentagon","triangle","pentagon","square"];
@@ -4597,8 +4599,9 @@ class Arena {
           b.scrapStock=b.scrapStock.filter(other=>!leaving.has(other));
         }
         const maxHp=meta.orbitHp??piece.f.hp, hp=Math.min(piece.hp,maxHp);
+        const pullTime=.52+.075*(meta.weight-1);
         piece.scrap={slot,at:this.time,x:piece.x,y:piece.y,vx:piece.vx,vy:piece.vy,angle:piece.angle,
-          pullTime:.52+.075*(meta.weight-1),maxHp,startHp:hp,originalHp:piece.hp,
+          pullTime,charge:0,chargesAt:this.time+pullTime,maxHp,startHp:hp,originalHp:piece.hp,
           originalRadius:piece.r,color:settings.fill};
         piece.hp=hp;
         piece.r=radius;
@@ -4626,49 +4629,74 @@ class Arena {
     }
     return choice;
   }
-  throwScrap(b,piece,settings,x,y,heading,target=null){
-    if(this.shots.length>=3000)return false;
-    const meta=SCRAP_TYPES[piece.name];
-    const speed=settings.speed*(b.stage===3?1.12:1);
-    let turnRate=0;
-    if(b.stage===3){
-      const turn=(piece.name==="alpha"?.34:.68)*b.scrapTurn;
-      turnRate=turn/SCRAP_CURVE_TIME;
-      const seconds=Math.hypot(target.x-x,target.y-y)/speed;
-      const [forward,lateral]=scrapArcTravel(speed,0,turnRate,SCRAP_CURVE_TIME,seconds);
+  planScrap(b,piece,settings,foe){
+    const {x,y}=piece,dx=foe.x-x,dy=foe.y-y;
+    const speed=settings.speed*(b.stage===3?1.12:1),charge=piece.scrap.charge;
+    const turnRate=charge>=.5?(piece.name==="alpha"?.34:.68)*b.scrapTurn/SCRAP_CURVE_TIME:0;
+    let heading=Math.atan2(dy,dx);
+    if(turnRate){
+      const [forward,lateral]=scrapArcTravel(speed,0,turnRate,SCRAP_CURVE_TIME,Math.hypot(dx,dy)/speed);
       heading-=Math.atan2(lateral,forward);
-      b.scrapTurn*=-1;
     }
+    return {x,y,heading,speed,turnRate,charge,targetId:foe.id};
+  }
+  throwScrap(b,piece,settings,plan){
+    if(this.shots.length>=3000)return false;
+    const {x,y,heading,speed,turnRate,charge,targetId}=plan;
+    const meta=SCRAP_TYPES[piece.name];
+    if(turnRate)b.scrapTurn*=-1;
     this.shots.push({type:"shot",kind:meta.kind,owner:b,sourceClass:b.cls,id:++this.serial,
       alive:true,x,y,px:x,py:y,r:piece.r,angle:heading,
       vx:Math.cos(heading)*speed,vy:Math.sin(heading)*speed,
-      scrapColor:settings.fill,scrapTarget:target?.id,scrapTurnRate:turnRate,bornTick:this.tick,
-      age:0,life:Math.min(4,920/speed),damage:settings.damage,dur:meta.dur});
+      scrapColor:settings.fill,scrapTarget:targetId,scrapTurnRate:turnRate,scrapCharge:charge,bornTick:this.tick,
+      age:0,life:Math.min(4,920/speed),damage:settings.damage*(1+charge*.60),dur:meta.dur});
     piece.alive=false;
     b.scrapStock=b.scrapStock.filter(other=>other!==piece);
     delete piece.scrap;
     b.nextScrapGrab=this.time+1.2;
     return true;
   }
-  fireScrapperBarrel(b,stage,target){
+  fireScrapperBarrel(b,barrel,target){
     if(this.time<b.nextScrapBarrel)return;
-    const barrels=stage.parts.filter(part=>part.kind==="barrel");
-    if(!barrels.length)return;
-    const slot=b.scrapBarrel%barrels.length,part=barrels[slot];
-    const cos=Math.cos(b.aim),sin=Math.sin(b.aim);
+    const {part,slot}=barrel,cos=Math.cos(b.aim),sin=Math.sin(b.aim);
     const mount={x:b.x+part.x*cos-part.y*sin,y:b.y+part.x*sin+part.y*cos,
       aim:b.aim+part.angle*Math.PI/180,scrapBarrel:slot};
-    const g=gun(0,{length:part.w/(2*b.r),width:12/b.r,speed:1.08,damage:1,pen:1.55,life:.86,recoil:0,spread:0});
+    const g=gun(0,{length:part.w/(2*b.r),width:12/b.r,speed:1.08,damage:b.stage===3?1.5:1,pen:1.55,
+      life:(b.spec.range+32)/(480*1.08*1.35),recoil:0,spread:0});
     const muzzle=gunMuzzle(mount,g,b.r,6);
     const dx=target.x-muzzle.x,dy=target.y-muzzle.y;
-    if(sq(dx)+sq(dy)>535**2||Math.abs(angleDelta(Math.atan2(dy,dx),mount.aim))>.34)return;
+    if(dx*muzzle.cos+dy*muzzle.sin<0||Math.abs(dx*muzzle.sin-dy*muzzle.cos)>target.r*.72+6)return;
     if(this.spawnShot(b,g,mount)){
       b.scrapBarrel++;
       b.nextScrapBarrel=this.time+.88;
     }
   }
+  explodeScrap(p,contact){
+    if(!p.alive||p.scrapCharge!==1)return;
+    const x=p.px+(p.x-p.px)*contact,y=p.py+(p.y-p.py)*contact;
+    const radius=SCRAP_BLAST_RADIUS;
+    const boss=p.owner;
+    this.removeShot(p);
+    boss.scrapBlasts.push({x,y,at:this.time});
+    this.burst(x,y,SCRAP_ENERGY_BRIGHT,16);
+    for(const entity of this.solid.nearby(x,y,radius,new Set())){
+      if(!entity.alive||entity===boss||entity.protect>0||this.allies(entity,boss))continue;
+      if(entity.type==="tank"){
+        if(!this.bossCanTarget(boss,entity)||this.hasBases&&this.baseDistance(entity.team,entity.x,entity.y)<=entity.r)continue;
+      }else if(entity.type!=="form"||entity.scrap)continue;
+      const gap=Math.max(0,Math.hypot(entity.x-x,entity.y-y)-entity.r);
+      if(gap>=radius||this.maze?.hit(x,y,entity.x,entity.y)!=null||
+        this.baseImpact(boss,x,y,entity.x,entity.y,0)!=null)continue;
+      const damage=p.damage*(1-.72*gap/radius);
+      entity.hp-=damage;
+      entity.hit=entity.damaged=this.time;
+      if(entity.dodgeAttempt?.p===p)finishDodgeAttempt(entity,false);
+      if(entity.hp<=0)this.kill(entity,boss,boss.name);
+    }
+  }
   advanceScrapper(b){
     const now=this.time;
+    if(b.scrapBlasts.length)b.scrapBlasts=b.scrapBlasts.filter(blast=>now-blast.at<SCRAP_BLAST_TIME);
     b.scrapStock=b.scrapStock.filter(piece=>piece.alive);
     const warning=b.scrapWarning;
     if(warning&&!warning.piece.alive){
@@ -4717,7 +4745,19 @@ class Arena {
       }
     }
     const target=b.target&&this.scrapperTarget(b,b.target)?b.target:null;
-    const aim=b.scrapWarning?.heading??(target?Math.atan2(target.y-b.y,target.x-b.x):b.angle+b.direction*Math.PI/2);
+    let aim=b.scrapWarning?.plan.heading??(target?Math.atan2(target.y-b.y,target.x-b.x):b.angle+b.direction*Math.PI/2);
+    let barrel;
+    if(target&&b.stage>=2){
+      const barrels=stage.parts.filter(part=>part.kind==="barrel");
+      const slot=b.scrapBarrel%barrels.length,part=barrels[slot];
+      if(part){
+        barrel={part,slot};
+        const angle=part.angle*Math.PI/180;
+        const offset=part.y*Math.cos(angle)-part.x*Math.sin(angle);
+        const distance=Math.hypot(target.x-b.x,target.y-b.y);
+        aim-=angle+Math.asin(clamp(offset/Math.max(1,distance),-1,1));
+      }
+    }
     b.aim+=clamp(angleDelta(aim,b.aim),-2.6*DT,2.6*DT);
     b.scrapSpin+=stage.speedOrbit*Math.PI/180*(stage.clockwise?1:-1)*DT;
     // Ease orbit size transitions so the shield does not sweep through a tank in one tick.
@@ -4730,21 +4770,22 @@ class Arena {
       const blend=progress*progress*(3-2*progress);
       piece.px=piece.x;piece.py=piece.y;
       if(piece!==b.scrapWarning?.piece){
+        orbit.charge=clamp((now-orbit.chargesAt)/SCRAP_CHARGE_TIME,0,1);
         const fromX=orbit.x+orbit.vx*elapsed,fromY=orbit.y+orbit.vy*elapsed;
         piece.x=fromX+(b.x+Math.cos(angle)*b.scrapRadius-fromX)*blend;
         piece.y=fromY+(b.y+Math.sin(angle)*b.scrapRadius-fromY)*blend;
         piece.angle=orbit.angle+angleDelta(angle+Math.PI/4,orbit.angle)*blend;
       }else{
-        piece.x=b.scrapWarning.x;piece.y=b.scrapWarning.y;
+        piece.x=b.scrapWarning.plan.x;piece.y=b.scrapWarning.plan.y;
       }
       piece.vx=(piece.x-piece.px)/DT;piece.vy=(piece.y-piece.py)/DT;
     }
     if(b.scrapWarning){
       if(now<b.scrapWarning.until)return;
-      const {piece,x,y,heading,settings}=b.scrapWarning;
+      const {piece,plan,settings}=b.scrapWarning;
       b.scrapWarning=null;
       b.nextScrapShot=now+stage.cooldown;
-      this.throwScrap(b,piece,settings,x,y,heading);
+      this.throwScrap(b,piece,settings,plan);
       return;
     }
     if(now>=b.nextScrapGrab){
@@ -4756,8 +4797,8 @@ class Arena {
       if(b.stage===1){
         const piece=this.scrapperPiece(b,target);
         if(piece){
-          const {x,y}=piece,settings=stage.orbits[piece.name];
-          b.scrapWarning={piece,x,y,heading:Math.atan2(target.y-y,target.x-x),
+          const settings=stage.orbits[piece.name];
+          b.scrapWarning={piece,plan:this.planScrap(b,piece,settings,target),
             until:now+stage.warning+settings.extra,settings};
         }
       }else{
@@ -4769,8 +4810,8 @@ class Arena {
         for(const foe of (attacking.length?attacking:[target])){
           const piece=this.scrapperPiece(b,foe);
           if(!piece)continue;
-          const {x,y}=piece,heading=Math.atan2(foe.y-y,foe.x-x);
-          if(this.throwScrap(b,piece,stage.orbits[piece.name],x,y,heading,foe))throws++;
+          const settings=stage.orbits[piece.name];
+          if(this.throwScrap(b,piece,settings,this.planScrap(b,piece,settings,foe)))throws++;
           if(throws===2)break;
         }
         if(throws){
@@ -4780,7 +4821,7 @@ class Arena {
         }
       }
     }
-    if(b.stage>=2)this.fireScrapperBarrel(b,stage,target);
+    if(barrel)this.fireScrapperBarrel(b,barrel,target);
   }
   advanceGuardian(boss){
     const spec=boss.spec;
@@ -5718,7 +5759,13 @@ class Arena {
         if(p.wallTime!=null&&p.owner.spec===DEFENDER)this.provokeDefenderBases(p.owner,p.px,p.py,x,y,p.r);
       }
     }
-    if(p.wallTime==null&&(p.x<0||p.y<0||p.x>this.size||p.y>this.size)){this.removeShot(p);}
+    if(p.wallTime==null&&(p.x<0||p.y<0||p.x>this.size||p.y>this.size)){
+      if(p.scrapCharge===1){
+        const across=p.x<0?-p.px/dx:p.x>this.size?(this.size-p.px)/dx:Infinity;
+        const down=p.y<0?-p.py/dy:p.y>this.size?(this.size-p.py)/dy:Infinity;
+        p.wallTime=Math.min(across,down);
+      }else this.removeShot(p);
+    }
   }
   fireDeployerRound(p,angle,gun){
     const ca=Math.cos(angle),sa=Math.sin(angle),r=p.r*.24;
@@ -5908,6 +5955,11 @@ class Arena {
           this.creditHeavyInterception(p,q);
           if(this.apprentice)creditApprenticeCoop(this,p,q,true);
         }
+        if(p.scrapCharge===1||q.scrapCharge===1){
+          const contact=impact(sx,sy,dx,dy,p.r+q.r)??n;
+          this.explodeScrap(p,contact);
+          this.explodeScrap(q,contact);
+        }
         if(p.dur<=0) this.removeShot(p,q.owner);
         if(q.dur<=0) this.removeShot(q,p.owner);
       }
@@ -5924,14 +5976,21 @@ class Arena {
         if(p.owner.spec===FALLEN_OVERLORD){
           const localProvocation=p.provoker===e&&p.provokedUntil>this.time;
           if(e.type==="tank"?!this.bossCanTarget(p.owner,e)&&!localProvocation:e.type!=="form")continue;
+        }else if(p.scrapCharge===1&&e.type==="form"){
+          if(e.scrap)continue;
         }else if(p.owner.type==="boss"&&(e.type!=="tank"||e.level<15&&!this.apprentice&&!p.owner.provoked.has(e.id)))continue;
         const t=impact(p.px-e.px,p.py-e.py,(p.x-p.px)-(e.x-e.px),(p.y-p.py)-(e.y-e.py),p.r+e.r);
         if(t!==null&&t<(p.wallTime??Infinity))hits.push([t,e]);
       }
       hits.sort((a,b)=>a[0]-b[0]||a[1].id-b[1].id);
-      for(const [,e] of hits){
+      for(const [contact,e] of hits){
         if(!p.alive) break;
         if(!e.alive||e.protect>0) continue;
+        if(p.scrapCharge===1){
+          (p.contacts??=new Map()).set(e.id,this.tick);
+          this.explodeScrap(p,contact);
+          break;
+        }
         const contacts=p.contacts??=new Map();
         const previous=contacts.get(e.id);
         const isDrone=isSpawnedDrone(p.kind)||p.kind==="decadeEscort"||p.kind===NECRO_DRONE;
@@ -5983,6 +6042,10 @@ class Arena {
         if(this.duelEnded||this.closing&&!this.closing.active)return;
       }
       if(p.wallTime!=null){
+        if(p.scrapCharge===1){
+          this.explodeScrap(p,p.wallTime);
+          continue;
+        }
         const segment=p.cartographerPillar;
         if(segment?.hp>0&&p.owner.type==="tank"&&this.maze instanceof CartographerBarrier){
           this.maze.damage(segment,p.damage*Math.min(1,p.dur/2));
@@ -7530,7 +7593,7 @@ function botThink(w,t){
       const dx=p.x-t.x,dy=p.y-t.y;
       const px=p.vx+(p.kx||0)-vx*max,py=p.vy+(p.ky||0)-vy*max;
       const riskWindow=dodgeWindows?.get(p)??.61;
-      const r=t.r+p.r+10+t.trait*1.4;
+      const r=t.r+p.r+10+t.trait*1.4+(p.scrapCharge===1?20:0);
       const arc=scrapArcs?.get(p);
       let horizon,gap;
       if(arc)[gap,horizon]=scrapDodgeGap(arc,dx,dy,vx*max,vy*max,r);
@@ -8394,6 +8457,27 @@ function paintScrapper(b,time){
   else{ctx.fillStyle=fill;ctx.fill();}
   for(const part of stage.parts)paintScrapPart(part);
 }
+function paintScrapEnergy(x,y,r,angle,charge){
+  if(charge<=0)return;
+  ctx.save();
+  ctx.globalAlpha*=.14+.40*charge;
+  ctx.fillStyle=SCRAP_ENERGY;
+  ctx.fill();
+  ctx.restore();
+  if(charge<.5)return;
+  ctx.save();ctx.translate(x,y);ctx.rotate(angle);
+  ctx.strokeStyle=charge===1?SCRAP_ENERGY_BRIGHT:SCRAP_ENERGY;
+  ctx.lineWidth=charge===1?3.3:2;
+  for(const direction of [1,-1]){
+    ctx.beginPath();
+    ctx.moveTo(r*.9*direction,-r*.48*direction);
+    ctx.lineTo(r*1.12*direction,-r*.12*direction);
+    ctx.lineTo(r*.78*direction,r*.22*direction);
+    ctx.lineTo(r*1.13*direction,r*.55*direction);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
 function paintScrapOrbit(b,x,y,time,blend,visible,recorded){
   const stage=SUCATEIRO_VISUAL.stages[b.stage-1];
   ctx.save();ctx.lineJoin="round";
@@ -8406,22 +8490,46 @@ function paintScrapOrbit(b,x,y,time,blend,visible,recorded){
   for(const piece of b.scrapStock){
     if(piece.alive===false||!visible(piece.x,piece.y,piece.r))continue;
     const [px,py]=recorded?[piece.x,piece.y]:tp(piece,blend);
-    const active=marked===piece.id,meta=SCRAP_TYPES[piece.name];
+    const active=marked===piece.id,meta=SCRAP_TYPES[piece.name],charge=piece.scrap.charge;
     poly(px,py,piece.r,meta.sides,piece.angle);
     paint(active?"#ffe69e":time-piece.damaged<.052?"#fcf3d1":piece.scrap.color,active?"#875127":"#4c5764",active?6:4);
+    paintScrapEnergy(px,py,piece.r,piece.angle,charge);
+    const width=Math.max(22,piece.r*1.5),left=px-width/2;
+    let top=py+piece.r+5;
     if(piece.hp<piece.scrap.maxHp){
-      const width=piece.r*1.5,top=py+piece.r+4,left=px-width/2;
       ctx.fillStyle="#34493d";ctx.fillRect(left,top,width,5);
       ctx.fillStyle="#a7d571";ctx.fillRect(left+1,top+1,(width-2)*clamp(piece.hp/piece.scrap.maxHp,0,1),3);
+      top+=7;
     }
+    ctx.fillStyle="#2c5263";ctx.fillRect(left,top,width,5);
+    ctx.fillStyle=charge===1?SCRAP_ENERGY_BRIGHT:SCRAP_ENERGY;
+    ctx.fillRect(left+1,top+1,(width-2)*charge,3);
   }
   if(warning&&warning.piece?.alive!==false){
-    const {x:fromX,y:fromY,heading}=warning;
-    const ux=Math.cos(heading),uy=Math.sin(heading),tipX=fromX+ux*224,tipY=fromY+uy*224;
+    const {x:fromX,y:fromY,heading,speed,turnRate}=warning.plan;
+    const vx=Math.cos(heading)*speed,vy=Math.sin(heading)*speed,seconds=224/speed;
     ctx.strokeStyle="#9a522b";ctx.lineWidth=4;ctx.setLineDash([10,7]);ctx.beginPath();
-    ctx.moveTo(fromX,fromY);ctx.lineTo(tipX,tipY);ctx.stroke();ctx.setLineDash([]);
-    ctx.beginPath();ctx.moveTo(tipX-ux*15+uy*8,tipY-uy*15-ux*8);
-    ctx.lineTo(tipX,tipY);ctx.lineTo(tipX-ux*15-uy*8,tipY-uy*15+ux*8);ctx.stroke();
+    ctx.moveTo(fromX,fromY);
+    let endX=fromX,endY=fromY;
+    for(let i=1;i<=12;i++){
+      const time=i*seconds/12;
+      const [dx,dy]=turnRate?scrapArcTravel(vx,vy,turnRate,SCRAP_CURVE_TIME,time):[vx*time,vy*time];
+      endX=fromX+dx;endY=fromY+dy;
+      ctx.lineTo(endX,endY);
+    }
+    ctx.stroke();ctx.setLineDash([]);
+    const endHeading=heading+turnRate*Math.min(SCRAP_CURVE_TIME,seconds);
+    const ux=Math.cos(endHeading),uy=Math.sin(endHeading);
+    ctx.beginPath();ctx.moveTo(endX-ux*15+uy*8,endY-uy*15-ux*8);
+    ctx.lineTo(endX,endY);ctx.lineTo(endX-ux*15-uy*8,endY-uy*15+ux*8);ctx.stroke();
+  }
+  for(const blast of b.scrapBlasts){
+    if(!visible(blast.x,blast.y,SCRAP_BLAST_RADIUS))continue;
+    const progress=clamp((time-blast.at)/SCRAP_BLAST_TIME,0,1);
+    ctx.globalAlpha=(1-progress)*.85;
+    circle(blast.x,blast.y,12+(SCRAP_BLAST_RADIUS-12)*Math.sqrt(progress));
+    ctx.fillStyle="#5ae2ef31";ctx.fill();
+    ctx.strokeStyle=SCRAP_ENERGY_BRIGHT;ctx.lineWidth=4;ctx.stroke();
   }
   ctx.restore();
 }
@@ -8893,7 +9001,11 @@ function paintRocketeerMissile(x,y,r,angle,color){
 }
 function paintShot(x,y,r,angle,kind,color){
   const scrap=SCRAP_SHOTS.get(kind);
-  if(scrap){poly(x,y,r,scrap.sides,angle+Math.PI/4);paint(color,"#4c5764",3);return;}
+  if(scrap){
+    poly(x,y,r,scrap.sides,angle+Math.PI/4);paint(color,"#4c5764",3);
+    paintScrapEnergy(x,y,r,angle,color===SCRAP_ENERGY_BRIGHT?1:color===SCRAP_ENERGY?.5:0);
+    return;
+  }
   if(kind===ROCKETEER_MISSILE){paintRocketeerMissile(x,y,r,angle,color);return;}
   if(kind===SKIMMER_MISSILE){paintSkimmerMissile(x,y,r,angle,color);return;}
   if(kind===FACTORY_MINION){

@@ -69,14 +69,14 @@ test('arremesso nasce na peça marcada, mantém a direção avisada e dá dano r
   assert.equal(w.shots.length,0);
   assert.equal(Math.round((warning.until-w.time)*100),75);
   const score=player.score;
-  const {x,y,heading}=warning;
+  const {x,y,heading,charge}=warning.plan;
   const before=player.hp;
   idle(player,x+250*Math.cos(heading),y+250*Math.sin(heading));
   stepUntil(w,()=>w.shots.some(p=>p.owner===b));
   const shot=w.shots.find(p=>p.owner===b);
   assert.deepEqual([shot.x,shot.y,shot.angle],[x,y,heading]);
   assert.equal(shot.kind,'scrapTriangle');
-  assert.equal(shot.damage,11);
+  assert.equal(shot.damage,11*(1+charge*.60));
   assert.ok(Math.abs(Math.hypot(shot.vx,shot.vy)-420)<1e-9);
   assert.equal(shotColor(shot,w.time),SUCATEIRO_VISUAL.stages[0].orbits.triangle.fill);
   assert.equal(triangle.alive,false);
@@ -93,7 +93,7 @@ test('um tiro de Destroyer destrói a peça marcada e cancela o arremesso',()=>{
   idle(player,b.x+440,b.y);
   idle(other,200,200);
   stepUntil(w,()=>b.scrapWarning);
-  const {piece,until,x,y}=b.scrapWarning;
+  const {piece,until,plan:{x,y}}=b.scrapWarning;
   idle(player,x+125,y);
   player.aim=Math.PI;
   assert.ok(w.spawnShot(player,C.Destroyer.guns[0]));
@@ -121,28 +121,102 @@ test('sorteio normal inclui o Sucateiro só em modos compatíveis com chefes de 
   }
 });
 
-test('o alfa da fase final sai sem aviso, 12% mais rápido e faz uma curva sem perder velocidade',()=>{
-  const w=lab(),b=w.boss,[player,other]=w.tanks;
+function clearScrapLab(stage=1){
+  const w=lab(),b=w.boss;
   w.shapes=[];
   w.formTarget=0;
-  b.hp=b.spec.hp*.34;
-  w.addShape('alpha',b.x+15,b.y-265,false);
-  idle(player,b.x+490,b.y);
-  idle(other,200,200);
-  stepUntil(w,()=>w.shots.some(p=>p.kind==='scrapAlpha'));
-  const shot=w.shots.find(p=>p.kind==='scrapAlpha');
+  for(const t of w.tanks)idle(t,200,200);
+  b.hp=b.spec.hp*[1,.69,.34][stage-1];
+  b.nextScrapShot=b.nextScrapBarrel=Infinity;
+  return w;
+}
+function waitForStock(w,name,charge){
+  const b=w.boss;
+  w.addShape(name,b.x+205,b.y,false);
+  const piece=w.shapes.at(-1);
+  stepUntil(w,()=>piece.scrap&&w.time-piece.scrap.at>=piece.scrap.pullTime);
+  assert.ok(piece.scrap.charge<.02);
+  stepUntil(w,()=>piece.scrap.charge>=charge);
+  return piece;
+}
+
+test('a carga aumenta o dano e define a curva a partir da metade em qualquer fase',()=>{
+  const w=clearScrapLab(2),b=w.boss;
+  const piece=waitForStock(w,'triangle',.51);
+  const settings=SUCATEIRO_VISUAL.stages[1].orbits.triangle;
+  const foe={id:932,x:piece.x+320,y:piece.y};
+  assert.ok(piece.scrap.charge<.54);
+  const plan=w.planScrap(b,piece,settings,foe);
+  assert.ok(plan.turnRate);
+  const expected=11*(1+plan.charge*.60);
+  assert.equal(snapshotArena(w).boss.scrapStock[0].scrap.charge,plan.charge);
+  assert.ok(w.throwScrap(b,piece,settings,plan));
+  assert.equal(w.shots.at(-1).damage,expected);
+  assert.equal(w.shots.at(-1).scrapCharge,plan.charge);
+});
+
+test('o alfa da fase final mantém os 12% extras e a curva só entra após meia carga',()=>{
+  const w=clearScrapLab(3),b=w.boss;
+  const piece=waitForStock(w,'alpha',.25),settings=SUCATEIRO_VISUAL.stages[2].orbits.alpha;
+  const foe={id:932,x:piece.x+320,y:piece.y};
+  assert.equal(w.planScrap(b,piece,settings,foe).turnRate,0);
+  stepUntil(w,()=>piece.scrap.charge>=.51);
+  const plan=w.planScrap(b,piece,settings,{...foe,x:piece.x+320,y:piece.y});
+  assert.ok(w.throwScrap(b,piece,settings,plan));
+  const shot=w.shots.at(-1);
   const speed=205*1.12,first=Math.atan2(shot.vy,shot.vx);
   assert.equal(b.scrapWarning,null);
-  assert.equal(shot.scrapTarget,player.id);
-  assert.equal(shot.damage,28);
+  assert.equal(shot.damage,28*(1+plan.charge*.60));
   assert.ok(Math.abs(Math.hypot(shot.vx,shot.vy)-speed)<1e-9);
-  assert.ok(Math.hypot(b.vx,b.vy)>40);
   const predicted=scrapArcTravel(shot.vx,shot.vy,shot.scrapTurnRate,.62,30*DT);
   const start=[shot.x,shot.y];
   for(let i=0;i<30;i++)w.step(null);
   assert.ok(Math.abs(angleDelta(Math.atan2(shot.vy,shot.vx),first))>.20);
   assert.ok(Math.abs(Math.hypot(shot.vx,shot.vy)-speed)<1e-9);
   assert.ok(Math.hypot(shot.x-start[0]-predicted[0],shot.y-start[1]-predicted[1])<1e-6);
+});
+
+test('uma peça carregada explode uma vez ao colidir com uma forma neutra e afeta o entorno',()=>{
+  const w=clearScrapLab(),b=w.boss,[near,far]=w.tanks;
+  const piece=waitForStock(w,'square',1), settings=SUCATEIRO_VISUAL.stages[0].orbits.square;
+  const {x,y}=piece;
+  w.addShape('triangle',x+80,y,false);
+  const barrier=w.shapes.at(-1);
+  const [nearBefore,farBefore]=[near.hp,far.hp];
+  idle(near,x+80,y+82);
+  idle(far,x+80,y+210);
+  b.nextScrapGrab=Infinity;
+  const plan=w.planScrap(b,piece,settings,{x:x+160,y});
+  assert.ok(w.throwScrap(b,piece,settings,plan));
+  const shot=w.shots.at(-1);
+  assert.equal(shot.scrapCharge,1);
+  assert.equal(shot.damage,12.8);
+  stepUntil(w,()=>b.scrapBlasts.length>0);
+  assert.equal(shot.alive,false);
+  assert.ok(barrier.hp<barrier.f.hp,'a forma no impacto recebeu dano');
+  assert.ok(near.hp<nearBefore,'o tanque ao lado recebeu o dano em área');
+  assert.equal(far.hp,farBefore);
+  const wounded=near.hp;
+  stepUntil(w,()=>b.scrapBlasts.length===0);
+  assert.equal(near.hp,wounded);
+});
+
+test('os canhões alcançam o limite da mira e ganham dano na fase 3',()=>{
+  const w=clearScrapLab(2),b=w.boss,[player]=w.tanks;
+  // More than 535 units from the muzzle, inside the boss's 720-unit tracking range.
+  idle(player,b.x+669,b.y);
+  b.aim=0;
+  b.nextScrapBarrel=0;
+  stepUntil(w,()=>w.shots.some(p=>p.scrapBarrel!=null));
+  const first=w.shots.find(p=>p.scrapBarrel!=null);
+  assert.ok(Math.hypot(player.x-first.x,player.y-first.y)>535);
+  assert.equal(first.damage,7);
+  const before=player.hp;
+  stepUntil(w,()=>player.hp<before,110);
+  b.hp=b.spec.hp*.34;
+  b.nextScrapBarrel=w.time;
+  idle(player,b.x+665,b.y);
+  stepUntil(w,()=>w.shots.some(p=>p.scrapBarrel!=null&&p.damage===10.5),90);
 });
 
 test('a fase 2 lança duas peças distintas contra dois atacantes, sem parar nem repetir o alvo',()=>{
@@ -266,5 +340,24 @@ test('Spike atravessa o escudo e recua com pouca vida nas duas lutas que causava
     assert.ok(reversals<=5,'sem inversões repetidas na seed '+seed);
     assert.ok(retreated,'o Spike se afastou do chefe para se recuperar na seed '+seed);
     assert.ok(spike.alive&&!b.alive,'vitória com o Spike vivo na seed '+seed);
+  }
+});
+
+test('o primeiro tiro adversário detona a peça cheia, mas expirar no ar não detona',()=>{
+  for(const intercept of [true,false]){
+    const w=clearScrapLab(),b=w.boss,[player]=w.tanks;
+    const piece=waitForStock(w,'square',1),settings=SUCATEIRO_VISUAL.stages[0].orbits.square;
+    const {x,y}=piece;
+    const plan=w.planScrap(b,piece,settings,{x:x+200,y});
+    w.throwScrap(b,piece,settings,plan);
+    const shot=w.shots.at(-1);
+    if(intercept){
+      idle(player,x+150,y);
+      player.aim=Math.PI;
+      assert.ok(w.spawnShot(player,C.Destroyer.guns[0]));
+      idle(player,x+150,y+180);
+    }else shot.life=.10;
+    stepUntil(w,()=>!shot.alive,60);
+    assert.equal(b.scrapBlasts.length,intercept?1:0);
   }
 });
