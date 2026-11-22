@@ -1,4 +1,4 @@
-// Runtime format for JSON exported by the Montador de Chefes (versions 1–8).
+// Runtime format for JSON exported by the Montador de Chefes (versions 1–9).
 const BossProject=(()=>{
   const TAU=Math.PI*2,RAD=Math.PI/180;
   const FILE_LIMIT=5_000_000;
@@ -30,7 +30,7 @@ const BossProject=(()=>{
       title:["Coleta","Escudo carregado","Sobrecarga"][i],hp:[100,70,35][i],orbitEnabled:true,orbitShape:"circle",orbitPoints:null,
       body:"hex",radius:[58,62,66][i],angle:30,fill:["#747787","#7c748f","#8d655d"][i],line:"#3f4351",stroke:6,
       capacity:[6,9,12][i],radiusOrbit:[135,158,184][i],speedOrbit:[39,48,58][i], clockwise:true,showRing:true,
-      aim:0,warning:.75,cooldown:3,parts:[],orbits:{},behaviors:[]
+      aim:0,warning:.75,cooldown:3,bodySpin:0,parts:[],orbits:{},behaviors:[]
     };
     s.parts.push(
       {...makePart("barrel",43,-22),name:"Canhão superior",angle:-13,w:94,h:26},
@@ -54,8 +54,8 @@ const BossProject=(()=>{
     for(const item of Object.values(base.orbits)){item.qty=0;item.limit=0;}
     return base;
   }
-  const defaults=()=>({version:8,template:"scrapper",name:"Sucateiro",stages:[0,1,2].map(stagePreset)});
-  const blankProject=()=>({version:8,template:"blank",name:"Novo chefe",stages:[blankStage(0)]});
+  const defaults=()=>({version:9,template:"scrapper",name:"Sucateiro",stages:[0,1,2].map(stagePreset)});
+  const blankProject=()=>({version:9,template:"blank",name:"Novo chefe",stages:[blankStage(0)]});
   function orderThresholds(stages){
     stages[0].hp=100;
     for(let i=1;i<stages.length;i++){
@@ -183,7 +183,7 @@ const BossProject=(()=>{
       bodyDamage:n(raw?.bodyDamage,22,0,250),hitRadius:n(raw?.hitRadius,0,0,180)};
   }
   function normalize(raw){
-    if(![1,2,3,4,5,6,7,8].includes(raw?.version)||!Array.isArray(raw.stages)||raw.stages.length<1||raw.stages.length>PHASE_LIMIT){
+    if(![1,2,3,4,5,6,7,8,9].includes(raw?.version)||!Array.isArray(raw.stages)||raw.stages.length<1||raw.stages.length>PHASE_LIMIT){
       throw Error("Use um JSON do montador com 1 a 8 fases.");
     }
     const project=raw.template==="blank"?blankProject():defaults();
@@ -196,6 +196,7 @@ const BossProject=(()=>{
         line:color(v.line,base.line),stroke:n(v.stroke,base.stroke,0,16),
         capacity:Math.round(n(v.capacity,base.capacity,0,24)),radiusOrbit:n(v.radiusOrbit,base.radiusOrbit,80,230),
         speedOrbit:n(v.speedOrbit,base.speedOrbit,0,200),clockwise:v.clockwise!==false,showRing:v.showRing!==false,
+        bodySpin:n(v.bodySpin,0,-360,360),
         aim:n(v.aim,base.aim,-360,360),warning:n(v.warning,base.warning,.15,3),cooldown:n(v.cooldown,base.cooldown,0,20)};
       s.orbitEnabled=typeof v.orbitEnabled==="boolean"?v.orbitEnabled:base.orbitEnabled||s.capacity>0;
       s.orbitPoints=normalizeOrbitPoints(v.orbitPoints);
@@ -225,6 +226,10 @@ const BossProject=(()=>{
     });
     orderThresholds(project.stages);
     return project;
+  }
+  function rotatePoint(x,y,angle){
+    const c=Math.cos(angle),s=Math.sin(angle);
+    return {x:x*c-y*s,y:x*s+y*c};
   }
   function pieceOrigin(p){
     return p.origin??{x:p.kind==="barrel"?p.w/2:0,y:0};
@@ -274,12 +279,13 @@ const BossProject=(()=>{
   function enter(w,b,index){
     clearStock(b);
     const project=b.spec.importedProject,phase=project.stages[index];
+    const heading=b.authored?b.aim:0;
     const state=b.authored={index,phase,start:w.time,aims:Object.create(null),motion:null,
       homeX:b.authored?.homeX??b.x,homeY:b.authored?.homeY??b.y,
       track:trackForOrbit(phase),warning:null,coolUntil:w.time,
       rules:phase.behaviors.map(rule=>({rule,slot:0,next:w.time})),stock:[]};
     b.r=project.combat.hitRadius||phase.radius;
-    b.aim=0;
+    b.aim=heading;
     for(const entry of stockFor(phase)){
       w.addShape(entry.key,b.x,b.y,false);
       const form=w.shapes.at(-1),item=phase.orbits[entry.key];
@@ -318,7 +324,8 @@ const BossProject=(()=>{
     return target;
   }
   function targetAim(b,p,target){
-    const mount=barrelPose(p),dx=target.x-b.x-mount.rootX,dy=target.y-b.y-mount.rootY;
+    const mount=barrelPose(p),local=rotatePoint(target.x-b.x,target.y-b.y,-b.aim);
+    const dx=local.x-mount.rootX,dy=local.y-mount.rootY;
     return Math.atan2(dy,dx)-Math.asin(clamp(pieceOrigin(p).y/Math.max(1,Math.hypot(dx,dy)),-1,1));
   }
   function stepMotion(w,b,target,dt){
@@ -359,9 +366,9 @@ const BossProject=(()=>{
     let fired=false;
     for(const p of group){
       const aim=controlled.has(p.id)?state.aims[p.id]:rule.aim==="target"?targetAim(b,p,target):p.angle*RAD;
-      const origin=barrelPose(p,aim);
+      const origin=barrelPose(p,aim),offset=rotatePoint(origin.muzzleX,origin.muzzleY,b.aim);
       state.aims[p.id]=aim;
-      fired=spawn(w,b,{x:b.x+origin.muzzleX,y:b.y+origin.muzzleY,aim,speed:rule.speed,damage:rule.damage,
+      fired=spawn(w,b,{x:b.x+offset.x,y:b.y+offset.y,aim:b.aim+aim,speed:rule.speed,damage:rule.damage,
         r:clamp(p.h*.21,4,10),fill:state.phase.fill})||fired;
     }
     return fired;
@@ -372,7 +379,8 @@ const BossProject=(()=>{
     const count=Math.min(rule.count,rule.limit-active,64-b.drones);
     const source=state.phase.parts.find(p=>p.id===rule.source);
     const origin=source?barrelPose(source,state.aims[source.id]):{muzzleX:0,muzzleY:0};
-    const x=b.x+origin.muzzleX,y=b.y+origin.muzzleY;
+    const offset=rotatePoint(origin.muzzleX,origin.muzzleY,b.aim);
+    const x=b.x+offset.x,y=b.y+offset.y;
     const aim=target?Math.atan2(target.y-y,target.x-x):0;
     let fired=false;
     for(let i=0;i<count;i++){
@@ -416,7 +424,8 @@ const BossProject=(()=>{
     let index=b.authored.index;
     while(index+1<phases.length&&percent<=phases[index+1].hp+1e-8)index++;
     if(index!==b.authored.index)enter(w,b,index);
-    const state=b.authored;
+    const state=b.authored,turn=state.phase.bodySpin*RAD*dt;
+    b.aim=(b.aim+turn)%TAU;
     const target=nearest(w,b,b.spec.range);
     stepMotion(w,b,target,dt);positionStock(w,b);stepLaunch(w,b,target);
     const controlled=new Set();
@@ -427,9 +436,12 @@ const BossProject=(()=>{
         const previous=state.aims[p.id]??p.angle*RAD;
         if(rule.aim==="spin")state.aims[p.id]=p.angle*RAD+(w.time-state.start)*rule.turnSpeed*RAD;
         else if(target){
-          const desired=targetAim(b,p,target)-previous;
+          // Keep tracking in world coordinates as the turret base moves with the boss.
+          const relative=previous-(state.aims[p.id]===undefined?0:turn);
+          const desired=targetAim(b,p,target)-relative;
           const limit=Math.max(30,Math.abs(rule.turnSpeed))*RAD*dt;
-          state.aims[p.id]=previous+clamp(Math.atan2(Math.sin(desired),Math.cos(desired)),-limit,limit);
+          const aim=relative+clamp(Math.atan2(Math.sin(desired),Math.cos(desired)),-limit,limit);
+          state.aims[p.id]=Math.atan2(Math.sin(aim),Math.cos(aim));
         }else state.aims[p.id]=previous;
         controlled.add(p.id);
       }

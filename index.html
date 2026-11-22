@@ -106,7 +106,7 @@ button,select,input{font:inherit}button,select,input{border:1px solid var(--line
 }
 .bot-summary{display:none}
 .config .lite-help{margin:0;color:var(--muted);font-size:11px;line-height:1.35}
-.config .memory-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}.config .memory-actions button{min-height:44px;line-height:1.25;white-space:normal;overflow-wrap:anywhere}.config .memory-actions .danger{grid-column:1/-1}.config .memory-status{margin:0;color:var(--muted);font-size:11px;line-height:1.4;overflow-wrap:anywhere}
+.config .memory-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}.config .memory-actions button{min-height:44px;line-height:1.25;white-space:normal;overflow-wrap:anywhere}.config .memory-actions .danger{grid-column:1/-1}.config .builder-link{color:#c8ea85;font-size:12px;font-weight:700;text-underline-offset:3px}.config .memory-status{margin:0;color:var(--muted);font-size:11px;line-height:1.4;overflow-wrap:anywhere}
 @media(pointer:coarse) and (max-width:950px){
   .bot-summary{display:grid;gap:3px;width:fit-content;max-width:min(249px,calc(100vw - 86px));padding:6px 9px;
     color:var(--fg);background:#17231af5;border:1px solid #789071;border-radius:8px;font-size:11px;line-height:1.25}
@@ -672,6 +672,7 @@ button{-webkit-tap-highlight-color:transparent}
             <label class="wide">Nível inicial<select id="labLevel"><option>15</option><option>30</option><option selected>45</option></select></label>
             <label class="wide">Chefe do desafio<select id="labBoss"></select></label>
             <button id="summonLabBoss" class="wide" type="button">Invocar Fallen Overlord · 2 contra 1</button>
+            <a class="wide builder-link" href="montador-de-chefes.html" target="_blank" rel="noopener">Abrir Montador de Chefes</a>
             <button id="importLabBoss" class="wide" type="button">Importar chefe JSON</button>
             <input id="labBossFile" type="file" accept=".json,application/json" aria-label="Arquivo JSON do chefe" hidden>
             <p id="labBossStatus" class="memory-status wide" role="status" hidden></p>
