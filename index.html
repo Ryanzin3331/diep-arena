@@ -665,7 +665,7 @@ button{-webkit-tap-highlight-color:transparent}
           <label id="botsField">Bots<select id="botCount"><option>8</option><option>12</option><option selected>24</option><option>36</option></select></label>
           <label id="mapField" class="wide">Modo da próxima partida<select id="arenaMap"><option value="open">FFA aberto</option><option value="survival">Survival · 12 tanques</option><option value="teams">2 Teams · Azul × Vermelho</option><option value="four-teams">4 Teams</option><option value="domination">Dominação</option><option value="convoy">Comboio · Dois times</option><option value="mothership">Mothership</option><option value="tag">Tag</option><option value="maze">Maze fixo</option><option value="maze-seed">Maze por seed</option></select></label>
           <label id="bossField" class="wide">Chefes na próxima partida<select id="bossSchedule"><option value="arena">Sorteio · a cada 4 min</option><option value="classic">Sorteio · a cada 45 min</option><option value="off">Desligados</option></select></label>
-          <label id="eventBossField" class="wide">Bosses de evento na próxima partida<select id="eventBosses"><option value="off" selected>Desligados · 5 chefes</option><option value="on">Ligados · 7 chefes</option></select></label>
+          <label id="eventBossField" class="wide">Bosses de evento na próxima partida<select id="eventBosses"><option value="off" selected>Desligados · 5 chefes</option><option value="on">Ligados · 9 chefes</option></select></label>
           <label id="shipStartField" class="wide" hidden>Início no Mothership<select id="shipStart"><option value="1">Clássico · nível 1</option><option value="30">Rápido · nível 30</option></select></label>
           <div id="duelFields" class="config wide" hidden>
             <label>Tanque A<select id="classA"></select></label><label>Tanque B<select id="classB"></select></label>
@@ -2320,11 +2320,89 @@ const DECADE_APPEARANCES=new Map(DECADE_MINIONS.map(m=>[m.appearance,m]));
 const CLASSIC_BOSSES={guardian:GUARDIAN,fallen:FALLEN_BOOSTER,defender:DEFENDER,summoner:SUMMONER,fallenOverlord:FALLEN_OVERLORD};
 const CARTOGRAPHER={name:"Cartógrafo",hp:1350,reward:30000,body:34,r:75,color:"#789ab0",ammo:"#8daeba",
   range:810,guns:[-.39,.39].map(offset=>gun(0,{offset,width:.38,length:1.51,speed:.83,damage:1.23,pen:CARTOGRAPHER_SHOTS[0].penetration,life:1.2,recoil:0,spread:0}))};
+// Preset do Montador de Chefes, versão 2.
+const SUCATEIRO_VISUAL={version:2,template:"scrapper",name:"Sucateiro",stages:[
+  {
+    title:"Coleta",hp:100,body:"hex",radius:58,angle:30,
+    fill:"#747787",line:"#3f4351",stroke:6,capacity:6,radiusOrbit:135,
+    speedOrbit:39,clockwise:true,showRing:true,aim:0,warning:0.75,
+    cooldown:3,
+    parts:[
+      {"name":"Canhão superior","kind":"barrel","x":43,"y":-22,"w":94,"h":26,"angle":-13,"shape":"hex","fill":"#929e9c","line":"#444957","stroke":5,"opacity":100},
+      {"name":"Canhão inferior","kind":"barrel","x":43,"y":22,"w":94,"h":26,"angle":13,"shape":"hex","fill":"#929e9c","line":"#444957","stroke":5,"opacity":100},
+      {"name":"Placa traseira","kind":"plate","x":-33,"y":0,"w":37,"h":79,"angle":0,"shape":"hex","fill":"#646879","line":"#444957","stroke":5,"opacity":100},
+      {"name":"Núcleo","kind":"core","x":-4,"y":0,"w":65,"h":65,"angle":0,"shape":"hex","fill":"#b2bcac","line":"#444957","stroke":5,"opacity":100}
+    ],orbits:{
+      square:{"qty":3,"limit":6,"damage":8,"speed":250,"extra":0,"fill":"#ebc452","scale":100},
+      triangle:{"qty":3,"limit":6,"damage":11,"speed":420,"extra":0,"fill":"#ec856a","scale":100},
+      pentagon:{"qty":0,"limit":0,"damage":17,"speed":300,"extra":0.18,"fill":"#8884e1","scale":100},
+      alpha:{"qty":0,"limit":0,"damage":28,"speed":205,"extra":0.45,"fill":"#7776d9","scale":100}
+    }
+  },
+  {
+    title:"Escudo carregado",hp:70,body:"hex",radius:62,angle:30,
+    fill:"#7c748f",line:"#3f4351",stroke:6,capacity:9,radiusOrbit:158,
+    speedOrbit:48,clockwise:true,showRing:true,aim:0,warning:0.75,
+    cooldown:3,
+    parts:[
+      {"name":"Canhão superior","kind":"barrel","x":43,"y":-22,"w":94,"h":26,"angle":-13,"shape":"hex","fill":"#929e9c","line":"#444957","stroke":5,"opacity":100},
+      {"name":"Canhão inferior","kind":"barrel","x":43,"y":22,"w":94,"h":26,"angle":13,"shape":"hex","fill":"#929e9c","line":"#444957","stroke":5,"opacity":100},
+      {"name":"Placa traseira","kind":"plate","x":-33,"y":0,"w":37,"h":79,"angle":0,"shape":"hex","fill":"#9b8562","line":"#444957","stroke":5,"opacity":100},
+      {"name":"Marca de fase","kind":"poly","x":-39,"y":0,"w":32,"h":32,"angle":180,"shape":"triangle","fill":"#e2bf79","line":"#444957","stroke":3,"opacity":100},
+      {"name":"Núcleo","kind":"core","x":-4,"y":0,"w":65,"h":65,"angle":0,"shape":"hex","fill":"#e1ba72","line":"#444957","stroke":5,"opacity":100}
+    ],orbits:{
+      square:{"qty":3,"limit":6,"damage":8,"speed":250,"extra":0,"fill":"#ebc452","scale":100},
+      triangle:{"qty":2,"limit":6,"damage":11,"speed":420,"extra":0,"fill":"#ec856a","scale":100},
+      pentagon:{"qty":2,"limit":3,"damage":17,"speed":300,"extra":0.18,"fill":"#8884e1","scale":100},
+      alpha:{"qty":0,"limit":0,"damage":28,"speed":205,"extra":0.45,"fill":"#7776d9","scale":100}
+    }
+  },
+  {
+    title:"Sobrecarga",hp:35,body:"hex",radius:66,angle:30,
+    fill:"#8d655d",line:"#3f4351",stroke:6,capacity:12,radiusOrbit:184,
+    speedOrbit:58,clockwise:true,showRing:true,aim:0,warning:0.75,
+    cooldown:2.5,
+    parts:[
+      {"name":"Canhão superior","kind":"barrel","x":43,"y":-22,"w":94,"h":26,"angle":-13,"shape":"hex","fill":"#929e9c","line":"#444957","stroke":5,"opacity":100},
+      {"name":"Canhão inferior","kind":"barrel","x":43,"y":22,"w":94,"h":26,"angle":13,"shape":"hex","fill":"#929e9c","line":"#444957","stroke":5,"opacity":100},
+      {"name":"Placa traseira","kind":"plate","x":-33,"y":0,"w":37,"h":79,"angle":0,"shape":"hex","fill":"#ac815f","line":"#444957","stroke":5,"opacity":100},
+      {"name":"Marca de fase","kind":"poly","x":-39,"y":0,"w":32,"h":32,"angle":180,"shape":"triangle","fill":"#e2bf79","line":"#444957","stroke":3,"opacity":100},
+      {"name":"Núcleo","kind":"core","x":-4,"y":0,"w":65,"h":65,"angle":0,"shape":"hex","fill":"#f19163","line":"#444957","stroke":5,"opacity":100},
+      {"name":"Miolo quente","kind":"core","x":-4,"y":0,"w":28,"h":28,"angle":0,"shape":"hex","fill":"#f7d49a","line":"#444957","stroke":3,"opacity":100}
+    ],orbits:{
+      square:{"qty":2,"limit":6,"damage":8,"speed":250,"extra":0,"fill":"#ebc452","scale":100},
+      triangle:{"qty":3,"limit":6,"damage":11,"speed":420,"extra":0,"fill":"#ec856a","scale":100},
+      pentagon:{"qty":1,"limit":3,"damage":17,"speed":300,"extra":0.18,"fill":"#8884e1","scale":100},
+      alpha:{"qty":1,"limit":1,"damage":28,"speed":205,"extra":0.45,"fill":"#7776d9","scale":100}
+    }
+  }
+]};
+const SUCATEIRO={name:SUCATEIRO_VISUAL.name,hp:2100,reward:30000,body:28,
+  r:SUCATEIRO_VISUAL.stages[0].radius,color:SUCATEIRO_VISUAL.stages[0].fill,range:720,guns:[]};
+const SCRAP_TYPES={
+  square:{kind:"scrapSquare",weight:1,radius:15,sides:4,dur:3},
+  triangle:{kind:"scrapTriangle",weight:1,radius:19,sides:3,dur:3.8},
+  pentagon:{kind:"scrapPentagon",weight:2,radius:28,sides:5,dur:6},
+  alpha:{kind:"scrapAlpha",weight:5,radius:46,sides:5,dur:10,orbitHp:240}
+};
+const SCRAP_CURVE_TIME=.62,SCRAP_CHARGE_TIME=4,SCRAP_BLAST_RADIUS=112,SCRAP_BLAST_TIME=.34;
+const SCRAP_HEAL_DELAY=3,SCRAP_HEAL_RATE=.20;
+const SCRAP_GUIDE_TIME=.36,SCRAP_GUIDE_LIMIT=Math.PI/15,SCRAP_GUIDE_RATE=Math.PI/5;
+const SCRAP_ENERGY="#53dce9",SCRAP_ENERGY_BRIGHT="#8bfaff";
+function scrapArcTravel(vx,vy,rate,remaining,seconds){
+  const arc=Math.min(remaining,seconds),straight=seconds-arc;
+  const turn=rate*arc,cos=Math.cos(turn),sin=Math.sin(turn);
+  const along=sin/rate+cos*straight,across=(1-cos)/rate+sin*straight;
+  return [vx*along-vy*across,vy*along+vx*across];
+}
+const SCRAP_SHOTS=new Map(Object.values(SCRAP_TYPES).map(type=>[type.kind,type]));
+const SCRAP_SCOPES=new Set(["open","teams","four-teams"]);
 const ROTATING_BOSSES={...CLASSIC_BOSSES,treeTopper:TREE_TOPPER,decade:DECADE};
-const BOSS_SPECS={...ROTATING_BOSSES,cartographer:CARTOGRAPHER};
+const BOSS_SPECS={...ROTATING_BOSSES,cartographer:CARTOGRAPHER,sucateiro:SUCATEIRO};
 function shuffleBosses(random,previous,events=false,scope){
   const bosses=Object.keys(events?ROTATING_BOSSES:CLASSIC_BOSSES);
   if(events&&scope==="open")bosses.push("cartographer");
+  if(events&&SCRAP_SCOPES.has(scope))bosses.push("sucateiro");
   for(let i=bosses.length-1;i>0;i--){
     const j=Math.floor(random()*(i+1));
     [bosses[i],bosses[j]]=[bosses[j],bosses[i]];
@@ -2414,7 +2492,7 @@ const HISTORY_KIND={combate:"Combate",progressao:"Evolução",chefes:"Chefe",fug
 const ACTOR_KEY={tank:e=>(e.human?"jogador:":"bot:")+e.name,boss:e=>"chefe:"+e.name,
   form:e=>e.mini?"chefe:"+e.f.name:null,tower:e=>"torre:"+e.name,ship:e=>"nave:"+e.name,closer:e=>"arena:"+e.name};
 const FORM_ART={...FORMS,...Object.fromEntries(SURVIVAL_MINIS.map(f=>[f.key,f]))};
-const FORM_KEYS=Object.keys(FORM_ART), SHOT_KINDS=["bullet","drone","autoDrone","trap","firework","squareDrone","eventMissile",SKIMMER_MISSILE,ROCKETEER_MISSILE,...DECADE_MINIONS.map(m=>m.appearance),"decadeEscort","decadeBullet",NECRO_DRONE,FACTORY_MINION];
+const FORM_KEYS=Object.keys(FORM_ART), SHOT_KINDS=["bullet","drone","autoDrone","trap","firework","squareDrone","eventMissile",SKIMMER_MISSILE,ROCKETEER_MISSILE,...DECADE_MINIONS.map(m=>m.appearance),"decadeEscort","decadeBullet",NECRO_DRONE,FACTORY_MINION,...SCRAP_SHOTS.keys()];
 const FORM_INDEX=new Map(FORM_KEYS.map((name,i)=>[name,i]));
 const DEFAULT_PLAYER_COLOR="#39b7ed";
 function customTankColor(t){return t.human?t.playerColor:undefined;}
@@ -2433,6 +2511,7 @@ function unitColor(t,time=0){
   return RAINBOW_COLORS[index];
 }
 function shotColor(p,time){
+  if(p.scrapColor)return p.scrapCharge===1?SCRAP_ENERGY_BRIGHT:p.scrapCharge>=.5?SCRAP_ENERGY:p.scrapColor;
   if(p.pillarSource)return "#eaba70";
   if(p.kind===NECRO_DRONE&&p.owner.team==null)return customTankColor(p.owner)??"#edaa80";
   return p.owner.spec?.ammo??(p.owner.mini?p.owner.f.color:unitColor(p.owner,time));}
@@ -2441,6 +2520,12 @@ function snapshotUnit(t){
   const {type,id,name,cls,x,y,r,aim,hp,hit,team,slot,human,protect}=t;
   if(type==="boss")return {type,id,name,cls,x,y,r,aim,hp,hit,alive:true,spec:t.spec,phase:t.phase,nextVolley:t.nextVolley,
     turretAngles:t.turrets?.map(turret=>turret.aim),
+    ...(t.spec===SUCATEIRO?{stage:t.stage,scrapRadius:t.scrapRadius,
+      scrapStock:t.scrapStock.filter(piece=>piece.alive).map(({id,x,y,r,angle,name,hp,damaged,scrap})=>
+        ({id,x,y,r,angle,name,hp,damaged,scrap:{color:scrap.color,maxHp:scrap.maxHp,charge:scrap.charge}})),
+      scrapBlasts:t.scrapBlasts.slice(),
+      scrapWarning:t.scrapWarning?.piece.alive?{id:t.scrapWarning.piece.id,plan:t.scrapWarning.plan,
+        until:t.scrapWarning.until}:null}:{}),
     ...(t.turret?{stage:t.stage,turret:snapshotCartographerTurret(t.turret)}:{}),
     ...(t.barrier?{barrier:{stage:t.barrier.stage,starts:t.barrier.starts,ends:t.barrier.ends,segments:t.barrier.segments.map(
       ({hp,center,pillar,walls,extra,turret})=>({hp,center,pillar,walls,extra,turret:snapshotCartographerTurret(turret)}))}}:{})};
@@ -2461,7 +2546,8 @@ function snapshotEffects(items,stride,write){
   return data.subarray(0,index);
 }
 function packedForms(w){
-  return snapshotEffects(w.shapes,8,(a,i,e)=>{
+  const forms=w.boss?.spec===SUCATEIRO?w.shapes.filter(form=>!form.scrap):w.shapes;
+  return snapshotEffects(forms,8,(a,i,e)=>{
     a[i]=e.x;a[i+1]=e.y;a[i+2]=e.r;a[i+3]=e.angle;
     a[i+4]=e.hp;a[i+5]=e.damaged;a[i+6]=FORM_INDEX.get(e.name);a[i+7]=+e.shiny;
   });
@@ -3515,6 +3601,7 @@ class Arena {
   }
   beginClosing(){
     if(this.boss?.spec===CARTOGRAPHER)this.clearCartographerBarrier(this.boss);
+    if(this.boss?.spec===SUCATEIRO)this.clearScrapper(this.boss);
     this.closing??={startsAt:this.time+1.6,closers:[],active:false,last:null,lastTower:null, tanksDone:false,summary:""};
   }
   spawnClosers(){
@@ -3877,6 +3964,7 @@ class Arena {
   kill(e,by,cause){
     if(!e.alive) return;
     if(e.spec===CARTOGRAPHER)this.clearCartographerBarrier(e);
+    if(e.spec===SUCATEIRO)this.clearScrapper(e);
     if(e.careWindow)finishCare(e,this.time,by===e.careWindow.rival?"foi eliminado":"interrompida");
     if(e.type==="tower"){
       if(this.closing?.active&&by?.type==="closer")this.destroyTowerDuringClosing(e,by);
@@ -3944,7 +4032,8 @@ class Arena {
       this.note(message);this.record("chefes",message,[by,e],e,"Mini-chefe derrotado");
       this.burst(e.x,e.y,e.f.color,20);
     }else{
-      this.award(by,e.f.xp*(e.shiny?100:1)*(this.mothership||this.tag||this.survival?3:this.domination?2:1));
+      const xp=e.scrap?Math.round(e.f.xp*e.scrap.maxHp/e.f.hp):e.f.xp;
+      this.award(by,xp*(e.shiny?100:1)*(this.mothership||this.tag||this.survival?3:this.domination?2:1));
       if(e.shiny){
         const message=(by?.name??"Um tanque")+" destruiu uma forma brilhante";
         this.note(message);
@@ -4125,6 +4214,7 @@ class Arena {
   spawnBoss(kind){
     if(this.boss?.alive||this.maze||this.domination||this.mothership||this.tag||this.survival||this.convoy)return null;
     if(kind==="cartographer"&&!this.bossTrial&&(this.profileRoster!=="open"||!this.bossInterval||!this.eventBosses))return null;
+    if(kind==="sucateiro"&&!this.bossTrial&&(!SCRAP_SCOPES.has(this.profileRoster)||!this.bossInterval||!this.eventBosses))return null;
     const spec=this.apprentice?APPRENTICE_GUARDIAN:BOSS_SPECS[kind]??GUARDIAN;
     const angle=this.bossTrial?Math.PI/2:TAU*rngFrom(this.seed^0x25e1dace^this.tick)();
     const orbit=this.bossTrial?430:this.nest*.87;
@@ -4155,6 +4245,19 @@ class Arena {
       cruiseAngle:angle-Math.PI/2,phase:"ronda",target:null,polygons:[],nextDrone:this.time+.125});
     if(spec===CARTOGRAPHER)Object.assign(this.boss,{aim:-Math.PI/2,stats:Array(8).fill(0),barrierHomeX:x,barrierHomeY:y,
       stage:1,nextBarrier:this.time+.25,turret:cartographerTurret(-Math.PI/2,this.time+.9)});
+    if(spec===SUCATEIRO){
+      Object.assign(this.boss,{stage:1,scrapStock:[],scrapWarning:null,scrapSpin:0,
+        scrapRadius:SUCATEIRO_VISUAL.stages[0].radiusOrbit,nextScrapGrab:this.time+.15,nextScrapShot:this.time+2.4,
+        stats:Array(8).fill(0),scrapTurn:1,scrapBarrel:0,nextScrapBarrel:this.time,scrapBlasts:[]});
+      if(this.bossTrial){
+        const stock=["square","triangle","pentagon","square","triangle","alpha","square","triangle",
+          "pentagon","triangle","pentagon","square"];
+        stock.forEach((name,i)=>{
+          const bearing=i*TAU/stock.length,dist=205+(i%2)*65;
+          this.addShape(name,x+Math.cos(bearing)*dist,y+Math.sin(bearing)*dist,false);
+        });
+      }
+    }
     if(spec===TREE_TOPPER||spec===DECADE)Object.assign(this.boss,{
       stats:[0,0,0,0,0,0,0,0],turrets:Array.from({length:spec===TREE_TOPPER?5:1},(_,i)=>({aim:angle+i*TAU/5,ready:this.time+i*.16})),
       nextDeploy:this.time+1,deployerIndex:0,target:null
@@ -4444,6 +4547,292 @@ class Arena {
     }
     if(now-b.damaged>3)b.hp=Math.min(spec.hp,b.hp+spec.regen*DT);
   }
+  releaseScrap(piece){
+    const scrap=piece.scrap;
+    if(piece.alive){
+      piece.hp=Math.max(1,Math.min(piece.f.hp,scrap.originalHp-(scrap.startHp-piece.hp)));
+      piece.r=scrap.originalRadius;
+      piece.vx=piece.vy=piece.kx=piece.ky=0;
+    }
+    delete piece.scrap;
+  }
+  clearScrapper(b){
+    for(const piece of b.scrapStock)this.releaseScrap(piece);
+    b.scrapStock.length=0;
+    b.scrapWarning=null;
+  }
+  captureScrap(b,stage){
+    const used=b.scrapStock.reduce((total,piece)=>total+SCRAP_TYPES[piece.name].weight,0);
+    const count={square:0,triangle:0,pentagon:0,alpha:0};
+    for(const piece of b.scrapStock)count[piece.name]++;
+    const capacity=stage.capacity;
+    const available=this.shapes.filter(piece=>{
+      const meta=SCRAP_TYPES[piece.name],settings=stage.orbits[piece.name];
+      return piece.alive&&!piece.shiny&&!piece.scrap&&meta&&count[piece.name]<settings.limit&&
+        meta.weight<=capacity&&sq(piece.x-b.x)+sq(piece.y-b.y)<=310**2;
+    });
+    available.sort((a,z)=>Number(!count[z.name])*SCRAP_TYPES[z.name].weight-Number(!count[a.name])*SCRAP_TYPES[a.name].weight||
+      sq(a.x-b.x)+sq(a.y-b.y)-sq(z.x-b.x)-sq(z.y-b.y)||a.id-z.id);
+    for(const piece of available){
+      const meta=SCRAP_TYPES[piece.name],settings=stage.orbits[piece.name];
+      const radius=meta.radius*settings.scale/100;
+      const leaving=new Set();
+      let space=capacity-used;
+      if(space<meta.weight){
+        if(meta.weight<2||count[piece.name])continue;
+        for(const other of b.scrapStock){
+          const weight=SCRAP_TYPES[other.name].weight;
+          if(weight>=meta.weight)continue;
+          leaving.add(other);
+          space+=weight;
+          if(space>=meta.weight)break;
+        }
+        if(space<meta.weight)continue;
+      }
+      const bearing=Math.atan2(piece.y-b.y,piece.x-b.x)-b.scrapSpin;
+      // Look for a free slot near the original bearing, without moving existing shields.
+      const step=TAU/36;
+      for(let i=0;i<=36;i++){
+        const slot=bearing+Math.ceil(i/2)*(i%2?1:-1)*step;
+        const occupied=b.scrapStock.some(other=>!leaving.has(other)&&2*stage.radiusOrbit*Math.abs(Math.sin((slot-other.scrap.slot)/2))<radius+other.r+8);
+        if(occupied)continue;
+        if(leaving.size){
+          for(const other of leaving)this.releaseScrap(other);
+          b.scrapStock=b.scrapStock.filter(other=>!leaving.has(other));
+        }
+        const maxHp=meta.orbitHp??piece.f.hp, hp=Math.min(piece.hp,maxHp);
+        const pullTime=.52+.075*(meta.weight-1);
+        piece.scrap={slot,at:this.time,x:piece.x,y:piece.y,vx:piece.vx,vy:piece.vy,angle:piece.angle,
+          pullTime,charge:0,chargesAt:this.time+pullTime,maxHp,startHp:hp,originalHp:piece.hp,
+          originalRadius:piece.r,color:settings.fill};
+        piece.hp=hp;
+        piece.r=radius;
+        piece.kx=piece.ky=0;
+        b.scrapStock.push(piece);
+        return;
+      }
+    }
+  }
+  scrapperTarget(b,tank){
+    return this.bossCanTarget(b,tank)&&sq(tank.x-b.x)+sq(tank.y-b.y)<b.spec.range**2&&
+      (!this.hasBases||this.baseDistance(tank.team,tank.x,tank.y)>tank.r);
+  }
+  scrapperPiece(b,target){
+    const targetAngle=Math.atan2(target.y-b.y,target.x-b.x);
+    const range=sq(target.x-b.x)+sq(target.y-b.y);
+    let choice=null,best=Infinity;
+    for(const piece of b.scrapStock){
+      if(this.time-piece.scrap.at<piece.scrap.pullTime)continue;
+      const angle=Math.atan2(piece.y-b.y,piece.x-b.x);
+      const deviation=Math.abs(angleDelta(angle,targetAngle));
+      if(deviation>Math.PI/2.7||range<=sq(piece.x-b.x)+sq(piece.y-b.y))continue;
+      const priority=deviation-SCRAP_TYPES[piece.name].weight*.27;
+      if(priority<best){best=priority;choice=piece;}
+    }
+    return choice;
+  }
+  planScrap(b,piece,settings,foe){
+    const {x,y}=piece,dx=foe.x-x,dy=foe.y-y;
+    const speed=settings.speed*(b.stage===3?1.12:1),charge=piece.scrap.charge;
+    const turnRate=charge>=.5?(piece.name==="alpha"?.34:.68)*b.scrapTurn/SCRAP_CURVE_TIME:0;
+    let heading=Math.atan2(dy,dx);
+    if(turnRate){
+      const [forward,lateral]=scrapArcTravel(speed,0,turnRate,SCRAP_CURVE_TIME,Math.hypot(dx,dy)/speed);
+      heading-=Math.atan2(lateral,forward);
+    }
+    return {x,y,heading,speed,turnRate,charge,targetId:foe.id,targetX:foe.x,targetY:foe.y};
+  }
+  throwScrap(b,piece,settings,plan){
+    if(this.shots.length>=3000)return false;
+    const {x,y,heading,speed,turnRate,charge,targetId}=plan;
+    const meta=SCRAP_TYPES[piece.name];
+    if(turnRate)b.scrapTurn*=-1;
+    const target=b.stage===3&&turnRate?this.tanks.find(tank=>tank.id===targetId):null;
+    const guide=target?{target,x:plan.targetX,y:plan.targetY,offset:0}:null;
+    this.shots.push({type:"shot",kind:meta.kind,owner:b,sourceClass:b.cls,id:++this.serial,
+      alive:true,x,y,px:x,py:y,r:piece.r,angle:heading,
+      vx:Math.cos(heading)*speed,vy:Math.sin(heading)*speed,
+      scrapColor:settings.fill,scrapTarget:targetId,scrapTurnRate:turnRate,scrapCharge:charge,scrapGuide:guide,bornTick:this.tick,
+      age:0,life:Math.min(4,920/speed),damage:settings.damage*(1+charge),dur:meta.dur});
+    piece.alive=false;
+    b.scrapStock=b.scrapStock.filter(other=>other!==piece);
+    delete piece.scrap;
+    b.nextScrapGrab=this.time+1.2;
+    return true;
+  }
+  fireScrapperBarrel(b,barrel,target){
+    if(this.time<b.nextScrapBarrel)return;
+    const {part,slot}=barrel,cos=Math.cos(b.aim),sin=Math.sin(b.aim);
+    const mount={x:b.x+part.x*cos-part.y*sin,y:b.y+part.x*sin+part.y*cos,
+      aim:b.aim+part.angle*Math.PI/180,scrapBarrel:slot};
+    const final=b.stage===3;
+    const speed=final?1.36:1.08;
+    const g=gun(0,{length:part.w/(2*b.r),width:12/b.r,speed,damage:(final?13:8)/7,pen:final?7.5:6,
+      life:(b.spec.range+32)/(480*speed*1.35),recoil:0,spread:0});
+    const muzzle=gunMuzzle(mount,g,b.r,6);
+    const dx=target.x-muzzle.x,dy=target.y-muzzle.y;
+    if(dx*muzzle.cos+dy*muzzle.sin<0||Math.abs(dx*muzzle.sin-dy*muzzle.cos)>target.r*.72+6)return;
+    if(this.spawnShot(b,g,mount)){
+      b.scrapBarrel++;
+      b.nextScrapBarrel=this.time+(final?.46:.74);
+    }
+  }
+  explodeScrap(p,contact,direct=null){
+    if(!p.alive||p.scrapCharge!==1)return;
+    const x=p.px+(p.x-p.px)*contact,y=p.py+(p.y-p.py)*contact;
+    const radius=SCRAP_BLAST_RADIUS;
+    const boss=p.owner;
+    this.removeShot(p);
+    boss.scrapBlasts.push({x,y,at:this.time});
+    this.burst(x,y,SCRAP_ENERGY_BRIGHT,16);
+    for(const entity of this.solid.nearby(x,y,radius,new Set())){
+      if(!entity.alive||entity===boss||entity.protect>0||this.allies(entity,boss))continue;
+      if(entity.type==="tank"){
+        if(!this.bossCanTarget(boss,entity)||this.hasBases&&this.baseDistance(entity.team,entity.x,entity.y)<=entity.r)continue;
+      }else if(entity.type!=="form"||entity.scrap)continue;
+      const gap=entity===direct?0:Math.max(0,Math.hypot(entity.x-x,entity.y-y)-entity.r);
+      if(gap>=radius||this.maze?.hit(x,y,entity.x,entity.y)!=null||
+        this.baseImpact(boss,x,y,entity.x,entity.y,0)!=null)continue;
+      const damage=p.damage*(1-.72*gap/radius);
+      entity.hp-=damage;
+      entity.hit=entity.damaged=this.time;
+      if(entity.dodgeAttempt?.p===p)finishDodgeAttempt(entity,false);
+      if(entity.hp<=0)this.kill(entity,boss,boss.name);
+    }
+  }
+  advanceScrapper(b){
+    const now=this.time;
+    if(b.scrapBlasts.length)b.scrapBlasts=b.scrapBlasts.filter(blast=>now-blast.at<SCRAP_BLAST_TIME);
+    b.scrapStock=b.scrapStock.filter(piece=>piece.alive);
+    const warning=b.scrapWarning;
+    if(warning&&!warning.piece.alive){
+      b.scrapWarning=null;
+      b.nextScrapShot=now+.65;
+    }
+    const hp=b.hp/b.spec.hp*100;
+    const previousStage=b.stage;
+    const stages=SUCATEIRO_VISUAL.stages;
+    while(b.stage<stages.length&&hp<=stages[b.stage].hp)b.stage++;
+    const stage=stages[b.stage-1];
+    if(b.stage!==previousStage){
+      if(b.scrapWarning){
+        b.scrapWarning=null;
+        b.nextScrapShot=Math.max(b.nextScrapShot,now+.25);
+        // Resume the marked piece from its frozen position without jumping around the orbit.
+        const {piece}=warning;
+        if(piece.alive){
+          const pull={x:piece.x,y:piece.y,at:now,vx:0,vy:0,angle:piece.angle,pullTime:.35};
+          piece.scrap.chargesAt+=now-warning.started+pull.pullTime;
+          Object.assign(piece.scrap,pull);
+        }
+      }
+      b.r=stage.radius;
+      for(const piece of b.scrapStock){
+        const settings=stage.orbits[piece.name];
+        piece.r=SCRAP_TYPES[piece.name].radius*settings.scale/100;
+        piece.scrap.color=settings.fill;
+      }
+      this.note(b.name+" · "+stage.title);
+    }
+    b.px=b.x;b.py=b.y;
+    if(!b.scrapWarning){
+      b.angle+=b.direction*(39+(b.stage-1)*11)/b.orbit*DT;
+      b.x=this.mid+Math.cos(b.angle)*b.orbit;
+      b.y=this.mid+Math.sin(b.angle)*b.orbit;
+    }
+    b.vx=(b.x-b.px)/DT;b.vy=(b.y-b.py)/DT;
+    if(this.tick%9===0){
+      let nearest=Infinity;
+      b.target=null;
+      for(const [id,until] of b.provoked)if(until<=now)b.provoked.delete(id);
+      for(const tank of this.tanks){
+        if(!this.scrapperTarget(b,tank))continue;
+        const distance=sq(tank.x-b.x)+sq(tank.y-b.y);
+        if(distance<b.spec.range**2&&distance<nearest){nearest=distance;b.target=tank;}
+      }
+    }
+    const target=b.target&&this.scrapperTarget(b,b.target)?b.target:null;
+    let aim=b.scrapWarning?.plan.heading??(target?Math.atan2(target.y-b.y,target.x-b.x):b.angle+b.direction*Math.PI/2);
+    let barrel;
+    if(target&&b.stage>=2){
+      const barrels=stage.parts.filter(part=>part.kind==="barrel");
+      const slot=b.scrapBarrel%barrels.length,part=barrels[slot];
+      if(part){
+        barrel={part,slot};
+        const angle=part.angle*Math.PI/180;
+        const offset=part.y*Math.cos(angle)-part.x*Math.sin(angle);
+        const distance=Math.hypot(target.x-b.x,target.y-b.y);
+        aim-=angle+Math.asin(clamp(offset/Math.max(1,distance),-1,1));
+      }
+    }
+    b.aim+=clamp(angleDelta(aim,b.aim),-2.6*DT,2.6*DT);
+    b.scrapSpin+=stage.speedOrbit*Math.PI/180*(stage.clockwise?1:-1)*DT;
+    // Ease orbit size transitions so the shield does not sweep through a tank in one tick.
+    b.scrapRadius+=(stage.radiusOrbit-b.scrapRadius)*.08;
+    for(const piece of b.scrapStock){
+      const orbit=piece.scrap;
+      const angle=orbit.slot+b.scrapSpin;
+      const elapsed=clamp(now-orbit.at,0,orbit.pullTime);
+      const progress=elapsed/orbit.pullTime;
+      const blend=progress*progress*(3-2*progress);
+      piece.px=piece.x;piece.py=piece.y;
+      if(piece!==b.scrapWarning?.piece){
+        const orbitTime=now-orbit.chargesAt;
+        orbit.charge=clamp(orbitTime/SCRAP_CHARGE_TIME,0,1);
+        const healingTime=clamp(orbitTime-SCRAP_HEAL_DELAY,0,DT);
+        if(healingTime>0&&piece.hp<orbit.maxHp)piece.hp=Math.min(orbit.maxHp,piece.hp+orbit.maxHp*SCRAP_HEAL_RATE*healingTime);
+        const fromX=orbit.x+orbit.vx*elapsed,fromY=orbit.y+orbit.vy*elapsed;
+        piece.x=fromX+(b.x+Math.cos(angle)*b.scrapRadius-fromX)*blend;
+        piece.y=fromY+(b.y+Math.sin(angle)*b.scrapRadius-fromY)*blend;
+        piece.angle=orbit.angle+angleDelta(angle+Math.PI/4,orbit.angle)*blend;
+      }else{
+        piece.x=b.scrapWarning.plan.x;piece.y=b.scrapWarning.plan.y;
+      }
+      piece.vx=(piece.x-piece.px)/DT;piece.vy=(piece.y-piece.py)/DT;
+    }
+    if(b.scrapWarning){
+      if(now<b.scrapWarning.until)return;
+      const {piece,plan,settings}=b.scrapWarning;
+      b.scrapWarning=null;
+      b.nextScrapShot=now+stage.cooldown;
+      this.throwScrap(b,piece,settings,plan);
+      return;
+    }
+    if(now>=b.nextScrapGrab){
+      b.nextScrapGrab=now+.62;
+      this.captureScrap(b,stage);
+    }
+    if(!target)return;
+    if(now>=b.nextScrapShot){
+      if(b.stage===1){
+        const piece=this.scrapperPiece(b,target);
+        if(piece){
+          const settings=stage.orbits[piece.name];
+          b.scrapWarning={piece,plan:this.planScrap(b,piece,settings,target),
+            started:now,until:now+stage.warning+settings.extra,settings};
+        }
+      }else{
+        const attacking=this.tanks.filter(tank=>this.scrapperTarget(b,tank)&&
+          (tank.highlightBossId===b.id&&now-tank.highlightBossTime<=2.4||
+           tank.bossTarget===b&&(tank.intent.fire||C[tank.cls].ram)));
+        attacking.sort((a,z)=>Math.hypot(a.x-b.x,a.y-b.y)-Math.hypot(z.x-b.x,z.y-b.y)||a.id-z.id);
+        let throws=0;
+        for(const foe of (attacking.length?attacking:[target])){
+          const piece=this.scrapperPiece(b,foe);
+          if(!piece)continue;
+          const settings=stage.orbits[piece.name];
+          if(this.throwScrap(b,piece,settings,this.planScrap(b,piece,settings,foe)))throws++;
+          if(throws===2)break;
+        }
+        if(throws){
+          b.nextScrapShot=now+stage.cooldown;
+          b.nextScrapBarrel=Math.max(b.nextScrapBarrel,now+.3);
+          return;
+        }
+      }
+    }
+    if(barrel)this.fireScrapperBarrel(b,barrel,target);
+  }
   advanceGuardian(boss){
     const spec=boss.spec;
     const {patrolPeriod,range,droneCap,dronePeriod,regen}=spec;
@@ -4727,6 +5116,7 @@ class Arena {
     const care=mount.parent?mount.parent.careWindow:t.careWindow;
     if(care)child.careWindow=care;
     if(mount.cartographerShot){child.cartographerShot=true;child.bornTick=this.tick;}
+    if(mount.scrapBarrel!=null){child.scrapBarrel=mount.scrapBarrel;child.bornTick=this.tick;}
     if(mount.pillar)child.pillarSource=mount.pillar;
     if(t.apprentice?.row)child.apprenticeRow=t.apprentice.row;
     if(t.apprentice?.coopDecision)child.apprenticeCoop=t.apprentice.coopDecision;
@@ -5275,6 +5665,7 @@ class Arena {
     }
   }
   advanceShape(e){
+    if(e.scrap)return;
     if(e.mini){this.advanceSurvivalMini(e);return;}
     e.px=e.x;e.py=e.y;e.angle+=e.rot*DT;
     let vx=Math.cos(e.phase+this.time*.17)*7,vy=Math.sin(e.phase+this.time*.19)*7;
@@ -5328,9 +5719,28 @@ class Arena {
     p.vx+=pushX*correction;
     p.vy+=pushY*correction;
   }
+  steerScrap(p,age){
+    const guide=p.scrapGuide;
+    if(!guide)return 0;
+    const dt=Math.min(DT,SCRAP_GUIDE_TIME-age);
+    const {target,x,y,offset}=guide;
+    if(dt<=0||!this.bossCanTarget(p.owner,target)||
+      this.maze?.hit(p.x,p.y,target.x,target.y)!=null||
+      this.baseImpact(p.owner,p.x,p.y,target.x,target.y,0)!=null){
+      p.scrapGuide=null;
+      return 0;
+    }
+    // Correct for the target's displacement from the original aim, within the turn budget.
+    const initial=Math.atan2(y-p.y,x-p.x);
+    const current=Math.atan2(target.y-p.y,target.x-p.x);
+    const desired=clamp(angleDelta(current,initial),-SCRAP_GUIDE_LIMIT,SCRAP_GUIDE_LIMIT);
+    const turn=clamp(desired-offset,-SCRAP_GUIDE_RATE*dt,SCRAP_GUIDE_RATE*dt);
+    guide.offset+=turn;
+    return turn/DT;
+  }
   advanceShot(p){
-    // Keep the first visible state at the muzzle before advancing the sweep.
-    if(p.cartographerShot&&p.bornTick===this.tick)return;
+    // Keep the first visible state at the origin before advancing the sweep.
+    if((p.cartographerShot||p.scrapColor||p.scrapBarrel!=null)&&p.bornTick===this.tick)return;
     if(!p.owner.alive&&(isSpawnedDrone(p.kind)||p.kind===NECRO_DRONE)){
       this.removeShot(p);return;
     }
@@ -5354,8 +5764,17 @@ class Arena {
       this.spaceTankDrone(p);
     }
     if(p.kind===SKIMMER_MISSILE)p.angle=angleDelta(p.angle+p.spin*5.6*DT,0);
+    if(p.scrapColor)p.angle=angleDelta(p.angle+2.5*DT,0);
     if(p.kind==="firework"){p.vx+=Math.cos(p.angle)*2.75;p.vy+=Math.sin(p.angle)*2.75;}
-    const x=p.x+p.vx*DT,y=p.y+p.vy*DT;
+    const remaining=p.scrapTurnRate?SCRAP_CURVE_TIME-(p.age-DT):0;
+    let dx=p.vx*DT,dy=p.vy*DT;
+    if(remaining>0){
+      const rate=p.scrapTurnRate+this.steerScrap(p,p.age-DT);
+      [dx,dy]=rate?scrapArcTravel(p.vx,p.vy,rate,remaining,DT):[dx,dy];
+      const angle=rate*Math.min(remaining,DT),cos=Math.cos(angle),sin=Math.sin(angle);
+      [p.vx,p.vy]=[p.vx*cos-p.vy*sin,p.vx*sin+p.vy*cos];
+    }
+    const x=p.x+dx,y=p.y+dy;
     if((p.kind===NECRO_DRONE||p.kind===FACTORY_MINION)&&!this.maze&&!this.hasBases){
       p.x=clamp(x,p.r,this.size-p.r);p.y=clamp(y,p.r,this.size-p.r);
     }else if(this.maze&&isDrone)this.maze.move(p,clamp(x,p.r,this.size-p.r),clamp(y,p.r,this.size-p.r));
@@ -5370,7 +5789,13 @@ class Arena {
         if(p.wallTime!=null&&p.owner.spec===DEFENDER)this.provokeDefenderBases(p.owner,p.px,p.py,x,y,p.r);
       }
     }
-    if(p.wallTime==null&&(p.x<0||p.y<0||p.x>this.size||p.y>this.size)){this.removeShot(p);}
+    if(p.wallTime==null&&(p.x<0||p.y<0||p.x>this.size||p.y>this.size)){
+      if(p.scrapCharge===1){
+        const across=p.x<0?-p.px/dx:p.x>this.size?(this.size-p.px)/dx:Infinity;
+        const down=p.y<0?-p.py/dy:p.y>this.size?(this.size-p.py)/dy:Infinity;
+        p.wallTime=Math.min(across,down);
+      }else this.removeShot(p);
+    }
   }
   fireDeployerRound(p,angle,gun){
     const ca=Math.cos(angle),sa=Math.sin(angle),r=p.r*.24;
@@ -5560,6 +5985,11 @@ class Arena {
           this.creditHeavyInterception(p,q);
           if(this.apprentice)creditApprenticeCoop(this,p,q,true);
         }
+        if(p.scrapCharge===1||q.scrapCharge===1){
+          const contact=impact(sx,sy,dx,dy,p.r+q.r)??n;
+          this.explodeScrap(p,contact);
+          this.explodeScrap(q,contact);
+        }
         if(p.dur<=0) this.removeShot(p,q.owner);
         if(q.dur<=0) this.removeShot(q,p.owner);
       }
@@ -5576,14 +6006,21 @@ class Arena {
         if(p.owner.spec===FALLEN_OVERLORD){
           const localProvocation=p.provoker===e&&p.provokedUntil>this.time;
           if(e.type==="tank"?!this.bossCanTarget(p.owner,e)&&!localProvocation:e.type!=="form")continue;
+        }else if(p.scrapCharge===1&&e.type==="form"){
+          if(e.scrap)continue;
         }else if(p.owner.type==="boss"&&(e.type!=="tank"||e.level<15&&!this.apprentice&&!p.owner.provoked.has(e.id)))continue;
         const t=impact(p.px-e.px,p.py-e.py,(p.x-p.px)-(e.x-e.px),(p.y-p.py)-(e.y-e.py),p.r+e.r);
         if(t!==null&&t<(p.wallTime??Infinity))hits.push([t,e]);
       }
       hits.sort((a,b)=>a[0]-b[0]||a[1].id-b[1].id);
-      for(const [,e] of hits){
+      for(const [contact,e] of hits){
         if(!p.alive) break;
         if(!e.alive||e.protect>0) continue;
+        if(p.scrapCharge===1){
+          (p.contacts??=new Map()).set(e.id,this.tick);
+          this.explodeScrap(p,contact,e);
+          break;
+        }
         const contacts=p.contacts??=new Map();
         const previous=contacts.get(e.id);
         const isDrone=isSpawnedDrone(p.kind)||p.kind==="decadeEscort"||p.kind===NECRO_DRONE;
@@ -5635,6 +6072,10 @@ class Arena {
         if(this.duelEnded||this.closing&&!this.closing.active)return;
       }
       if(p.wallTime!=null){
+        if(p.scrapCharge===1){
+          this.explodeScrap(p,p.wallTime);
+          continue;
+        }
         const segment=p.cartographerPillar;
         if(segment?.hp>0&&p.owner.type==="tank"&&this.maze instanceof CartographerBarrier){
           this.maze.damage(segment,p.damage*Math.min(1,p.dur/2));
@@ -5706,6 +6147,7 @@ class Arena {
       else if(this.boss.spec===FALLEN_OVERLORD)this.advanceFallenOverlord(this.boss);
       else if(this.boss.spec===TREE_TOPPER||this.boss.spec===DECADE)this.advanceEventBoss(this.boss);
       else if(this.boss.spec===CARTOGRAPHER)this.advanceCartographer(this.boss);
+      else if(this.boss.spec===SUCATEIRO)this.advanceScrapper(this.boss);
       else this.advanceGuardian(this.boss);
     }
     for(const p of this.shots) if(p.alive) this.advanceShot(p);
@@ -5742,6 +6184,10 @@ class Arena {
           this.note(this.bossTrialResult);
         }else if(this.boss&&(!this.boss.alive||!left.length)){
           if(this.boss.spec===CARTOGRAPHER)this.clearCartographerBarrier(this.boss);
+          if(this.boss.spec===SUCATEIRO){
+            this.clearScrapper(this.boss);
+            for(const shot of this.shots)if(shot.owner===this.boss)this.removeShot(shot);
+          }
           this.winner=left.length?this.bossRewardedTo:this.boss;
           this.bossTrialResult=!this.boss.alive
             ?this.boss.name+" derrotado"+(this.bossRewardedTo?" · finalizado por "+this.bossRewardedTo.name:"")
@@ -5889,6 +6335,71 @@ function shapePathCost(t,forms,vx,vy,hp){
     if(gap<clearance&&lastGap<clearance)cost+=weight*(clearance-lastGap)/clearance;
   }
   return cost;
+}
+function scrapDodgeGap(samples,dx,dy,vx,vy,radius){
+  let bestDistance=Infinity,bestTime=0,x=dx,y=dy,lastTime=0;
+  for(const [seconds,forward,lateral] of samples){
+    const nextX=dx+forward-vx*seconds,nextY=dy+lateral-vy*seconds;
+    const sx=nextX-x,sy=nextY-y;
+    const fraction=clamp(-(x*sx+y*sy)/Math.max(1,sx*sx+sy*sy),0,1);
+    const distance=sq(x+sx*fraction)+sq(y+sy*fraction);
+    if(distance<bestDistance){
+      bestDistance=distance;
+      bestTime=lastTime+(seconds-lastTime)*fraction;
+    }
+    x=nextX;y=nextY;lastTime=seconds;
+  }
+  return [Math.sqrt(bestDistance)-radius,bestTime];
+}
+function scrapperRamRoute(w,t,boss){
+  const dx=t.x-boss.x,dy=t.y-boss.y,dist=Math.hypot(dx,dy);
+  const orbit=boss.scrapRadius,stock=boss.scrapStock.filter(piece=>piece.alive);
+  const widest=stock.reduce((radius,piece)=>Math.max(radius,piece.r),0);
+  if(!widest||dist<orbit-t.r-widest||dist>orbit+200){
+    t.scrapApproach=null;
+    return null;
+  }
+  const bearing=Math.atan2(dy,dx),speed=movement(t);
+  const crossing=clamp((dist-orbit+t.r+widest)/speed+.13,.20,.95);
+  const phase=SUCATEIRO_VISUAL.stages[boss.stage-1];
+  const angularSpeed=phase.speedOrbit*Math.PI/180*(phase.clockwise?1:-1);
+  const gaps=stock.map(piece=>{
+    const x=piece.x-boss.x,y=piece.y-boss.y;
+    const moving=piece!==boss.scrapWarning?.piece;
+    const angle=Math.atan2(y,x)+(moving?angularSpeed*crossing:0);
+    return {angle,clearance:t.r+piece.r+8};
+  });
+  const clearance=angle=>gaps.reduce((best,piece)=>
+    Math.min(best,2*orbit*Math.abs(Math.sin(angleDelta(angle,piece.angle)/2))-piece.clearance),Infinity);
+  const directlyBlocked=stock.some(piece=>impact(piece.x-t.x,piece.y-t.y,
+    (piece.vx+Math.cos(bearing)*speed)*crossing,(piece.vy+Math.sin(bearing)*speed)*crossing,t.r+piece.r+5)!=null);
+  const previous=t.scrapApproach?.bossId===boss.id?t.scrapApproach:null;
+  if(clearance(bearing)>=0&&!directlyBlocked&&
+    (!previous||w.time>=previous.until||Math.abs(angleDelta(previous.slot+boss.scrapSpin,bearing))<.23)){
+    t.scrapApproach=null;
+    return null;
+  }
+
+  // Keep the opening in the orbit's rotating frame while it stays usable.
+  let route=previous;
+  const projected=route?route.slot+boss.scrapSpin:0;
+  if(!route||w.time>=route.until||clearance(projected)<-12){
+    let score=-Infinity;
+    for(const offset of [-1.4,-1.05,-.74,-.46,-.23,.23,.46,.74,1.05,1.4]){
+      const side=Math.sign(offset),angle=bearing+offset;
+      const value=Math.min(30,clearance(angle))-Math.abs(offset)*16-
+        (side!==(previous?.side??(t.trait%2?1:-1))?10:0);
+      if(value>score){
+        score=value;
+        route={bossId:boss.id,slot:angle-boss.scrapSpin,side,until:w.time+.72};
+      }
+    }
+    t.scrapApproach=route;
+  }
+  const turn=angleDelta(route.slot+boss.scrapSpin,bearing);
+  const step=clamp(Math.abs(turn),.17,.34)*route.side;
+  const distance=Math.max(orbit+t.r+widest+12,dist-76);
+  return [boss.x+Math.cos(bearing+step)*distance,boss.y+Math.sin(bearing+step)*distance];
 }
 function crasherDanger(t,e,distance){
   const gap=distance-t.r-e.r;
@@ -6446,6 +6957,10 @@ function botThink(w,t){
   const dodge=fallen?fallenDodge(w,t,boss):null;
   const huntBoss=boss&&!canFight&&t.level>=15&&(!fallen||w.bossCanTarget(boss,t))&&
     hp>(w.bossTrial?.30:.48)&&(weapon||hp>.78);
+  const spike=t.cls==="Spike", scrapper=spike&&boss?.spec===SUCATEIRO?boss:null;
+  if(!huntBoss||!scrapper)t.scrapApproach=null;
+  if(!spike||hp>.78||!w.boss?.alive||t.scrapRecovery?.bossId!==w.boss.id)t.scrapRecovery=null;
+  const recoverScrap=!canFight&&hp<=.78&&(scrapper||t.scrapRecovery);
   const avoidSwarm=incoming&&(droneGap<170&&(hp<.64||bossDrones>=5)||hp<.40&&droneGap<310);
   const intercept=crasher&&(!canFight||eDist>175||danger>235);
   const objective=t.domTarget, contested=objective?.near[1-t.team]>0;
@@ -6819,6 +7334,17 @@ function botThink(w,t){
         decision=["ship-screen",ownShip,t.name+" interceptou "+enemy.name+" para cobrir a retirada."];
     }
     else if(support)detail=escort?"Cobrindo a retirada de "+escort.name:"Defendendo a aproximação da base";
+  }else if(recoverScrap){
+    const recovery=t.scrapRecovery;
+    const tooClose=scrapper&&sq(t.x-scrapper.x)+sq(t.y-scrapper.y)<465**2;
+    if(scrapper&&(!recovery||tooClose)){
+      const away=Math.atan2(t.y-scrapper.y,t.x-scrapper.x);
+      t.scrapRecovery={bossId:scrapper.id,x:clamp(scrapper.x+Math.cos(away)*625,85,w.size-85),
+        y:clamp(scrapper.y+Math.sin(away)*625,85,w.size-85)};
+    }
+    ({x:targetX,y:targetY}=t.scrapRecovery);
+    moving=clamp((Math.hypot(t.x-targetX,t.y-targetY)-18)/90,0,1);
+    mode=4;detail="Afastando-se do escudo do Sucateiro para recuperar vida";
   }else if(huntBoss){
     targetEntity=boss;t.bossTarget=boss;
     const dx=boss.x-t.x,dy=boss.y-t.y,d=Math.hypot(dx,dy);
@@ -6842,6 +7368,13 @@ function botThink(w,t){
     }
     mode=2;detail=defender?(ram?"Aproveitando uma abertura no Defender":c.ram?"Esperando uma abertura nas armadilhas":
       c.style==="sniper"?"Disparando de longe contra o Defender":"Contornando as armadilhas do Defender"):"Atacando "+boss.name;
+    if(ram&&scrapper){
+      const opening=scrapperRamRoute(w,t,scrapper);
+      if(opening){
+        [targetX,targetY]=opening;
+        detail="Contornando a órbita em busca de uma abertura";
+      }
+    }
     if(maze instanceof CartographerBarrier&&weapon?.kind==="bullet"){
       const target=maze.pillarAim(t,boss,Math.min(vision,bulletSpeed(t,weapon)*weapon.life),t.r*weapon.length+35,w.time);
       if(target){cartographerPillar=target.pillar;aimX=cartographerPillar.center;aimY=cartographerPillar.y;fire=target.clear;}
@@ -7022,6 +7555,12 @@ function botThink(w,t){
     t.progress={x:t.x,y:t.y,t:w.time};
   }
   const threatening=risks.sort((a,b)=>sq(a.x-t.x)+sq(a.y-t.y)-sq(b.x-t.x)-sq(b.y-t.y)).slice(0,16);
+  let scrapArcs;
+  for(const p of threatening){
+    const remaining=SCRAP_CURVE_TIME-p.age;
+    if(p.scrapTurnRate&&remaining>0)(scrapArcs??=new Map()).set(p,[.15,.30,.45,.61].map(seconds=>
+      [seconds,...scrapArcTravel(p.vx,p.vy,p.scrapTurnRate,remaining,seconds)]));
+  }
   const obstacles=forms.filter(e=>e!==ramFood).sort((a,b)=>
     (Math.hypot(a.x-t.x,a.y-t.y)-a.r)-(Math.hypot(b.x-t.x,b.y-t.y)-b.r)
   ).slice(0,12);
@@ -7084,9 +7623,14 @@ function botThink(w,t){
       const dx=p.x-t.x,dy=p.y-t.y;
       const px=p.vx+(p.kx||0)-vx*max,py=p.vy+(p.ky||0)-vy*max;
       const riskWindow=dodgeWindows?.get(p)??.61;
-      const horizon=clamp(-(dx*px+dy*py)/Math.max(1,px*px+py*py),0,riskWindow);
-      const r=t.r+p.r+10+t.trait*1.4;
-      const gap=Math.hypot(dx+px*horizon,dy+py*horizon)-r;
+      const r=t.r+p.r+10+t.trait*1.4+(p.scrapCharge===1?20:0)+(p.scrapGuide?.target===t?10:0);
+      const arc=scrapArcs?.get(p);
+      let horizon,gap;
+      if(arc)[gap,horizon]=scrapDodgeGap(arc,dx,dy,vx*max,vy*max,r);
+      else{
+        horizon=clamp(-(dx*px+dy*py)/Math.max(1,px*px+py*py),0,riskWindow);
+        gap=Math.hypot(dx+px*horizon,dy+py*horizon)-r;
+      }
       if(gap<32){
         const weight=p.damage??p.f.body;
         const cost=(1-gap/32)*clamp(weight/9,.34,4)*(1.4-horizon)*(1+(1-hp)*.7)*(cautious?1.24:1);
@@ -7905,6 +8449,120 @@ function paintCartographerInsignia(radius,stage,style){
     paint(style.accent,style.rim,1.5);
   }
 }
+const SCRAP_VISUAL_SIDES={circle:0,triangle:3,square:4,pentagon:5,hex:6,oct:8};
+function paintScrapPart(part){
+  const {x,y,w,h,angle,kind,shape,fill,line,stroke,opacity}=part;
+  ctx.save();ctx.translate(x,y);ctx.rotate(angle*Math.PI/180);ctx.globalAlpha*=opacity/100;
+  ctx.beginPath();
+  if(kind==="barrel"){
+    ctx.moveTo(-w/2,-h*.385);ctx.lineTo(w/2,-h/2);
+    ctx.lineTo(w/2,h/2);ctx.lineTo(-w/2,h*.385);ctx.closePath();
+  }else if(kind==="plate"){
+    ctx.rect(-w/2,-h/2,w,h);
+  }else if(kind==="core"||!SCRAP_VISUAL_SIDES[shape]){
+    ctx.ellipse(0,0,w/2,h/2,0,0,TAU);
+  }else{
+    const sides=SCRAP_VISUAL_SIDES[shape];
+    for(let i=0;i<sides;i++){
+      const turn=i*TAU/sides,px=Math.cos(turn)*w/2,py=Math.sin(turn)*h/2;
+      if(i)ctx.lineTo(px,py);else ctx.moveTo(px,py);
+    }
+    ctx.closePath();
+  }
+  if(stroke>0)paint(fill,line,stroke);
+  else{ctx.fillStyle=fill;ctx.fill();}
+  if(kind==="barrel"){
+    ctx.beginPath();ctx.moveTo(w/2-10,-h/2);ctx.lineTo(w/2-10,h/2);
+    ctx.strokeStyle=line;ctx.lineWidth=Math.max(2,stroke*.65);ctx.stroke();
+  }
+  ctx.restore();
+}
+function paintScrapper(b,time){
+  const stage=SUCATEIRO_VISUAL.stages[b.stage-1],sides=SCRAP_VISUAL_SIDES[stage.body];
+  ctx.lineJoin="round";
+  if(sides)poly(0,0,stage.radius,sides,stage.angle*Math.PI/180);
+  else circle(0,0,stage.radius);
+  const fill=time-b.hit<.06?"#f4e4ca":stage.fill;
+  if(stage.stroke>0)paint(fill,stage.line,stage.stroke);
+  else{ctx.fillStyle=fill;ctx.fill();}
+  for(const part of stage.parts)paintScrapPart(part);
+}
+function paintScrapEnergy(x,y,r,angle,charge){
+  if(charge<=0)return;
+  ctx.save();
+  ctx.globalAlpha*=.14+.40*charge;
+  ctx.fillStyle=SCRAP_ENERGY;
+  ctx.fill();
+  ctx.restore();
+  if(charge<.5)return;
+  ctx.save();ctx.translate(x,y);ctx.rotate(angle);
+  ctx.strokeStyle=charge===1?SCRAP_ENERGY_BRIGHT:SCRAP_ENERGY;
+  ctx.lineWidth=charge===1?3.3:2;
+  for(const direction of [1,-1]){
+    ctx.beginPath();
+    ctx.moveTo(r*.9*direction,-r*.48*direction);
+    ctx.lineTo(r*1.12*direction,-r*.12*direction);
+    ctx.lineTo(r*.78*direction,r*.22*direction);
+    ctx.lineTo(r*1.13*direction,r*.55*direction);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+function paintScrapOrbit(b,x,y,time,blend,visible,recorded){
+  const stage=SUCATEIRO_VISUAL.stages[b.stage-1];
+  ctx.save();ctx.lineJoin="round";
+  if(stage.showRing&&visible(x,y,b.scrapRadius)){
+    circle(x,y,b.scrapRadius);
+    ctx.strokeStyle="#6a718679";ctx.lineWidth=2;ctx.setLineDash([6,7]);ctx.stroke();ctx.setLineDash([]);
+  }
+  const warning=b.scrapWarning;
+  const marked=recorded?warning?.id:warning?.piece?.id;
+  for(const piece of b.scrapStock){
+    if(piece.alive===false||!visible(piece.x,piece.y,piece.r))continue;
+    const [px,py]=recorded?[piece.x,piece.y]:tp(piece,blend);
+    const active=marked===piece.id,meta=SCRAP_TYPES[piece.name],charge=piece.scrap.charge;
+    poly(px,py,piece.r,meta.sides,piece.angle);
+    paint(active?"#ffe69e":time-piece.damaged<.052?"#fcf3d1":piece.scrap.color,active?"#875127":"#4c5764",active?6:4);
+    paintScrapEnergy(px,py,piece.r,piece.angle,charge);
+    const width=Math.max(22,piece.r*1.5),left=px-width/2;
+    let top=py+piece.r+5;
+    if(piece.hp<piece.scrap.maxHp){
+      ctx.fillStyle="#34493d";ctx.fillRect(left,top,width,5);
+      ctx.fillStyle="#a7d571";ctx.fillRect(left+1,top+1,(width-2)*clamp(piece.hp/piece.scrap.maxHp,0,1),3);
+      top+=7;
+    }
+    ctx.fillStyle="#2c5263";ctx.fillRect(left,top,width,5);
+    ctx.fillStyle=charge===1?SCRAP_ENERGY_BRIGHT:SCRAP_ENERGY;
+    ctx.fillRect(left+1,top+1,(width-2)*charge,3);
+  }
+  if(warning&&warning.piece?.alive!==false){
+    const {x:fromX,y:fromY,heading,speed,turnRate}=warning.plan;
+    const vx=Math.cos(heading)*speed,vy=Math.sin(heading)*speed,seconds=224/speed;
+    ctx.strokeStyle="#9a522b";ctx.lineWidth=4;ctx.setLineDash([10,7]);ctx.beginPath();
+    ctx.moveTo(fromX,fromY);
+    let endX=fromX,endY=fromY;
+    for(let i=1;i<=12;i++){
+      const time=i*seconds/12;
+      const [dx,dy]=turnRate?scrapArcTravel(vx,vy,turnRate,SCRAP_CURVE_TIME,time):[vx*time,vy*time];
+      endX=fromX+dx;endY=fromY+dy;
+      ctx.lineTo(endX,endY);
+    }
+    ctx.stroke();ctx.setLineDash([]);
+    const endHeading=heading+turnRate*Math.min(SCRAP_CURVE_TIME,seconds);
+    const ux=Math.cos(endHeading),uy=Math.sin(endHeading);
+    ctx.beginPath();ctx.moveTo(endX-ux*15+uy*8,endY-uy*15-ux*8);
+    ctx.lineTo(endX,endY);ctx.lineTo(endX-ux*15-uy*8,endY-uy*15+ux*8);ctx.stroke();
+  }
+  for(const blast of b.scrapBlasts){
+    if(!visible(blast.x,blast.y,SCRAP_BLAST_RADIUS))continue;
+    const progress=clamp((time-blast.at)/SCRAP_BLAST_TIME,0,1);
+    ctx.globalAlpha=(1-progress)*.85;
+    circle(blast.x,blast.y,12+(SCRAP_BLAST_RADIUS-12)*Math.sqrt(progress));
+    ctx.fillStyle="#5ae2ef31";ctx.fill();
+    ctx.strokeStyle=SCRAP_ENERGY_BRIGHT;ctx.lineWidth=4;ctx.stroke();
+  }
+  ctx.restore();
+}
 function paintBoss(b,x,y,selected,time,blend=1,animationTime=time){
   const fallen=b.spec===FALLEN_BOOSTER;
   ctx.save();ctx.translate(x,y);ctx.rotate(b.aim);
@@ -7912,7 +8570,9 @@ function paintBoss(b,x,y,selected,time,blend=1,animationTime=time){
     circle(0,0,b.r+8);ctx.strokeStyle=fallen?"#414754a6":"#a33c687d";ctx.lineWidth=2;
     ctx.setLineDash([6,6]);ctx.stroke();ctx.setLineDash([]);
   }
-  if(b.spec===CARTOGRAPHER){
+  if(b.spec===SUCATEIRO){
+    paintScrapper(b,time);
+  }else if(b.spec===CARTOGRAPHER){
     const stage=b.stage??1,style=CARTOGRAPHER_STAGE_STYLES[stage-1];
     poly(0,0,b.r,6,Math.PI/6);
     paint(time-b.hit<.06?"#d4e5ea":style.hull,style.rim,6);
@@ -7959,9 +8619,10 @@ function paintBoss(b,x,y,selected,time,blend=1,animationTime=time){
   }
   ctx.restore();
   const width=b.r*1.44, ratio=clamp(b.hp/b.spec.hp,0,1);
-  const barY=y+b.r*(b.spec===FALLEN_OVERLORD?1.67:fallen||b.spec===DEFENDER||b.spec===SUMMONER||b.spec===TREE_TOPPER||b.spec===DECADE||b.spec===CARTOGRAPHER?1.22:.7);
+  const barY=y+b.r*(b.spec===FALLEN_OVERLORD?1.67:fallen||b.spec===DEFENDER||b.spec===SUMMONER||b.spec===TREE_TOPPER||b.spec===DECADE||b.spec===CARTOGRAPHER||b.spec===SUCATEIRO?1.22:.7);
   ctx.fillStyle=fallen?"#414754":"#5e3750";ctx.fillRect(x-width/2,barY,width,7);
-  ctx.fillStyle=b.spec===CARTOGRAPHER?CARTOGRAPHER_STAGE_STYLES[(b.stage??1)-1].accent:b.spec.color;
+  ctx.fillStyle=b.spec===CARTOGRAPHER?CARTOGRAPHER_STAGE_STYLES[(b.stage??1)-1].accent:
+    b.spec===SUCATEIRO?SUCATEIRO_VISUAL.stages[b.stage-1].fill:b.spec.color;
   ctx.fillRect(x-width/2+1,barY+1,(width-2)*ratio,5);
 }
 function paintEventBoss(b,time){
@@ -8369,6 +9030,12 @@ function paintRocketeerMissile(x,y,r,angle,color){
   ctx.restore();
 }
 function paintShot(x,y,r,angle,kind,color){
+  const scrap=SCRAP_SHOTS.get(kind);
+  if(scrap){
+    poly(x,y,r,scrap.sides,angle+Math.PI/4);paint(color,"#4c5764",3);
+    paintScrapEnergy(x,y,r,angle,color===SCRAP_ENERGY_BRIGHT?1:color===SCRAP_ENERGY?.5:0);
+    return;
+  }
   if(kind===ROCKETEER_MISSILE){paintRocketeerMissile(x,y,r,angle,color);return;}
   if(kind===SKIMMER_MISSILE){paintSkimmerMissile(x,y,r,angle,color);return;}
   if(kind===FACTORY_MINION){
@@ -8639,13 +9306,13 @@ function drawArena(scene,lens,blend,marked,recorded,network=false){
     }
   }else{
     for(const e of scene.shapes){
-      if(!visible(e.x,e.y,e.r))continue;
+      if(e.scrap||!visible(e.x,e.y,e.r))continue;
       const [x,y]=tp(e,blend);
       paintForm(x,y,e.r,e.angle,e.hp,e.damaged,e.f,e.shiny,scene.time,lens.zoom);
     }
     for(const p of scene.shots){
       if(!visible(p.x,p.y,p.r))continue;
-      if(p.cartographerShot&&p.bornTick===scene.tick&&blend<1)continue;
+      if((p.cartographerShot||p.scrapColor||p.scrapBarrel!=null)&&p.bornTick===scene.tick&&blend<1)continue;
       const [x,y]=tp(p,blend);
       const kind=shotAppearance(p),color=shotColor(p,scene.time);
       if(kind==="decadeBullet")decadeShots.push({x,y,r:p.r,color});
@@ -8667,6 +9334,10 @@ function drawArena(scene,lens,blend,marked,recorded,network=false){
     paintShip(ship,x,y,ship.id===marked,scene.time);
   }
   const b=scene.boss;
+  if(b?.alive&&b.spec===SUCATEIRO){
+    const [x,y]=recorded?[b.x,b.y]:tp(b,blend);
+    paintScrapOrbit(b,x,y,scene.time,blend,visible,recorded);
+  }
   if(b?.alive&&visible(b.x,b.y,b.r)){
     const [x,y]=recorded?[b.x,b.y]:tp(b,blend);
     paintBoss(b,x,y,marked===b.id,scene.time,blend,animationTime);
@@ -9081,7 +9752,7 @@ function updateInterface(force=false){
   el("eventBossField").hidden=el("bossField").hidden;
   el("eventBosses").disabled=el("bossSchedule").value==="off";
   const eventBossOption=el("eventBosses").options[1];
-  const eventBossLabel=el("arenaMap").value==="open"?"Ligados · 8 chefes":"Ligados · 7 chefes";
+  const eventBossLabel=el("arenaMap").value==="open"?"Ligados · 9 chefes":"Ligados · 8 chefes";
   if(eventBossOption.textContent!==eventBossLabel)eventBossOption.textContent=eventBossLabel;
   el("shipStartField").hidden=mode==="lab"||el("arenaMap").value!=="mothership";
   el("restart").textContent=mode==="lab"?"Iniciar duelo":"Reiniciar";
@@ -9286,6 +9957,9 @@ function updateInspector(focus){
         ["Alvo",focus.target?.alive?focus.target.name:"Nenhum"]]
       :focus.spec===DECADE?[["Evento","10º aniversário"],["Armas","Torreta de tiro triplo · 5 geradores"],
         ["Minitanques",focus.drones+" / "+focus.spec.droneCap]]
+      :focus.spec===SUCATEIRO?[["Fase",SUCATEIRO_VISUAL.stages[focus.stage-1].title],
+        ["Peças em órbita",String(focus.scrapStock.filter(piece=>piece.alive).length)],
+        ["Ação",focus.scrapWarning?"Preparando arremesso":"Coletando polígonos"]]
       :[["Patrulha","Ninho dos pentágonos"],["Drones",focus.drones+" / "+focus.spec.droneCap]];
     rows.push(["Golpe final","+"+fmt.format(focus.spec.reward)+" XP"]);
     el("inspectBody").replaceChildren(...rows.map(([a,b])=>{
@@ -9572,19 +10246,25 @@ function updateHud(){
   const boss=world.boss;
   el("bossHud").hidden=!boss?.alive;
   if(boss?.alive){
-    const isCartographer=boss.spec===CARTOGRAPHER,stage=boss.stage??1;
-    const color=isCartographer?CARTOGRAPHER_STAGE_STYLES[stage-1].accent:boss.spec.color;
-    el("bossName").textContent=isCartographer?boss.name+" · Fase "+stage+"/3":boss.name;
+    const isCartographer=boss.spec===CARTOGRAPHER,isScrapper=boss.spec===SUCATEIRO,stage=boss.stage??1;
+    const visual=SUCATEIRO_VISUAL.stages;
+    const color=isCartographer?CARTOGRAPHER_STAGE_STYLES[stage-1].accent:isScrapper?visual[stage-1].fill:boss.spec.color;
+    el("bossName").textContent=isCartographer?boss.name+" · Fase "+stage+"/3":
+      isScrapper?boss.name+" · "+visual[stage-1].title:boss.name;
     el("bossHp").textContent=fmt.format(Math.ceil(boss.hp))+" / "+fmt.format(boss.spec.hp)+" HP";
     el("bossFill").style.width=clamp(boss.hp/boss.spec.hp,0,1)*100+"%";
     el("bossFill").style.backgroundColor=color;
     el("bossHud").style.borderColor=color;
     const thresholds=el("bossThresholds");
-    if(isCartographer&&thresholds.hidden){
-      thresholds.children[0].style.left=CARTOGRAPHER_REPOSITION_HP*100+"%";
-      thresholds.children[1].style.left=CARTOGRAPHER_CROSSFIRE_HP*100+"%";
+    const marks=isCartographer?[CARTOGRAPHER_REPOSITION_HP*100,CARTOGRAPHER_CROSSFIRE_HP*100]:
+      isScrapper?visual.slice(1).map(phase=>phase.hp):[];
+    if(thresholds.dataset.marks!==marks.join(",")){
+      thresholds.replaceChildren(...marks.map(value=>{
+        const mark=node("b");mark.style.left=value+"%";return mark;
+      }));
+      thresholds.dataset.marks=marks.join(",");
     }
-    thresholds.hidden=!isCartographer;
+    thresholds.hidden=!marks.length;
     el("bossFocus").disabled=Boolean(mode==="play"&&world.human?.alive);
   }
   updateRoomHud(focus);
