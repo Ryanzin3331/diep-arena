@@ -76,7 +76,7 @@ test('arremesso nasce na peça marcada, mantém a direção avisada e dá dano r
   const shot=w.shots.find(p=>p.owner===b);
   assert.deepEqual([shot.x,shot.y,shot.angle],[x,y,heading]);
   assert.equal(shot.kind,'scrapTriangle');
-  assert.equal(shot.damage,11*(1+charge*.60));
+  assert.equal(shot.damage,11*(1+charge));
   assert.ok(Math.abs(Math.hypot(shot.vx,shot.vy)-420)<1e-9);
   assert.equal(shotColor(shot,w.time),SUCATEIRO_VISUAL.stages[0].orbits.triangle.fill);
   assert.equal(triangle.alive,false);
@@ -148,7 +148,7 @@ test('a carga aumenta o dano e define a curva a partir da metade em qualquer fas
   assert.ok(piece.scrap.charge<.54);
   const plan=w.planScrap(b,piece,settings,foe);
   assert.ok(plan.turnRate);
-  const expected=11*(1+plan.charge*.60);
+  const expected=11*(1+plan.charge);
   assert.equal(snapshotArena(w).boss.scrapStock[0].scrap.charge,plan.charge);
   assert.ok(w.throwScrap(b,piece,settings,plan));
   assert.equal(w.shots.at(-1).damage,expected);
@@ -166,7 +166,7 @@ test('o alfa da fase final mantém os 12% extras e a curva só entra após meia 
   const shot=w.shots.at(-1);
   const speed=205*1.12,first=Math.atan2(shot.vy,shot.vx);
   assert.equal(b.scrapWarning,null);
-  assert.equal(shot.damage,28*(1+plan.charge*.60));
+  assert.equal(shot.damage,28*(1+plan.charge));
   assert.ok(Math.abs(Math.hypot(shot.vx,shot.vy)-speed)<1e-9);
   const predicted=scrapArcTravel(shot.vx,shot.vy,shot.scrapTurnRate,.62,30*DT);
   const start=[shot.x,shot.y];
@@ -190,10 +190,10 @@ test('uma peça carregada explode uma vez ao colidir com uma forma neutra e afet
   assert.ok(w.throwScrap(b,piece,settings,plan));
   const shot=w.shots.at(-1);
   assert.equal(shot.scrapCharge,1);
-  assert.equal(shot.damage,12.8);
+  assert.equal(shot.damage,16);
   stepUntil(w,()=>b.scrapBlasts.length>0);
   assert.equal(shot.alive,false);
-  assert.ok(barrier.hp<barrier.f.hp,'a forma no impacto recebeu dano');
+  assert.equal(barrier.f.hp-barrier.hp,shot.damage,'o impacto direto recebe o dano cheio');
   assert.ok(near.hp<nearBefore,'o tanque ao lado recebeu o dano em área');
   assert.equal(far.hp,farBefore);
   const wounded=near.hp;
@@ -219,32 +219,34 @@ test('os canhões alcançam o limite da mira e ganham dano na fase 3',()=>{
   stepUntil(w,()=>w.shots.some(p=>p.scrapBarrel!=null&&p.damage===10.5),90);
 });
 
-test('a fase 2 lança duas peças distintas contra dois atacantes, sem parar nem repetir o alvo',()=>{
-  const w=lab(),b=w.boss;
-  w.shapes=[];
-  w.formTarget=0;
-  b.hp=b.spec.hp*.69;
-  b.nextScrapShot=Infinity;
-  for(const [i,t] of w.tanks.entries()){
-    const side=i===0?1:-1;
-    w.addShape(i===0?'triangle':'square',b.x+side*225,b.y,false);
-    idle(t,b.x+side*440,b.y);
+test('as fases 2 e 3 lançam contra dois alvos e usam a recarga da fase',()=>{
+  for(const [health,cooldown] of [[.69,3],[.34,2.5]]){
+    const w=lab(),b=w.boss;
+    w.shapes=[];
+    w.formTarget=0;
+    b.hp=b.spec.hp*health;
+    b.nextScrapShot=Infinity;
+    for(const [i,t] of w.tanks.entries()){
+      const side=i===0?1:-1;
+      w.addShape(i===0?'triangle':'square',b.x+side*225,b.y,false);
+      idle(t,b.x+side*440,b.y);
+    }
+    stepUntil(w,()=>b.scrapStock.length===2&&b.scrapStock.every(piece=>w.time-piece.scrap.at>=piece.scrap.pullTime));
+    for(const [i,t] of w.tanks.entries()){
+      const piece=b.scrapStock[i],heading=Math.atan2(piece.y-b.y,piece.x-b.x);
+      idle(t,b.x+440*Math.cos(heading),b.y+440*Math.sin(heading));
+      w.bossDamage(b,t);
+    }
+    b.nextScrapShot=w.time;
+    stepUntil(w,()=>w.shots.filter(p=>p.scrapColor).length>0);
+    const throws=w.shots.filter(p=>p.scrapColor);
+    assert.equal(throws.length,2);
+    assert.deepEqual(new Set(Array.from(throws,p=>p.scrapTarget)),new Set(w.tanks.map(t=>t.id)));
+    assert.ok(throws.every(p=>p.bornTick===w.tick&&p.scrapTurnRate===0));
+    assert.equal(b.scrapWarning,null);
+    assert.equal(b.scrapStock.length,0);
+    assert.equal(b.nextScrapShot,w.time+cooldown);
   }
-  stepUntil(w,()=>b.scrapStock.length===2&&b.scrapStock.every(piece=>w.time-piece.scrap.at>=piece.scrap.pullTime));
-  for(const [i,t] of w.tanks.entries()){
-    const piece=b.scrapStock[i],heading=Math.atan2(piece.y-b.y,piece.x-b.x);
-    idle(t,b.x+440*Math.cos(heading),b.y+440*Math.sin(heading));
-    w.bossDamage(b,t);
-  }
-  b.nextScrapShot=w.time;
-  stepUntil(w,()=>w.shots.filter(p=>p.scrapColor).length>0);
-  const throws=w.shots.filter(p=>p.scrapColor);
-  assert.equal(throws.length,2);
-  assert.deepEqual(new Set(Array.from(throws,p=>p.scrapTarget)),new Set(w.tanks.map(t=>t.id)));
-  assert.ok(throws.every(p=>p.bornTick===w.tick&&p.scrapTurnRate===0));
-  assert.equal(b.scrapWarning,null);
-  assert.equal(b.scrapStock.length,0);
-  assert.ok(Math.hypot(b.vx,b.vy)>40);
 });
 
 test('os canhões ficam inativos na coleta e disparam alternando pelas bocas reais na fase 2',()=>{
@@ -376,7 +378,7 @@ test('a cura começa após três segundos em órbita, respeita o teto e preserva
   stepUntil(w,()=>w.time-start>=2.94);
   assert.equal(piece.hp,120);
   stepUntil(w,()=>w.time-start>=4);
-  assert.ok(Math.abs(piece.hp-(120+(w.time-start-3)*36))<1e-7);
+  assert.ok(Math.abs(piece.hp-(120+(w.time-start-3)*48))<1e-7);
   stepUntil(w,()=>piece.hp===240);
   w.releaseScrap(piece);
   assert.equal(piece.hp,2800);

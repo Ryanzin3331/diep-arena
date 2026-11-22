@@ -2361,7 +2361,7 @@ const SUCATEIRO_VISUAL={version:2,template:"scrapper",name:"Sucateiro",stages:[
     title:"Sobrecarga",hp:35,body:"hex",radius:66,angle:30,
     fill:"#8d655d",line:"#3f4351",stroke:6,capacity:12,radiusOrbit:184,
     speedOrbit:58,clockwise:true,showRing:true,aim:0,warning:0.75,
-    cooldown:3,
+    cooldown:2.5,
     parts:[
       {"name":"Canhão superior","kind":"barrel","x":43,"y":-22,"w":94,"h":26,"angle":-13,"shape":"hex","fill":"#929e9c","line":"#444957","stroke":5,"opacity":100},
       {"name":"Canhão inferior","kind":"barrel","x":43,"y":22,"w":94,"h":26,"angle":13,"shape":"hex","fill":"#929e9c","line":"#444957","stroke":5,"opacity":100},
@@ -2386,7 +2386,7 @@ const SCRAP_TYPES={
   alpha:{kind:"scrapAlpha",weight:5,radius:46,sides:5,dur:10,orbitHp:240}
 };
 const SCRAP_CURVE_TIME=.62,SCRAP_CHARGE_TIME=4,SCRAP_BLAST_RADIUS=112,SCRAP_BLAST_TIME=.34;
-const SCRAP_HEAL_DELAY=3,SCRAP_HEAL_RATE=.15;
+const SCRAP_HEAL_DELAY=3,SCRAP_HEAL_RATE=.20;
 const SCRAP_GUIDE_TIME=.36,SCRAP_GUIDE_LIMIT=Math.PI/15,SCRAP_GUIDE_RATE=Math.PI/5;
 const SCRAP_ENERGY="#53dce9",SCRAP_ENERGY_BRIGHT="#8bfaff";
 function scrapArcTravel(vx,vy,rate,remaining,seconds){
@@ -4653,7 +4653,7 @@ class Arena {
       alive:true,x,y,px:x,py:y,r:piece.r,angle:heading,
       vx:Math.cos(heading)*speed,vy:Math.sin(heading)*speed,
       scrapColor:settings.fill,scrapTarget:targetId,scrapTurnRate:turnRate,scrapCharge:charge,scrapGuide:guide,bornTick:this.tick,
-      age:0,life:Math.min(4,920/speed),damage:settings.damage*(1+charge*.60),dur:meta.dur});
+      age:0,life:Math.min(4,920/speed),damage:settings.damage*(1+charge),dur:meta.dur});
     piece.alive=false;
     b.scrapStock=b.scrapStock.filter(other=>other!==piece);
     delete piece.scrap;
@@ -4675,7 +4675,7 @@ class Arena {
       b.nextScrapBarrel=this.time+.88;
     }
   }
-  explodeScrap(p,contact){
+  explodeScrap(p,contact,direct=null){
     if(!p.alive||p.scrapCharge!==1)return;
     const x=p.px+(p.x-p.px)*contact,y=p.py+(p.y-p.py)*contact;
     const radius=SCRAP_BLAST_RADIUS;
@@ -4688,7 +4688,7 @@ class Arena {
       if(entity.type==="tank"){
         if(!this.bossCanTarget(boss,entity)||this.hasBases&&this.baseDistance(entity.team,entity.x,entity.y)<=entity.r)continue;
       }else if(entity.type!=="form"||entity.scrap)continue;
-      const gap=Math.max(0,Math.hypot(entity.x-x,entity.y-y)-entity.r);
+      const gap=entity===direct?0:Math.max(0,Math.hypot(entity.x-x,entity.y-y)-entity.r);
       if(gap>=radius||this.maze?.hit(x,y,entity.x,entity.y)!=null||
         this.baseImpact(boss,x,y,entity.x,entity.y,0)!=null)continue;
       const damage=p.damage*(1-.72*gap/radius);
@@ -6016,7 +6016,7 @@ class Arena {
         if(!e.alive||e.protect>0) continue;
         if(p.scrapCharge===1){
           (p.contacts??=new Map()).set(e.id,this.tick);
-          this.explodeScrap(p,contact);
+          this.explodeScrap(p,contact,e);
           break;
         }
         const contacts=p.contacts??=new Map();
