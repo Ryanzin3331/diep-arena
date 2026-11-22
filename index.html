@@ -1120,12 +1120,94 @@ const APPRENTICE_STORAGE_KEY="diep-arena:dupla-aprendiz:v1";
 function newApprenticeRow(){
   return {uses:0,hits:0,reward:0,contacts:0,contactHp:0};
 }
-function newApprenticeSession(train=true,contactWeight=.10){
-  return {train,contactWeight,count:0,brains:[new Map(),new Map()],rounds:new Map(),history:[]};
+function newApprenticeSession(train=true,contactWeight=.10,cooperation=true){
+  return {train,contactWeight,cooperation,count:0,brains:[new Map(),new Map()],
+    coop:[new Map(),new Map()],rounds:new Map(),history:[]};
 }
 function newApprenticeAgent(seed,slot){
   return {random:rngFrom(seed^Math.imul(slot+1,0x73b98177)),next:1,action:null,known:false,
-    contactHp:0,prepContactHp:0,droneHp:0,bossHp:0,learnedChoices:0,riskChoices:0,riskExample:null};
+    contactHp:0,prepContactHp:0,droneHp:0,bossHp:0,learnedChoices:0,riskChoices:0,riskExample:null,
+    coopRandom:rngFrom(seed^Math.imul(slot+1,0x2c1b3c6d)),coopDecision:null,
+    coopStats:Object.fromEntries(Object.keys(APPRENTICE_COOP).map(kind=>[kind,newCoopRecord()]))};
+}
+const APPRENTICE_COOP={
+  focus:"Concentrar fogo",opening:"Aproveitar abertura",cover:"Cobrir aliado"
+};
+function newCoopRecord(){
+  return {attempts:0,successes:0,experienced:0};
+}
+function apprenticeThreatens(shot,ally){
+  if(!shot.alive||!ally.alive||ally.protect>0)return false;
+  const dx=shot.x-ally.x,dy=shot.y-ally.y,horizon=Math.min(.55,shot.life-shot.age);
+  if(horizon<=0)return false;
+  const reach=shot.r+ally.r;
+  if(shot.target===ally&&sq(dx)+sq(dy)<Math.min(175,shot.speed*horizon+reach)**2)return true;
+  return impact(dx,dy,(shot.vx-ally.vx)*horizon,(shot.vy-ally.vy)*horizon,reach)!==null;
+}
+function apprenticeCoopOptions(w,t){
+  const weapon=C[t.cls].guns[0];
+  if(weapon?.kind!=="bullet")return [];
+  const ally=w.tanks.find(bot=>bot!==t&&bot.apprentice&&w.allies(t,bot)&&perceived(w,t,bot));
+  if(!ally)return [];
+  const vision=range(t),reach=Math.min(vision,t.r*weapon.length+bulletSpeed(t,weapon)*1.35*weapon.life);
+  const options=new Map();
+  const add=(kind,target,witness=null)=>{
+    const gap=sq(t.x-target.x)+sq(t.y-target.y),old=options.get(kind);
+    if(gap>reach**2||old&&gap>=old.gap||!perceived(w,t,target))return;
+    options.set(kind,{kind,ally,target,witness,gap,key:kind+":"+target.type});
+  };
+  for(const e of w.sense.nearby(t.x,t.y,vision)){
+    if(!e.alive)continue;
+    if((e.type==="form"||e.type==="boss")&&e.apprenticeHit?.by===ally&&w.time-e.apprenticeHit.at<1.15)add("focus",e);
+    if(e.type!=="shot"||e.owner===t||w.allies(e.owner,t)||!perceived(w,t,e)||!apprenticeThreatens(e,ally))continue;
+    add("cover",e,e);
+    if(!apprenticeThreatens(e,t))add("opening",e.owner,e);
+  }
+  return [...options.values()];
+}
+function selectApprenticeCoop(w,t,options){
+  if(!options.length)return null;
+  const agent=t.apprentice,session=w.apprentice.session,brain=session.coop[t.slot];
+  let best=null,score=0;
+  for(const option of options){
+    const memory=brain.get(option.key);
+    if(!memory||memory.attempts<3||memory.successes<2)continue;
+    const value=memory.successes/(memory.attempts+2);
+    if(value>=.34&&value>score){best=option;score=value;}
+  }
+  const experienced=Boolean(best)&&agent.coopRandom()<.78;
+  if(!experienced&&agent.coopRandom()>=.22)return null;
+  const option=experienced?best:options[Math.floor(agent.coopRandom()*options.length)];
+  const stats=agent.coopStats[option.kind];
+  stats.attempts++;if(experienced)stats.experienced++;
+  let row=null;
+  if(session.train){
+    row=brain.get(option.key)??newCoopRecord();
+    row.attempts++;if(experienced)row.experienced++;
+    brain.set(option.key,row);
+  }
+  return {...option,stats,row,experienced,until:w.time+1.6,credited:false};
+}
+function apprenticeCoopIntent(w,t,decision){
+  const weapon=C[t.cls].guns[0];
+  if(weapon?.kind!=="bullet"||!decision?.target.alive||!decision.ally.alive||!perceived(w,t,decision.target))return false;
+  const {target,kind}=decision;
+  const [x,y]=kind==="cover"?lead(t,target,bulletSpeed(t,weapon),.35):[target.x,target.y];
+  const aim=Math.atan2(y-t.y,x-t.x);
+  const closing=kind==="opening"?.65:kind==="focus"?.35:0;
+  t.intent={x:Math.cos(aim)*closing,y:Math.sin(aim)*closing,aim,fire:true,alt:false};
+  t.detail=APPRENTICE_COOP[kind]+(decision.experienced?" · experiência":" · exploração");
+  return true;
+}
+function creditApprenticeCoop(w,shot,target,intercepted){
+  const decision=shot.apprenticeCoop;
+  if(!decision||decision.credited||decision.target!==target||w.time>decision.until||
+    !decision.ally.alive||!shot.owner.alive||(decision.kind==="cover")!==intercepted)return;
+  if(decision.witness&&!apprenticeThreatens(decision.witness,decision.ally))return;
+  if(decision.kind==="opening"&&apprenticeThreatens(decision.witness,shot.owner))return;
+  decision.credited=true;
+  decision.stats.successes++;
+  if(decision.row)decision.row.successes++;
 }
 function apprenticeAction(available,weight){
   let pick=0,best=-Infinity;
@@ -1158,16 +1240,17 @@ function apprenticeDamage(w,target,source,amount,kind){
 function finishApprenticeReport(w){
   const {session,round,prep,prepSeconds}=w.apprentice;
   const report={round,seed:w.seed,prepSeconds,result:w.bossTrialResult,tanks:w.tanks.map((t,i)=>{
-    const {contactHp,prepContactHp,droneHp,bossHp,learnedChoices,riskChoices,riskExample}=t.apprentice;
+    const {contactHp,prepContactHp,droneHp,bossHp,learnedChoices,riskChoices,riskExample,coopStats}=t.apprentice;
     return {name:t.name,level:prep[i].level,cls:prep[i].cls,xp:prep[i].xp,
-      contactHp,prepContactHp,droneHp,bossHp,learnedChoices,riskChoices,riskExample};
+      contactHp,prepContactHp,droneHp,bossHp,learnedChoices,riskChoices,riskExample,coopStats};
   })};
   session.history.push(report);
   if(session.history.length>APPRENTICE_HISTORY_LIMIT)session.history.shift();
 }
 function encodeApprenticeSession(session){
-  const {count,brains,rounds,history}=session;
-  return JSON.stringify({version:1,count,brains:brains.map(brain=>[...brain]),rounds:[...rounds],history});
+  const {count,brains,coop,rounds,history}=session;
+  return JSON.stringify({version:1,count,brains:brains.map(brain=>[...brain]),coop:coop.map(brain=>[...brain]),
+    rounds:[...rounds],history});
 }
 function decodeApprenticeSession(raw){
   const session=newApprenticeSession();
@@ -1180,9 +1263,12 @@ function decodeApprenticeSession(raw){
     C[bot.cls]&&nonnegative(bot.xp);
   const validPrep=tanks=>pair(tanks)&&tanks.every(validStart);
   const validRow=row=>row&&["uses","hits","reward","contacts","contactHp"].every(key=>nonnegative(row[key]));
+  const validCoop=row=>row&&["attempts","successes","experienced"].every(key=>nonnegative(row[key]))&&
+    row.successes<=row.attempts&&row.experienced<=row.attempts;
   const validReport=report=>report&&Number.isInteger(report.round)&&report.round>0&&validSeed(report.seed)&&
     nonnegative(report.prepSeconds)&&report.prepSeconds<=APPRENTICE_PREP&&typeof report.result==="string"&&
     pair(report.tanks)&&report.tanks.every(t=>validStart(t)&&typeof t.name==="string"&&
+      (t.coopStats===undefined||Object.keys(APPRENTICE_COOP).every(kind=>validCoop(t.coopStats?.[kind])))&&
       ["contactHp","prepContactHp","droneHp","bossHp","learnedChoices","riskChoices"].every(key=>nonnegative(t[key]))&&
       (t.riskExample===null||t.riskExample&&APPRENTICE_CONTEXTS.includes(t.riskExample.context)&&
         ["avoided","chosen"].every(key=>APPRENTICE_ACTIONS.some(action=>action.name===t.riskExample[key]))));
@@ -1192,6 +1278,8 @@ function decodeApprenticeSession(raw){
   session.brains=data.brains.map(entries=>new Map(Array.isArray(entries)?entries.filter(entry=>
     pair(entry)&&APPRENTICE_CONTEXTS.includes(entry[0])&&Array.isArray(entry[1])&&
     entry[1].length===APPRENTICE_ACTIONS.length&&entry[1].every(validRow)):[]));
+  if(pair(data.coop))session.coop=data.coop.map(entries=>new Map(Array.isArray(entries)?entries.filter(entry=>
+    pair(entry)&&typeof entry[0]==="string"&&/^(focus|opening|cover):(form|boss|tank|shot)$/.test(entry[0])&&validCoop(entry[1])):[]));
   session.rounds=new Map(data.rounds.slice(-APPRENTICE_SEED_LIMIT).filter(entry=>pair(entry)&&validSeed(entry[0])&&
     entry[1]&&validPrep(entry[1].first)&&validPrep(entry[1].best)));
   session.history=data.history.slice(-APPRENTICE_HISTORY_LIMIT).filter(validReport);
@@ -1249,6 +1337,8 @@ function apprenticeThink(w,t){
   if(w.tick>=agent.next){
     agent.next=w.tick+APPRENTICE_INTERVAL;
     agent.row=null;agent.known=false;
+    agent.coopDecision=w.apprentice.session.cooperation?selectApprenticeCoop(w,t,apprenticeCoopOptions(w,t)):null;
+    if(agent.coopDecision&&apprenticeCoopIntent(w,t,agent.coopDecision))return;
     agent.wander=agent.random()*TAU;agent.side=agent.random()<.5?-1:1;
     if(first){
       let rows=brain.get(context);
@@ -1273,6 +1363,8 @@ function apprenticeThink(w,t){
       if(training){agent.row=rows[pick];agent.row.uses++;}
     }else agent.action=null;
   }
+  if(agent.coopDecision&&apprenticeCoopIntent(w,t,agent.coopDecision))return;
+  agent.coopDecision=null;
   const action=agent.action,target=action?.second?second??first:first;
   if(!action||!target){
     t.intent={x:Math.cos(agent.wander??0),y:Math.sin(agent.wander??0),aim:agent.wander??0,fire:false,alt:false};
@@ -4637,6 +4729,7 @@ class Arena {
     if(mount.cartographerShot){child.cartographerShot=true;child.bornTick=this.tick;}
     if(mount.pillar)child.pillarSource=mount.pillar;
     if(t.apprentice?.row)child.apprenticeRow=t.apprentice.row;
+    if(t.apprentice?.coopDecision)child.apprenticeCoop=t.apprentice.coopDecision;
     if(g.kind===SKIMMER_MISSILE){
       child.spin=t.intent.alt?-1:1;
       child.sideSpeed=bulletSpeed(t,skimmerSide);
@@ -5459,8 +5552,14 @@ class Arena {
           const pressure=buildPressure(blocked.owner,this.time);
           pressure[4]=Math.min(11,pressure[4]+.45);
         }
-        if(p.dur<=0)this.creditHeavyInterception(q,p);
-        if(q.dur<=0)this.creditHeavyInterception(p,q);
+        if(p.dur<=0){
+          this.creditHeavyInterception(q,p);
+          if(this.apprentice)creditApprenticeCoop(this,q,p,true);
+        }
+        if(q.dur<=0){
+          this.creditHeavyInterception(p,q);
+          if(this.apprentice)creditApprenticeCoop(this,p,q,true);
+        }
         if(p.dur<=0) this.removeShot(p,q.owner);
         if(q.dur<=0) this.removeShot(q,p.owner);
       }
@@ -5514,7 +5613,13 @@ class Arena {
           p.apprenticeRow.reward+=dealt*.10+(dealt>=e.hp?e.f.xp/45:0);
           p.apprenticeRow.hits++;
         }
-        if(this.apprentice)apprenticeDamage(this,e,p.owner,p.damage*load,isDrone?"drone":"shot");
+        if(this.apprentice){
+          apprenticeDamage(this,e,p.owner,p.damage*load,isDrone?"drone":"shot");
+          if(p.owner.apprentice&&(e.type==="boss"||e.type==="form")){
+            if(this.apprentice.session.cooperation)creditApprenticeCoop(this,p,e,false);
+            e.apprenticeHit={by:p.owner,at:this.time};
+          }
+        }
         e.hp-=p.damage*load;e.damaged=e.hit=this.time;
         if(e.type==="boss")this.bossDamage(e,p.owner);
         if(e.mini)this.pressureSurvivalMini(e,p.owner,p.damage*load);
@@ -9344,6 +9449,10 @@ function updateApprenticeHud(){
         if(tank.riskExample){
           const {context,avoided,chosen}=tank.riskExample;
           row.append(node("div",tank.riskChoices+" escolhas mudaram por risco · "+context+" · "+avoided+" → "+chosen));
+        }
+        for(const [kind,stats] of Object.entries(tank.coopStats??{})){
+          if(stats.attempts)row.append(node("div",APPRENTICE_COOP[kind]+" · "+stats.successes+" de "+stats.attempts+
+            " tentativas funcionaram · "+stats.experienced+" escolhas por experiência"));
         }
       }
       return row;
