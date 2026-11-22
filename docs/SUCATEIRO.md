@@ -4,7 +4,7 @@ Em **Laboratório → Chefe do desafio**, selecione **Sucateiro** e clique em **
 
 O Sucateiro patrulha o ninho, atrai polígonos comuns próximos e gira o estoque ao redor do casco. A peça acelera e desacelera durante a captura até acompanhar a órbita, em cerca de 0,52 s para as formas pequenas, 0,60 s para os pentágonos e 0,82 s para o alfa. As peças absorvem tiros e continuam sujeitas às colisões da arena. Um arremesso tira a peça da órbita, e o chefe espera 1,2 s antes de voltar a coletar.
 
-Na fase 1, o chefe para e marca a trajetória com um tracejado. Destruir a peça destacada cancela esse ataque. Nas fases 2 e 3, o chefe segue em movimento e arremessa sem aviso. Com dois atacantes e duas peças elegíveis, lança uma em cada alvo. Os dois canhões usam o mesmo alcance de 720 unidades da mira do chefe e alternam tiros a cada 0,88 s quando alinhados. O dano nominal é de 7 na fase 2 e 10,5 na fase 3. Há um intervalo mínimo de 0,3 s após um arremesso para o próximo tiro de canhão.
+Na fase 1, o chefe para e marca a trajetória com um tracejado. Destruir a peça destacada cancela esse ataque. Nas fases 2 e 3, o chefe segue em movimento e arremessa sem aviso. Com dois atacantes e duas peças elegíveis, lança uma em cada alvo. Os dois canhões usam o mesmo alcance de 720 unidades da mira do chefe e alternam tiros quando alinhados. Na fase 2, cada disparo causa 8 de dano nominal, com recarga de 0,74 s, velocidade de 518,4 unidades/s e durabilidade 12. Na fase 3, passa a 13 de dano, 0,46 s de recarga, 652,8 unidades/s e durabilidade 15. Há um intervalo mínimo de 0,3 s após um arremesso para o próximo tiro de canhão.
 
 Na fase 3, os polígonos saem 12% mais rápidos.
 

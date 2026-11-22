@@ -201,22 +201,30 @@ test('uma peça carregada explode uma vez ao colidir com uma forma neutra e afet
   assert.equal(near.hp,wounded);
 });
 
-test('os canhões alcançam o limite da mira e ganham dano na fase 3',()=>{
-  const w=clearScrapLab(2),b=w.boss,[player]=w.tanks;
-  // More than 535 units from the muzzle, inside the boss's 720-unit tracking range.
-  idle(player,b.x+669,b.y);
-  b.aim=0;
-  b.nextScrapBarrel=0;
-  stepUntil(w,()=>w.shots.some(p=>p.scrapBarrel!=null));
-  const first=w.shots.find(p=>p.scrapBarrel!=null);
-  assert.ok(Math.hypot(player.x-first.x,player.y-first.y)>535);
-  assert.equal(first.damage,7);
-  const before=player.hp;
-  stepUntil(w,()=>player.hp<before,110);
-  b.hp=b.spec.hp*.34;
-  b.nextScrapBarrel=w.time;
-  idle(player,b.x+665,b.y);
-  stepUntil(w,()=>w.shots.some(p=>p.scrapBarrel!=null&&p.damage===10.5),90);
+test('os canhões alcançam o limite da mira e mantêm o dano contra tanques resistentes',()=>{
+  for(const [level,phase,damage,speed,dur,cooldown] of [[25,2,8,518.4,12,.74],[45,3,13,652.8,15,.46]]){
+    const w=new Arena(7103,2,['Tank','Tank',level,'sucateiro']);
+    const b=w.boss,[player,other]=w.tanks;
+    w.shapes=[];
+    w.formTarget=0;
+    b.hp=b.spec.hp*(phase===3?.34:.69);
+    b.nextScrapShot=Infinity;
+    idle(player,b.x+669,b.y);
+    player.stats[2]=7;
+    idle(other,200,200);
+    b.aim=0;
+    stepUntil(w,()=>w.shots.some(p=>p.scrapBarrel!=null));
+    const shot=w.shots.find(p=>p.scrapBarrel!=null);
+    assert.ok(Math.hypot(player.x-shot.x,player.y-shot.y)>535);
+    assert.equal(shot.damage,damage);
+    assert.equal(shot.dur,dur);
+    assert.ok(Math.abs(Math.hypot(shot.vx,shot.vy)-speed)<1e-8);
+    assert.ok(Math.abs(b.nextScrapBarrel-w.time-cooldown)<1e-8);
+    const hp=player.hp;
+    stepUntil(w,()=>player.hp<hp,110);
+    assert.equal(hp-player.hp,damage);
+    assert.equal(shot.alive,phase===3);
+  }
 });
 
 test('as fases 2 e 3 lançam contra dois alvos e usam a recarga da fase',()=>{
