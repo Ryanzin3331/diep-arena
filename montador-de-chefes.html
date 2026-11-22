@@ -1,0 +1,2154 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Montador de Chefes</title>
+<style>
+:root{color-scheme:dark;--bg:#111713;--sheet:#171f19;--sub:#1b251d;--line:#304035;--muted:#a1b1a4;--text:#ecf2e9;--accent:#c6ef83;--ink:#1e2d18;--arena:#e0ead9;--warn:#f1ba77;font-family:Inter,Geist,system-ui,sans-serif}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-size:14px}button,input,select{font:inherit}button{cursor:pointer;border:1px solid var(--line);border-radius:8px;background:#202b23;color:var(--text);padding:8px 10px;line-height:1.2}button:hover{border-color:#84a478;background:#28382a}button:disabled{opacity:.42;cursor:default}button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px}.primary{color:var(--ink);border-color:var(--accent);background:var(--accent);font-weight:750}.primary:hover{background:#ddf8a7;color:#162413}.ghost{background:transparent}.danger{color:#ffc2b5}.icon{min-width:36px}.selected,button[aria-pressed="true"],button[aria-selected="true"]{background:#2b4028;border-color:#82ab64;color:#e4ffc0}a{color:var(--accent)}header{border-bottom:1px solid #2c3930;background:#151d17;padding:16px clamp(12px,3vw,38px);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}h1,h2,h3,p{margin:0}h1{font-size:20px;letter-spacing:-.035em}h2{font-size:16px;letter-spacing:-.02em}h3{font-size:13px}.brand,.header-actions,.toolbar,.button-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.brand{gap:11px}.emblem{width:35px;height:35px;background:#b7e678;clip-path:polygon(50% 0,92% 25%,92% 75%,50% 100%,8% 75%,8% 25%);display:grid;place-items:center;color:#283c21}.emblem::before{content:"";width:17px;height:17px;border:3px solid currentColor;border-radius:50%}.header-actions{margin-left:auto}.layout{max-width:1600px;margin:0 auto;display:grid;grid-template-columns:minmax(200px,248px) minmax(350px,1fr) minmax(240px,308px);gap:14px;align-items:start;padding:18px clamp(10px,2vw,26px)}.panel,.viewport{min-width:0;border:1px solid var(--line);border-radius:12px;background:var(--sheet);overflow:hidden}.section{padding:14px;border-bottom:1px solid #26362b}.section:last-child{border:0}.section>h2,.section>h3{margin-bottom:10px}.section-title{display:flex;gap:8px;justify-content:space-between;align-items:center;margin-bottom:10px}.hint,small{color:var(--muted)}.hint{font-size:12px;line-height:1.45}.phases{display:grid;gap:6px;margin-top:11px}.phase{width:100%;display:grid;grid-template-columns:26px minmax(0,1fr) auto;align-items:center;text-align:left;gap:7px;padding:9px 8px}.phase .badge{font-size:11px;font-weight:800;background:#101a12;border-radius:6px;color:var(--accent);padding:4px;text-align:center}.phase small{font-size:10px}.cut{padding-top:2px;overflow-wrap:anywhere}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.field{display:grid;gap:5px;align-content:start;min-width:0;color:#c9d6c9;font-size:12px}.wide{grid-column:1/-1}.field input,.field select,.add-controls select{min-width:0;width:100%;height:34px;border:1px solid #405345;border-radius:7px;background:#101813;color:var(--text);padding:3px 7px}.field input[type="color"]{padding:3px;cursor:pointer}.field input[type="checkbox"]{width:auto;height:auto}.toggle{display:flex;gap:7px;align-items:center}.add-controls{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px}.parts{list-style:none;margin:0 0 9px;padding:0;display:grid;gap:5px;max-height:300px;overflow:auto}.parts button{width:100%;display:flex;align-items:center;gap:7px;text-align:left;padding:7px 8px;min-height:35px}.parts button span:nth-child(2){min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.swatch{width:11px;height:11px;border-radius:3px;display:inline-block;flex:none;border:1px solid #0005}.viewport{background:#1b251e}.viewport-head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;gap:10px;flex-wrap:wrap}.viewport-head strong{font-size:13px}.live{font-size:11px;color:#bdcbb9;white-space:nowrap}.live::before{content:"";display:inline-block;width:7px;height:7px;background:#b9e779;border-radius:50%;margin-right:6px}.arena{position:relative;background:var(--arena)}canvas{display:block;width:100%;height:auto;aspect-ratio:840/610;touch-action:none;cursor:grab}canvas.dragging{cursor:grabbing}canvas.resizing{cursor:crosshair}.edit-tools select{padding:5px 6px;border:1px solid var(--line);border-radius:7px;background:#101813;color:var(--text);font-size:12px}.grid-label{font-size:11px;color:var(--muted)}.edit-tools{border-top-color:#28382d}.phases{max-height:312px;overflow:auto}.footer-actions button{font-size:11px}.arena-note{position:absolute;left:12px;bottom:10px;padding:4px 7px;pointer-events:none;border-radius:5px;background:#1e2c21e8;color:white;font-size:10px}.toolbar{padding:9px 10px;border-top:1px solid #314137}.toolbar .spacer{flex:1;min-width:0}.toolbar button{font-size:12px}.stats{padding:10px 12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;border-top:1px solid #2a382e}.stats strong{display:block;font-size:15px;color:#e3f7d5}.stats small{font-size:11px}.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding:9px;border-bottom:1px solid var(--line)}.tabs button{padding:7px 5px;font-size:12px}.part-toolbar{margin-top:12px}.orb-list{display:grid;gap:9px;margin-top:12px}.orb-row{display:grid;grid-template-columns:minmax(63px,1.2fr) repeat(2,minmax(0,1fr));gap:6px;align-items:end;border-top:1px solid #2e3f33;padding-top:8px}.orb-title{display:flex;align-items:center;gap:5px;line-height:1.2;font-size:11px;align-self:center}.orb-title small{display:block;font-size:10px;margin-top:2px}.orb-row .field{font-size:10px}.orb-row .field input{height:31px}.meter{height:6px;overflow:hidden;background:#303f34;border-radius:999px;margin:7px 0}.meter i{background:var(--accent);height:100%;display:block}.meter.over i{background:var(--warn)}#notice{position:fixed;max-width:min(420px,calc(100% - 24px));bottom:12px;right:12px;background:#202e23;border:1px solid #617b57;padding:10px 12px;border-radius:8px;box-shadow:0 6px 30px #0007;z-index:10;font-size:12px}dialog{border:1px solid #5d765d;background:#172218;color:var(--text);border-radius:12px;max-width:min(630px,calc(100% - 20px));padding:19px;max-height:85vh;overflow:auto}dialog::backdrop{background:#090e0bba}.plan{font-size:14px;line-height:1.58}.plan ul{padding-left:20px}.plan li{margin:8px 0}.plan .section-title{gap:18px}table{border-collapse:collapse;width:100%;margin:8px 0 12px;font-size:12px}th,td{text-align:left;padding:6px 4px;border-bottom:1px solid var(--line)}.footer-actions{margin-top:10px}[hidden]{display:none!important}
+@media(max-width:1000px){.layout{grid-template-columns:minmax(170px,205px) minmax(260px,1fr) minmax(208px,245px);gap:8px;padding:10px}.section{padding:11px}.stats{gap:5px}.toolbar{gap:5px}}
+@media(max-width:780px){.layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.viewport{grid-column:1/-1;grid-row:1}.toolbar button{font-size:11px}.header-actions{margin-left:0}}
+@media(max-width:450px){.layout{display:flex;flex-direction:column}.layout>section,.layout>aside{width:100%}.viewport{order:-1}.header-actions button{font-size:12px}.stats strong{font-size:13px}.stats small{font-size:10px}header{padding:12px 10px}}
+.mechanics-list{display:grid;gap:5px;margin:10px 0}
+.mechanics-list button{text-align:left}
+.mechanics-form{border-top:1px solid var(--line);padding-top:12px;margin-top:12px}
+.barrel-picker{margin:10px 0;padding:8px;border:1px solid var(--line);border-radius:7px}
+.barrel-picker label{padding:4px 1px}
+.test-status{font-size:12px;color:var(--accent);font-variant-numeric:tabular-nums}
+.arena.testing canvas{cursor:crosshair}
+@media(min-width:781px) and (min-height:450px){
+  body{height:100vh;height:100dvh;display:grid;grid-template-rows:auto minmax(0,1fr);overflow:hidden}
+  header{padding:9px clamp(10px,2vw,26px);gap:8px}
+  .layout{width:100%;min-height:0;align-items:stretch;padding-block:10px}
+  .project-panel{overflow:auto;overscroll-behavior:contain}
+  .inspector{display:flex;flex-direction:column;min-height:0}
+  .inspector .tabs{flex:none}
+  .inspector [role="tabpanel"]{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}
+  .viewport{display:flex;flex-direction:column;min-height:0}
+  .viewport-head,.toolbar,.stats{flex:none}
+  .arena{flex:1;min-height:0;display:grid;place-items:center;container-type:size}
+  canvas{width:min(100cqw,137.704918cqh);height:auto}
+  .section{padding:11px}
+  .toolbar{padding:6px 8px}
+  .stats{padding:6px 10px}
+}
+.tabs{grid-template-columns:repeat(2,minmax(0,1fr))}
+.mechanics-nav{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:4px;padding:7px;border-bottom:1px solid var(--line)}
+.mechanics-nav button{font-size:11px;padding:6px 4px}
+.mechanics-nav,.add-controls{min-width:0}
+.origin-tools{grid-column:1/-1;display:grid;gap:8px;border-top:1px solid var(--line);padding-top:10px}
+.origin-tools .fields{gap:6px}
+#orbitEnable,#attackOrbitEnable{margin-bottom:10px}
+#orbitEnable .field,#attackOrbitEnable .field{margin-bottom:6px}
+.drone-size-tools{padding-bottom:8px;margin-bottom:8px;border-bottom:1px solid var(--line)}
+.drone-size-tools button{font-size:11px}
+.tabs button{padding-inline:2px;min-width:0;font-size:clamp(10px,.9vw,12px)}
+@media(max-width:450px){.tabs button{font-size:11px}}
+#droneModelDialog{width:min(920px,calc(100% - 24px));max-width:none;max-height:calc(100dvh - 24px);padding:0;overflow:auto}
+.drone-model-head{background:#18251d;padding:12px 16px;position:sticky;top:0;z-index:1}
+.drone-model-head p{margin-top:3px}
+.drone-model-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(228px,284px);gap:14px;padding:14px}
+.drone-workspace,.drone-model-inspector{min-width:0}
+.drone-board{overflow:hidden;border:1px solid #576c53;border-radius:10px;background:#dce7d7}
+#droneModelCanvas{width:100%;height:auto;aspect-ratio:440/354;cursor:crosshair}
+.drone-tools{display:flex;align-items:end;flex-wrap:wrap;gap:6px;margin:9px 0}
+.drone-tool-field{display:grid;gap:4px;color:var(--muted);font-size:11px}
+.drone-tool-field select{height:34px;padding:3px 7px;border:1px solid var(--line);border-radius:7px;background:#101813;color:var(--text);font:inherit;font-size:13px}
+.drone-tools button,.drone-path-actions button,.drone-layer-actions button{font-size:12px}
+.drone-path-actions{margin:7px 0}
+.drone-model-inspector{border:1px solid var(--line);border-radius:9px;padding:10px;background:var(--sheet)}
+.drone-model-inspector h3{margin-bottom:8px}
+.drone-model-inspector .parts{max-height:165px}
+.drone-layer-actions{padding-bottom:9px;margin-bottom:9px;border-bottom:1px solid var(--line)}
+#resetDroneModel{margin-top:10px;font-size:11px}
+#droneModelHint{min-height:36px}
+@media(max-width:680px){.drone-model-grid{grid-template-columns:minmax(0,1fr);padding:10px;gap:10px}.drone-model-head{padding:9px 10px}}
+#orbitPathDialog{width:min(620px,calc(100% - 24px));max-width:none;max-height:calc(100dvh - 24px);padding:0;overflow:auto}
+.orbit-editor{padding:14px;display:grid;gap:10px}
+.orbit-editor .drone-board{width:min(100%,480px,calc((100dvh - 185px)*1.215));min-width:min(100%,235px);margin-inline:auto}
+#orbitPathCanvas{width:100%;height:auto;aspect-ratio:480/395;cursor:crosshair}
+.orbit-editor-tools button{font-size:12px}
+#orbitPathHint{min-height:34px}
+.orbit-edit-row{grid-column:1/-1;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+#combatFields{margin-top:9px}#combatFields summary{cursor:pointer;font-size:12px;color:var(--muted)}
+#combatFields .fields,#combatFields .hint{margin-top:6px}
+.guide-link{font-size:13px;font-weight:700;padding:7px 9px}
+#bodySpinFields{border:1px solid var(--line);border-radius:8px;padding:8px;margin:0 0 12px;min-width:0}
+#bodySpinFields legend{font-size:12px;font-weight:750;padding:0 4px}
+#bodySpinFields .hint{margin-top:7px}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><span class="emblem" aria-hidden="true"></span><h1>Montador de chefes</h1></div>
+  <div class="header-actions">
+    <button id="newProject">Novo projeto</button>
+    <a class="guide-link" href="https://github.com/Ryanzin3331/diep-arena/blob/main/docs/MONTADOR.md" target="_blank" rel="noopener">Guia</a>
+    <button id="openPlan" class="ghost">Plano do Sucateiro</button>
+    <button id="importProject">Importar JSON</button>
+    <button id="exportPng">Exportar PNG</button>
+    <button id="exportProject" class="primary">Salvar JSON</button>
+  </div>
+  <input type="file" id="projectFile" accept=".json,application/json" hidden>
+</header>
+<main class="layout">
+  <aside class="panel project-panel" aria-label="Projeto e peças">
+    <section class="section">
+      <label class="field">Nome do chefe<input id="bossName" maxlength="45"></label>
+      <details id="combatFields">
+        <summary>Atributos de combate</summary>
+        <div class="fields">
+          <label class="field">Vida máxima<input id="combatHp" type="number" min="50" max="20000" step="1"></label>
+          <label class="field">Dano de contato<input id="combatBody" type="number" min="0" max="250" step="1"></label>
+          <label class="field wide">Raio de colisão<input id="combatRadius" type="number" min="0" max="180" step="1"></label>
+        </div>
+        <p class="hint">Com raio 0, a colisão acompanha o raio visual de cada fase.</p>
+      </details>
+      <nav id="phaseList" class="phases" aria-label="Estágios"></nav>
+      <div class="button-row footer-actions">
+        <button id="addStage" title="Cria uma fase a partir da selecionada">Duplicar fase</button>
+        <button id="copyStage" title="Copia o estágio atual para o estágio seguinte">Copiar visual →</button>
+        <button id="removeStage" class="ghost danger">Excluir fase</button>
+        <button id="resetStage" class="ghost">Restaurar fase</button>
+      </div>
+    </section>
+    <section class="section">
+      <div class="section-title"><h2>Peças</h2><small id="partCount"></small></div>
+      <ul id="partList" class="parts"></ul>
+      <div class="add-controls">
+        <select id="partKind" aria-label="Nova peça">
+          <option value="barrel">Canhão</option><option value="plate">Blindagem</option>
+          <option value="core">Núcleo</option><option value="poly">Polígono</option>
+        </select>
+        <button id="addPart" title="Adicionar peça">Adicionar</button>
+      </div>
+    </section>
+    <section class="section"><p class="hint">Arraste a peça pra mover. Com as alças ligadas, arraste um canto pra redimensionar. Use <strong>Proporção</strong> ou segure <kbd>Shift</kbd> pra manter a proporção.</p></section>
+  </aside>
+  <section class="viewport" aria-label="Prévia do chefe">
+    <div class="viewport-head"><strong id="stageTitle"></strong><span class="live" id="animationStatus"></span></div>
+    <div class="arena">
+      <canvas id="preview" width="840" height="610" aria-label="Prévia editável do chefe"></canvas>
+      <div id="arenaNote" class="arena-note">Selecione e arraste uma peça</div>
+    </div>
+    <div class="toolbar">
+      <button id="togglePlay">Pausar</button><button class="primary" id="launch">Lançar peça</button>
+      <button id="refill">Repor escudo</button>
+      <button id="testToggle" type="button" aria-pressed="false">Testar fase</button>
+      <button id="testReset" type="button" hidden>Reiniciar teste</button>
+      <span class="test-status" id="testStatus"></span><span class="spacer"></span>
+      <button id="zoomOut" class="icon" aria-label="Diminuir zoom">−</button>
+      <button id="zoomReset" title="Restaurar zoom">100%</button>
+      <button id="zoomIn" class="icon" aria-label="Aumentar zoom">+</button>
+    </div>
+    <div class="toolbar edit-tools" aria-label="Ferramentas de edição">
+      <button id="toggleGrid" type="button" aria-pressed="true">Grade</button>
+      <label for="gridSize" class="grid-label">Passo</label>
+      <select id="gridSize" aria-label="Passo da grade">
+        <option value="5">5</option><option value="10">10</option><option value="20" selected>20</option><option value="25">25</option><option value="50">50</option>
+      </select>
+      <button id="toggleSnap" type="button" aria-pressed="false">Encaixar</button>
+      <button id="toggleHandles" type="button" aria-pressed="true">Alças</button>
+      <button id="toggleRatio" type="button" aria-pressed="false" title="Manter a proporção ao redimensionar">Proporção</button>
+      <span class="spacer"></span>
+      <button id="undoEdit" type="button" title="Desfazer (Ctrl+Z)">Desfazer</button>
+      <button id="redoEdit" type="button" title="Refazer (Ctrl+Shift+Z)">Refazer</button>
+    </div>
+    <div class="stats">
+      <div><strong id="statStock">0</strong><small>Peças ativas</small></div>
+      <div><strong id="statLoad">0 / 0</strong><small>Carga em órbita</small></div>
+      <div><strong id="statDamage">—</strong><small>Dano da peça selecionada</small></div>
+    </div>
+  </section>
+  <aside class="panel inspector" aria-label="Propriedades">
+    <div class="tabs" role="tablist" aria-label="Propriedades" id="inspectTabs">
+      <button id="tabVisual" role="tab" aria-controls="visualPanel" aria-selected="true" data-tab="visual">Visual</button>
+      <button id="tabMechanics" role="tab" aria-controls="mechanicsPanel" aria-selected="false" data-tab="mechanics">Mecânicas</button>
+    </div>
+    <div id="visualPanel" role="tabpanel" aria-labelledby="tabVisual">
+      <div id="stageFields" class="section"><h2>Estágio</h2><div id="stageProperties" class="fields"></div></div>
+      <div class="section">
+        <h2 id="partTitle">Casco</h2><div id="visualFields" class="fields"></div>
+        <div id="partButtons" class="button-row part-toolbar" hidden>
+          <button id="moveBack" aria-label="Mover peça para trás na camada">Pra trás</button>
+          <button id="moveFront" aria-label="Mover peça para frente na camada">Pra frente</button>
+          <button id="duplicatePart">Duplicar</button><button id="removePart" class="danger">Excluir</button>
+        </div>
+      </div>
+    </div>
+    <div id="mechanicsPanel" role="tabpanel" aria-labelledby="tabMechanics" hidden>
+      <nav id="mechanicsNav" class="mechanics-nav" aria-label="Configurações de mecânica">
+        <button data-mechanic-pane="behaviors" type="button" aria-pressed="true">Comportamentos</button>
+        <button data-mechanic-pane="orbit" type="button" aria-pressed="false">Órbita</button>
+        <button data-mechanic-pane="attack" type="button" aria-pressed="false">Lançamento</button>
+      </nav>
+      <section class="section" id="behaviorsPane">
+        <div class="section-title"><h2>Comportamentos da fase</h2></div>
+        <fieldset id="bodySpinFields"><legend>Giro do chefe</legend><div id="bodySpinSettings" class="fields"></div>
+          <p class="hint">Use Testar fase para ver o casco e as peças girarem.</p></fieldset>
+        <div class="add-controls">
+          <select id="mechanicType" aria-label="Tipo de comportamento">
+            <option value="fire">Disparo</option><option value="drones">Invocar drones</option>
+            <option value="move">Mover chefe</option><option value="launch">Lançar peça orbital</option>
+          </select>
+          <button id="addMechanic" class="primary" type="button">Adicionar</button>
+        </div>
+        <div id="mechanicsList" class="mechanics-list"></div>
+        <p id="emptyMechanics" class="hint">Adicione um comportamento para testar nesta fase.</p>
+        <div id="mechanicsForm" class="mechanics-form" hidden></div>
+      </section>
+      <section class="section" id="orbitPane" hidden>
+        <h2>Escudo orbital</h2><div id="orbitEnable"></div>
+        <div id="orbitSettings">
+          <div id="orbitFields" class="fields"></div>
+          <div class="meter" id="loadMeter"><i></i></div><p class="hint" id="capacityHint"></p>
+          <div class="orb-list" id="orbitRows"></div>
+        </div>
+      </section>
+      <section class="section" id="attackPane" hidden>
+        <h2>Lançamento</h2><div id="attackOrbitEnable"></div>
+        <div id="orbitAttackSettings">
+          <div id="attackFields" class="fields"></div>
+          <div class="orb-list" id="attackRows"></div>
+        </div>
+      </section>
+    </div>
+  </aside>
+</main>
+<div id="notice" role="status" hidden></div>
+<dialog id="projectDialog">
+  <div class="section-title"><h2>Novo projeto</h2><form method="dialog"><button>Cancelar</button></form></div>
+  <div class="button-row">
+    <button id="blankProject" class="primary" type="button">Casco em branco</button>
+    <button id="scrapperProject" type="button">Modelo Sucateiro</button>
+  </div>
+</dialog>
+<dialog id="planDialog"><div class="plan">
+  <div class="section-title"><h2>Plano do Sucateiro</h2><form method="dialog"><button>Fechar</button></form></div>
+  <p>O chefe recolhe formas da própria arena. A carga de um escudo limita o conjunto e o teto de cada tipo impede que uma órbita fique tomada por peças pesadas.</p>
+  <table><thead><tr><th>Peça</th><th>Carga</th><th>Dano inicial</th></tr></thead>
+  <tbody><tr><td>Quadrado</td><td>1</td><td>8</td></tr><tr><td>Triângulo</td><td>1</td><td>11</td></tr><tr><td>Pentágono azul</td><td>2</td><td>17</td></tr><tr><td>Pentágono alfa</td><td>5</td><td>28</td></tr></tbody></table>
+  <ul>
+    <li><strong>Fase 1.</strong> Carga de 6, com formas pequenas. O quadrado viaja mais devagar, e o triângulo é o mais veloz.</li>
+    <li><strong>Fase 2, a partir de 70%.</strong> Carga de 9 e espaço para pentágonos azuis. Dá pra destruir uma peça e abrir caminho.</li>
+    <li><strong>Fase 3, a partir de 35%.</strong> Carga de 12 e até uma peça alfa, quando disponível. O alfa causa mais dano e tem o aviso mais longo.</li>
+    <li><strong>Teste no jogo.</strong> Começar no Laboratório. Medir colisão, desgaste do escudo, a brecha depois do lançamento e a capacidade dos bots de aproveitar a abertura. Em seguida validar o sorteio de eventos no FFA e as outras rotações compatíveis.</li>
+  </ul>
+  <p class="hint">Os valores são propostas. A prévia edita o desenho, reserva vagas de órbita e simula o lançamento. No jogo, a disponibilidade das formas será a da arena real.</p>
+</div></dialog>
+<dialog id="droneModelDialog" aria-labelledby="droneModelTitle">
+  <header class="drone-model-head">
+    <div><h2 id="droneModelTitle">Modelar drone</h2><p id="droneModelRule" class="hint"></p></div>
+    <div class="button-row">
+      <button id="cancelDroneModel" type="button">Cancelar</button>
+      <button id="saveDroneModel" type="button" class="primary">Aplicar modelo</button>
+    </div>
+  </header>
+  <div class="drone-model-grid">
+    <section class="drone-workspace" aria-label="Área de desenho do drone">
+      <div class="drone-board">
+        <canvas id="droneModelCanvas" width="440" height="354" tabindex="0" aria-label="Desenho do drone"></canvas>
+      </div>
+      <div class="drone-tools">
+        <label class="drone-tool-field">Peça pronta
+          <select id="droneShape">
+            <option value="triangle">Triângulo</option><option value="circle">Elipse</option>
+            <option value="rect">Retângulo</option><option value="pentagon">Pentágono</option>
+            <option value="hex">Hexágono</option>
+          </select>
+        </label>
+        <button id="addDroneShape" type="button">Adicionar peça</button>
+        <button id="drawDroneShape" type="button" aria-pressed="false">Desenhar por pontos</button>
+        <button id="snapDroneShape" type="button" aria-pressed="true">Encaixar na grade</button>
+      </div>
+      <div id="dronePathActions" class="button-row drone-path-actions" hidden>
+        <button id="finishDronePath" class="primary" type="button">Fechar e preencher</button>
+        <button id="undoDronePoint" type="button">Remover último ponto</button>
+        <button id="cancelDronePath" type="button" class="ghost">Cancelar contorno</button>
+      </div>
+      <p id="droneModelHint" class="hint" aria-live="polite"></p>
+    </section>
+    <aside class="drone-model-inspector" aria-label="Camadas e propriedades">
+      <h3>Camadas</h3>
+      <div id="droneModelLayers" class="parts"></div>
+      <div class="button-row drone-layer-actions">
+        <button id="droneLayerBack" type="button">Pra trás</button>
+        <button id="droneLayerFront" type="button">Pra frente</button>
+        <button id="duplicateDroneLayer" type="button">Duplicar</button>
+        <button id="deleteDroneLayer" type="button" class="danger">Excluir</button>
+      </div>
+      <div class="button-row drone-size-tools" aria-label="Redimensionar camada">
+        <button id="droneHandles" type="button" aria-pressed="false">Alças</button>
+        <button id="droneRatio" type="button" aria-pressed="false">Proporção</button>
+        <button id="shrinkDroneLayer" type="button" aria-label="Diminuir camada" title="Diminuir camada">−</button>
+        <button id="growDroneLayer" type="button" aria-label="Aumentar camada" title="Aumentar camada">+</button>
+      </div>
+      <div id="droneModelFields" class="fields"></div>
+      <button id="resetDroneModel" type="button" class="ghost">Restaurar triângulo padrão</button>
+    </aside>
+  </div>
+</dialog>
+<dialog id="orbitPathDialog" aria-labelledby="orbitPathTitle">
+  <header class="drone-model-head">
+    <div><h2 id="orbitPathTitle">Trajeto da órbita</h2><p class="hint" id="orbitPathLimit"></p></div>
+    <div class="button-row">
+      <button id="cancelOrbitPath" type="button">Cancelar</button>
+      <button id="saveOrbitPath" type="button" class="primary">Aplicar trajeto</button>
+    </div>
+  </header>
+  <div class="orbit-editor">
+    <div class="drone-board">
+      <canvas id="orbitPathCanvas" width="480" height="395" tabindex="0" aria-label="Desenho do trajeto da órbita"></canvas>
+    </div>
+    <div class="button-row orbit-editor-tools">
+      <button id="drawOrbitPath" type="button">Desenhar do zero</button>
+      <button id="chooseOrbitTriangle" type="button">Usar triângulo</button>
+      <button id="removeOrbitVertex" type="button">Remover ponto</button>
+      <button id="finishOrbitPath" class="primary" type="button">Fechar trajeto</button>
+    </div>
+    <p id="orbitPathHint" class="hint" aria-live="polite"></p>
+  </div>
+</dialog>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const canvas=$("preview"),ctx=canvas.getContext("2d"),W=840,H=610,CX=W/2,CY=H/2;
+const TAU=Math.PI*2,RAD=Math.PI/180,STORAGE="diep-boss-builder:v1",VIEW_STORAGE="diep-boss-builder:view";
+const PHASE_LIMIT=8,GRID_STEPS=[5,10,20,25,50];
+const BODIES={circle:"Círculo",triangle:"Triângulo",square:"Quadrado",pentagon:"Pentágono",hex:"Hexágono",oct:"Octógono"};
+const SIDES={circle:0,triangle:3,square:4,pentagon:5,hex:6,oct:8};
+const KINDS={barrel:"Canhão",plate:"Blindagem",core:"Núcleo",poly:"Polígono"};
+const TYPES={
+  square:{label:"Quadrado",sides:4,weight:1,radius:15,color:"#ebc452",damage:8,speed:250,extra:0},
+  triangle:{label:"Triângulo",sides:3,weight:1,radius:19,color:"#ec856a",damage:11,speed:420,extra:0},
+  pentagon:{label:"Pentágono azul",sides:5,weight:2,radius:28,color:"#8884e1",damage:17,speed:300,extra:.18},
+  alpha:{label:"Pentágono alfa",sides:5,weight:5,radius:46,color:"#7776d9",damage:28,speed:205,extra:.45}
+};
+const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
+const copy=x=>JSON.parse(JSON.stringify(x));
+const n=(value,fallback,min,max)=>{
+  if(typeof value!=="number"&&(typeof value!=="string"||!value.trim()))return fallback;
+  const number=Number(value);return Number.isFinite(number)?clamp(number,min,max):fallback;
+};
+const label=(value,fallback)=>typeof value==="string"?value.trim().slice(0,45)||fallback:fallback;
+const color=(value,fallback)=>typeof value==="string"&&/^#[0-9a-f]{6}$/i.test(value)?value:fallback;
+const values=list=>new Set(Object.keys(list));
+const bodyKinds=values(BODIES),partKinds=values(KINDS);
+let partSerial=0;
+function nextPartId(){return "p-"+Date.now().toString(36)+"-"+(++partSerial);}
+const makePart=(kind,x=85,y=0)=>({id:nextPartId(),name:KINDS[kind],kind,x,y,origin:null,w:kind==="barrel"?92:52,h:kind==="barrel"?27:45,
+  angle:0,shape:kind==="poly"?"triangle":"hex",fill:kind==="core"?"#eac771":"#929e9c",line:"#444957",stroke:5,opacity:100});
+function stagePreset(i){
+  const s={
+    title:["Coleta","Escudo carregado","Sobrecarga"][i],hp:[100,70,35][i],orbitEnabled:true,orbitShape:"circle",orbitPoints:null,
+    body:"hex",radius:[58,62,66][i],angle:30,fill:["#747787","#7c748f","#8d655d"][i],line:"#3f4351",stroke:6,
+    capacity:[6,9,12][i],radiusOrbit:[135,158,184][i],speedOrbit:[39,48,58][i], clockwise:true,showRing:true,
+    aim:0,warning:.75,cooldown:3,bodySpin:0,parts:[],orbits:{},behaviors:[]
+  };
+  s.parts.push(
+    {...makePart("barrel",43,-22),name:"Canhão superior",angle:-13,w:94,h:26},
+    {...makePart("barrel",43,22),name:"Canhão inferior",angle:13,w:94,h:26},
+    {...makePart("plate",-33,0),name:"Placa traseira",w:37,h:79,fill:["#646879","#9b8562","#ac815f"][i]},
+    {...makePart("core",-4,0),name:"Núcleo",w:65,h:65,fill:["#b2bcac","#e1ba72","#f19163"][i]}
+  );
+  if(i>=1)s.parts.splice(3,0,{...makePart("poly",-39,0),name:"Marca de fase",shape:"triangle",angle:180,w:32,h:32,fill:"#e2bf79",stroke:3});
+  if(i===2)s.parts.push({...makePart("core",-4,0),name:"Miolo quente",w:28,h:28,fill:"#f7d49a",stroke:3});
+  const requested=[[3,3,0,0],[3,2,2,0],[2,3,1,1]][i];
+  Object.entries(TYPES).forEach(([key,type],j)=>{
+    s.orbits[key]={qty:requested[j],limit:[6,6,i===0?0:3,i===2?1:0][j],
+      damage:type.damage,speed:type.speed,extra:type.extra,fill:type.color,scale:100};
+  });
+  return s;
+}
+function blankStage(i){
+  const base=stagePreset(0);
+  base.title="Fase "+(i+1);base.hp=i?Math.max(1,100-25*i):100;
+  base.fill="#789ab0";base.line="#354c5b";base.parts=[];base.capacity=0;base.showRing=false;base.orbitEnabled=false;
+  for(const item of Object.values(base.orbits)){item.qty=0;item.limit=0;}
+  return base;
+}
+function normalizeCombat(raw){
+  return {hp:Math.round(n(raw?.hp,1400,50,20000)),
+    bodyDamage:n(raw?.bodyDamage,22,0,250),hitRadius:n(raw?.hitRadius,0,0,180)};
+}
+const defaults=()=>({version:9,template:"scrapper",name:"Sucateiro",combat:normalizeCombat(),stages:[0,1,2].map(stagePreset)});
+const blankProject=()=>({version:9,template:"blank",name:"Novo chefe",combat:normalizeCombat(),stages:[blankStage(0)]});
+function orderThresholds(stages){
+  stages[0].hp=100;
+  for(let i=1;i<stages.length;i++){
+    stages[i].hp=Math.round(clamp(stages[i].hp,stages.length-i,stages[i-1].hp-1));
+  }
+}
+const shotTriggers={interval:"A cada intervalo",enter:"Ao entrar na fase",near:"Quando o tanque está no alcance"};
+const shotModes={alternate:"Alternar emissores",together:"Disparar juntos"};
+const shotAims={track:"Acompanhar continuamente",target:"Mirar só ao disparar",spin:"Girar continuamente",fixed:"Seguir ângulo da peça"};
+const mechanicsTypes={fire:"Disparo",drones:"Invocar drones",move:"Mover chefe",launch:"Lançar peça orbital"};
+const droneModes={orbit:"Orbitar o chefe",chase:"Perseguir o tanque"};
+const moveModes={patrol:"Patrulhar em círculo",distance:"Manter distância do tanque",dash:"Investir em direção ao tanque"};
+const fitsEmitter=p=>p.kind==="barrel"||p.origin!==null;
+const droneShapeNames={triangle:"Triângulo",circle:"Elipse",rect:"Retângulo",pentagon:"Pentágono",hex:"Hexágono",path:"Polígono"};
+const droneLayerLimit=18,dronePointLimit=48,droneCoordLimit=36;
+function makeDroneLayer(shape,fill){
+  return {name:droneShapeNames[shape],shape,x:0,y:0,w:22,h:22,angle:0,scale:100,scaleY:100,fill,line:"#5d5940",stroke:2.6,points:[]};
+}
+function normalizeDroneModel(raw,fill){
+  if(!Array.isArray(raw))return null;
+  const layers=[];
+  for(const layer of raw.slice(0,droneLayerLimit)){
+    if(!layer||!Object.hasOwn(droneShapeNames,layer.shape))continue;
+    const base=makeDroneLayer(layer.shape,fill),limit=droneCoordLimit;
+    const points=Array.isArray(layer.points)?layer.points.slice(0,dronePointLimit)
+      .filter(p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.y))
+      .map(p=>({x:clamp(p.x,-limit,limit),y:clamp(p.y,-limit,limit)})):[];
+    if(layer.shape==="path"&&(points.length<3||!dronePathArea(points)))continue;
+    layers.push({...base,name:label(layer.name,base.name),x:n(layer.x,0,-limit,limit),y:n(layer.y,0,-limit,limit),
+      w:n(layer.w,base.w,2,60),h:n(layer.h,base.h,2,60),angle:n(layer.angle,0,-360,360),
+      scale:n(layer.scale,100,25,200),scaleY:n(layer.scaleY,n(layer.scale,100,25,200),25,200),fill:color(layer.fill,fill),line:color(layer.line,base.line),
+      stroke:n(layer.stroke,base.stroke,0,6),points:layer.shape==="path"?points:[]});
+  }
+  return layers.length?layers:null;
+}
+function dronePathArea(points){
+  return Math.abs(points.reduce((area,p,i)=>{
+    const next=points[(i+1)%points.length];
+    return area+p.x*next.y-next.x*p.y;
+  },0))*.5>=.25;
+}
+function droneLayerOutline(layer){
+  if(layer.shape==="path")return layer.points;
+  if(layer.shape==="rect")return [[-1,-1],[1,-1],[1,1],[-1,1]].map(([x,y])=>({x:x*layer.w/2,y:y*layer.h/2}));
+  return Array.from({length:SIDES[layer.shape]},(_,i)=>{
+    const angle=i*TAU/SIDES[layer.shape];
+    return {x:Math.cos(angle)*layer.w/2,y:Math.sin(angle)*layer.h/2};
+  });
+}
+function paintDroneLayer(context,layer){
+  context.save();context.translate(layer.x,layer.y);context.rotate(layer.angle*RAD);
+  if(layer.shape==="path")context.scale(layer.scale/100,layer.scaleY/100);
+  if(layer.shape==="circle")poly(context,0,0,layer.w/2,layer.h/2,0,0);
+  else{
+    context.beginPath();
+    for(const [i,p] of droneLayerOutline(layer).entries()){
+      if(i)context.lineTo(p.x,p.y);else context.moveTo(p.x,p.y);
+    }
+    context.closePath();
+  }
+  paint(context,layer.fill,layer.line,layer.stroke);context.restore();
+}
+function paintDrone(context,d){
+  if(!d.rule.model?.length){
+    poly(context,d.x,d.y,11,11,3,d.angle);paint(context,d.rule.fill,"#5d5940",2.6);return;
+  }
+  context.save();context.translate(d.x,d.y);context.rotate(d.angle);
+  for(const layer of d.rule.model)paintDroneLayer(context,layer);
+  context.restore();
+}
+function defaultMechanic(type,parts){
+  const base={type,name:mechanicsTypes[type],enabled:true,trigger:"interval",interval:.8,range:280};
+  if(type==="fire")return {...base,mode:"alternate",aim:"track",turnSpeed:145,damage:12,speed:420,
+    barrels:parts.filter(fitsEmitter).map(p=>p.id)};
+  if(type==="drones")return {...base,interval:2,mode:"chase",count:2,limit:6,speed:155,
+    damage:7,life:10,orbitRadius:115,source:"body",fill:"#ddbc62",model:null};
+  if(type==="move")return {...base,trigger:"enter",interval:3,mode:"patrol",speed:100,duration:10,distance:190};
+  return {...base,interval:3,aim:"target"};
+}
+function normalizeMechanic(item,parts){
+  const base=defaultMechanic(item.type,parts);
+  const allowed=(options,key)=>Object.hasOwn(options,item[key])?item[key]:base[key];
+  const numeric=(key,min,max)=>n(item[key],base[key],min,max);
+  const rule={...base,name:label(item.name,base.name),enabled:item.enabled!==false,
+    trigger:allowed(shotTriggers,"trigger"),interval:numeric("interval",.15,12),range:numeric("range",60,420)};
+  if(rule.type==="fire"){
+    const sources=new Set(base.barrels);
+    return {...rule,mode:allowed(shotModes,"mode"),aim:allowed(shotAims,"aim"),
+      turnSpeed:numeric("turnSpeed",-360,360),damage:numeric("damage",1,100),speed:numeric("speed",80,900),
+      barrels:Array.isArray(item.barrels)?[...new Set(item.barrels.filter(id=>sources.has(id)))]:base.barrels};
+  }
+  if(rule.type==="drones")return {...rule,mode:allowed(droneModes,"mode"),
+    count:Math.round(numeric("count",1,12)),limit:Math.round(numeric("limit",1,24)),
+    speed:numeric("speed",40,500),damage:numeric("damage",1,75),life:numeric("life",1,30),
+    orbitRadius:numeric("orbitRadius",35,230),source:parts.some(p=>p.id===item.source)?item.source:"body",
+    fill:color(item.fill,base.fill),model:normalizeDroneModel(item.model,color(item.fill,base.fill))};
+  if(rule.type==="move")return {...rule,mode:allowed(moveModes,"mode"),speed:numeric("speed",25,350),
+    duration:numeric("duration",.25,30),distance:numeric("distance",40,260)};
+  return {...rule,aim:item.aim==="fixed"?"fixed":"target"};
+}
+function renderBodySpin(){
+  const s=stage(),direction=s.bodySpin>0?"clockwise":s.bodySpin<0?"counter":"off";
+  const box=$("bodySpinSettings");
+  box.replaceChildren(field("Sentido do giro","select",direction,value=>{
+    const speed=Math.abs(s.bodySpin)||60;
+    s.bodySpin=value==="off"?0:value==="clockwise"?speed:-speed;
+    renderBodySpin();
+  },{options:{off:"Parado",clockwise:"Horário",counter:"Anti-horário"},wide:!s.bodySpin}));
+  if(s.bodySpin)box.append(field("Velocidade °/s","number",Math.abs(s.bodySpin),value=>{
+    s.bodySpin=Math.sign(s.bodySpin)*Math.round(n(value,Math.abs(s.bodySpin),1,360));
+    $("bodySpinSpeed").value=Math.abs(s.bodySpin);
+  },{id:"bodySpinSpeed",min:1,max:360,step:1}));
+}
+function renderMechanics(){
+  renderBodySpin();
+  const s=stage(),rules=s.behaviors;
+  mechanicIndex=clamp(mechanicIndex,0,Math.max(0,rules.length-1));
+  const list=$("mechanicsList"),form=$("mechanicsForm"),rule=rules[mechanicIndex];
+  $("addMechanic").disabled=rules.length>=12;
+  const title=entry=>entry.name===mechanicsTypes[entry.type]?entry.name:entry.name+" · "+mechanicsTypes[entry.type];
+  list.replaceChildren(...rules.map((entry,i)=>{
+    const item=make("button",title(entry)+(entry.enabled?"":" · Desligado"));
+    item.type="button";item.setAttribute("aria-pressed",i===mechanicIndex);
+    item.onclick=()=>{mechanicIndex=i;renderMechanics();};return item;
+  }));
+  $("emptyMechanics").hidden=Boolean(rule);
+  form.hidden=!rule;
+  if(!rule){form.replaceChildren();return;}
+  const refresh=()=>{renderMechanics();resetMechanicClock();};
+  const change=(key,value)=>{rule[key]=value;refresh();};
+  const fields=make("div",undefined,"fields");
+  const pick=(key,title,options)=>field(title,"select",rule[key],v=>change(key,v),{wide:true,options});
+  const number=(key,title,min,max,step=1)=>editNum(rule,key,title,min,max,step,resetMechanicClock);
+  fields.append(
+    field("Nome","text",rule.name,v=>{rule.name=v.slice(0,45)||mechanicsTypes[rule.type];
+      list.children[mechanicIndex].textContent=title(rule)+(rule.enabled?"":" · Desligado");},{wide:true}),
+    field("Ligado","checkbox",rule.enabled,v=>change("enabled",v),{wide:true}),
+    pick("trigger","Gatilho",shotTriggers));
+  if(rule.trigger!=="enter")fields.append(number("interval","Intervalo (s)",.15,12,.05));
+  if(rule.trigger==="near")fields.append(number("range","Alcance",60,420));
+  form.replaceChildren(fields);
+  if(rule.type==="fire"){
+    fields.append(pick("mode","Sequência",shotModes),pick("aim","Mira",shotAims),
+      number("damage","Dano",1,100),number("speed","Velocidade do tiro",80,900));
+    if(rule.aim==="spin")fields.append(number("turnSpeed","Giro (°/s)",-360,360));
+    if(rule.aim==="track")fields.append(number("turnSpeed","Velocidade da mira (°/s)",30,360));
+    const picker=make("fieldset",undefined,"barrel-picker");
+    picker.append(make("legend","Emissores"));
+    const emitters=s.parts.filter(fitsEmitter);
+    for(const p of emitters)picker.append(field(p.name,"checkbox",rule.barrels.includes(p.id),checked=>{
+      rule.barrels=checked?[...rule.barrels,p.id]:rule.barrels.filter(id=>id!==p.id);resetMechanicClock();
+    }));
+    if(!emitters.length)picker.append(make("p","Adicione um canhão ou personalize a origem de uma peça.","hint"));
+    form.append(picker);
+  }else if(rule.type==="drones"){
+    const origins=Object.fromEntries([["body","Centro do chefe"],...s.parts.map(p=>[p.id,p.name])]);
+    fields.append(pick("mode","Comportamento",droneModes),pick("source","Origem",origins),
+      number("count","Por invocação",1,12),number("limit","Limite ativo",1,24),
+      number("damage","Dano de contato",1,75),number("speed","Velocidade",40,500),
+      number("life","Duração (s)",1,30),field("Cor","color",rule.fill,v=>{rule.fill=v;}));
+    if(rule.mode==="orbit")fields.append(number("orbitRadius","Raio da órbita",35,230));
+    const button=make("button","Modelar drone","primary");button.type="button";
+    button.onclick=()=>openDroneModel(rule);
+    const modelRow=make("div",undefined,"button-row footer-actions");
+    modelRow.append(button,make("small",rule.model?.length?rule.model.length+" camada(s)":"Triângulo padrão"));
+    form.append(modelRow);
+  }else if(rule.type==="move"){
+    fields.append(pick("mode","Deslocamento",moveModes),number("speed","Velocidade",25,350),
+      number("duration","Duração (s)",.25,30,.25));
+    if(rule.mode!=="dash")fields.append(number("distance",rule.mode==="patrol"?"Raio da patrulha":"Distância desejada",40,260));
+  }else{
+    fields.append(pick("aim","Mira",{"target":"Acompanhar tanque","fixed":"Ângulo do lançamento"}));
+    form.append(make("p",s.orbitEnabled?"Usa as peças disponíveis e os ajustes de Lançamento desta fase.":
+      "A órbita está desligada nesta fase. Ative em Lançamento para usar este ataque.","hint"));
+  }
+  const remove=make("button","Excluir comportamento","ghost danger");
+  remove.type="button";
+  remove.onclick=()=>{rules.splice(mechanicIndex,1);refresh();storeSoon();};
+  form.append(remove);
+}
+const orbitShapes={circle:"Circular",triangle:"Triangular",custom:"Personalizado"};
+const ORBIT_VERTEX_LIMIT=24,ORBIT_MIN_SEGMENT=.018;
+const orbitTriangle=()=>Array.from({length:3},(_,i)=>{
+  const angle=-Math.PI/2+i*TAU/3;
+  return {x:Math.cos(angle),y:Math.sin(angle)};
+});
+function limitOrbitPoint(x,y){
+  const factor=Math.max(1,Math.hypot(x,y));
+  return {x:x/factor,y:y/factor};
+}
+function normalizeOrbitPoints(raw){
+  if(!Array.isArray(raw))return null;
+  const points=[];
+  for(const value of raw.slice(0,ORBIT_VERTEX_LIMIT)){
+    if(!value||!Number.isFinite(value.x)||!Number.isFinite(value.y))continue;
+    const p=limitOrbitPoint(value.x,value.y),last=points.at(-1);
+    if(!last||Math.hypot(last.x-p.x,last.y-p.y)>=ORBIT_MIN_SEGMENT)points.push(p);
+  }
+  if(points.length>2&&Math.hypot(points[0].x-points.at(-1).x,points[0].y-points.at(-1).y)<ORBIT_MIN_SEGMENT)points.pop();
+  if(points.length<3)return null;
+  const [a,b,...rest]=points;
+  return rest.some(c=>Math.abs((b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x))>=.002)?points:null;
+}
+function makeOrbitTrack(points){
+  let length=0;
+  const edges=points.map((a,i)=>{
+    const b=points[(i+1)%points.length],dx=b.x-a.x,dy=b.y-a.y;
+    const size=Math.hypot(dx,dy),offset=length;
+    length+=size;
+    return {x:a.x,y:a.y,dx,dy,offset,size};
+  });
+  return {points,edges,length};
+}
+function trackForOrbit(s){
+  if(s.orbitShape==="circle")return null;
+  return makeOrbitTrack(s.orbitShape==="triangle"?orbitTriangle():s.orbitPoints??orbitTriangle());
+}
+function pointOnOrbit(track,turn){
+  const distance=(turn-Math.floor(turn))*track.length;
+  const edge=track.edges.find(e=>distance<e.offset+e.size)??track.edges.at(-1);
+  const progress=(distance-edge.offset)/edge.size;
+  return {x:edge.x+edge.dx*progress,y:edge.y+edge.dy*progress};
+}
+function traceOrbit(context,points,radius,closed){
+  context.beginPath();
+  for(const [i,p] of points.entries()){
+    const x=p.x*radius,y=p.y*radius;
+    if(i)context.lineTo(x,y);else context.moveTo(x,y);
+  }
+  if(closed)context.closePath();
+  context.stroke();
+}
+function normalize(raw){
+  if(![1,2,3,4,5,6,7,8,9].includes(raw?.version)||!Array.isArray(raw.stages)||raw.stages.length<1||raw.stages.length>PHASE_LIMIT){
+    throw Error("Use um JSON do montador com 1 a 8 fases.");
+  }
+  const project=raw.template==="blank"?blankProject():defaults();
+  project.combat=normalizeCombat(raw.combat);
+  project.name=label(raw.name,project.name);
+  project.stages=raw.stages.map((value,i)=>{
+    const base=project.template==="scrapper"&&i<3?stagePreset(i):blankStage(i),v=value??{};
+    const s={...base,title:label(v.title,base.title),hp:i===0?100:n(v.hp,base.hp,1,99),body:bodyKinds.has(v.body)?v.body:base.body,
+      radius:n(v.radius,base.radius,20,125),angle:n(v.angle,base.angle,-360,360),fill:color(v.fill,base.fill),
+      line:color(v.line,base.line),stroke:n(v.stroke,base.stroke,0,16),
+      capacity:Math.round(n(v.capacity,base.capacity,0,24)),radiusOrbit:n(v.radiusOrbit,base.radiusOrbit,80,230),
+      speedOrbit:n(v.speedOrbit,base.speedOrbit,0,200),clockwise:v.clockwise!==false,showRing:v.showRing!==false,
+      bodySpin:n(v.bodySpin,0,-360,360),
+      aim:n(v.aim,base.aim,-360,360),warning:n(v.warning,base.warning,.15,3),cooldown:n(v.cooldown,base.cooldown,0,20)};
+    s.orbitEnabled=typeof v.orbitEnabled==="boolean"?v.orbitEnabled:base.orbitEnabled||s.capacity>0;
+    s.orbitPoints=normalizeOrbitPoints(v.orbitPoints);
+    s.orbitShape=Object.hasOwn(orbitShapes,v.orbitShape)?v.orbitShape:"circle";
+    if(s.orbitShape==="custom"&&!s.orbitPoints)s.orbitPoints=orbitTriangle();
+    const ids=new Set();
+    if(Array.isArray(v.parts))s.parts=v.parts.slice(0,32).map(p=>{
+      const b=makePart(partKinds.has(p?.kind)?p.kind:"plate");
+      const id=typeof p?.id==="string"&&/^[-a-zA-Z0-9]{1,60}$/.test(p.id)&&!ids.has(p.id)?p.id:b.id;
+      ids.add(id);
+      const origin=p?.origin&&typeof p.origin==="object"
+        ?{x:n(p.origin.x,b.kind==="barrel"?n(p.w,b.w,10,220)/2:0,-250,250),y:n(p.origin.y,0,-250,250)}:null;
+      return {...b,id,origin,name:label(p?.name,b.name),
+        x:n(p?.x,b.x,-250,250),y:n(p?.y,b.y,-220,220),w:n(p?.w,b.w,10,220),h:n(p?.h,b.h,10,195),
+        angle:n(p?.angle,b.angle,-360,360),opacity:n(p?.opacity,b.opacity,15,100),stroke:n(p?.stroke,b.stroke,0,16),
+        shape:bodyKinds.has(p?.shape)?p.shape:b.shape,fill:color(p?.fill,b.fill),line:color(p?.line,b.line)};
+    });
+    s.orbits=Object.fromEntries(Object.entries(base.orbits).map(([key,b])=>{
+      const o=v.orbits?.[key]??{};
+      return [key,{qty:Math.round(n(o.qty,b.qty,0,16)),limit:Math.round(n(o.limit,b.limit,0,16)),
+        damage:n(o.damage,b.damage,0,300),speed:n(o.speed,b.speed,60,950),extra:n(o.extra,b.extra,0,2),
+        fill:color(o.fill,b.fill),scale:n(o.scale,b.scale,50,145)}];
+    }));
+    s.behaviors=Array.isArray(v.behaviors)?v.behaviors.filter(rule=>Object.hasOwn(mechanicsTypes,rule?.type)).slice(0,12)
+      .map(rule=>normalizeMechanic(rule,s.parts)):[];
+    return s;
+  });
+  orderThresholds(project.stages);
+  return project;
+}
+let project=defaults(),phase=0,selection=-1,mechanicIndex=0,tab="visual",mechanicPane="behaviors",originEditing=false,playing=true,zoom=1,announcement=0,saveTimer=0;
+const GUIDE_BUTTONS=[["toggleGrid","grid"],["toggleSnap","snap"],["toggleHandles","handles"],["toggleRatio","ratio"]];
+let guides={grid:true,snap:false,handles:true,ratio:false,step:20};
+try{const raw=localStorage.getItem(STORAGE);if(raw)project=normalize(JSON.parse(raw));}catch{}
+try{
+  const saved=JSON.parse(localStorage.getItem(VIEW_STORAGE));
+  if(saved)guides={grid:saved.grid!==false,snap:saved.snap===true,handles:saved.handles!==false,ratio:saved.ratio===true,
+    step:GRID_STEPS.includes(saved.step)?saved.step:20};
+}catch{}
+const undoStack=[],redoStack=[];
+let lastProject=JSON.stringify(project);
+const stage=()=>project.stages[phase],part=()=>stage().parts[selection];
+let sim={time:0,stock:[],selected:null,warning:null,shots:[],coolUntil:0},drag=null;
+const targetRadius=17,moveKeys=new Set();
+const movementKeys={w:[0,-1],a:[-1,0],s:[0,1],d:[1,0],arrowup:[0,-1],arrowleft:[-1,0],arrowdown:[0,1],arrowright:[1,0]};
+let testing=false,dummy={x:230,y:-65,hp:100},fireClock=[],fireRounds=[],barrelAngles=new Map(),fireHits=0;
+let drones=[],bossMotion=null,bossPos={x:0,y:0},bossHeading=0;
+function resetMechanicClock(){
+  fireClock=stage().behaviors.map(rule=>({next:sim.time+(rule.trigger==="interval"?rule.interval:0),slot:0,start:sim.time}));
+  fireRounds=[];barrelAngles.clear();drones=[];bossPos={x:0,y:0};bossMotion=null;bossHeading=0;practiceNotice();
+}
+function resetPractice(){
+  moveKeys.clear();dummy={x:230,y:-65,hp:100};placeDummy(dummy.x,dummy.y);fireHits=0;resetMechanicClock();updateStats();
+}
+function placeDummy(x,y){
+  dummy.x=clamp(x,-CX/zoom+targetRadius,CX/zoom-targetRadius);
+  dummy.y=clamp(y,-CY/zoom+targetRadius,CY/zoom-targetRadius);
+}
+function rotatePoint(x,y,angle){
+  const c=Math.cos(angle),s=Math.sin(angle);
+  return {x:x*c-y*s,y:x*s+y*c};
+}
+function pieceOrigin(p){
+  return p.origin??{x:p.kind==="barrel"?p.w/2:0,y:0};
+}
+function barrelPose(p,angle){
+  const rest=p.angle*RAD,half=p.kind==="barrel"?p.w/2:0;
+  const rootX=p.x-Math.cos(rest)*half,rootY=p.y-Math.sin(rest)*half;
+  const current=angle??rest,c=Math.cos(current),s=Math.sin(current);
+  const x=rootX+c*half,y=rootY+s*half,origin=pieceOrigin(p);
+  return {x,y,angle:current/RAD,muzzleX:x+c*origin.x-s*origin.y,muzzleY:y+s*origin.x+c*origin.y,rootX,rootY};
+}
+function emitterAim(p,rule,timer){
+  if(rule.aim==="spin")return p.angle*RAD+(sim.time-timer.start)*rule.turnSpeed*RAD;
+  if(rule.aim==="fixed")return p.angle*RAD;
+  const {rootX,rootY}=barrelPose(p),local=rotatePoint(dummy.x-bossPos.x,dummy.y-bossPos.y,-bossHeading);
+  const dx=local.x-rootX,dy=local.y-rootY;
+  const distance=Math.hypot(dx,dy),side=pieceOrigin(p).y;
+  return Math.atan2(dy,dx)-Math.asin(clamp(side/Math.max(1,distance),-1,1));
+}
+function practiceNotice(){
+  $("testStatus").textContent=testing?Math.ceil(dummy.hp)+" HP · "+fireHits+" acertos · "+drones.length+" drones":"";
+}
+function damageDummy(amount){
+  dummy.hp=Math.max(0,dummy.hp-amount);fireHits++;practiceNotice();
+}
+function hitsDummy(x,y,dx,dy,r){
+  if(!dummy.hp)return false;
+  const along=clamp(((dummy.x-x)*dx+(dummy.y-y)*dy)/Math.max(1e-9,dx*dx+dy*dy),0,1);
+  return Math.hypot(x+dx*along-dummy.x,y+dy*along-dummy.y)<=targetRadius+r;
+}
+function toward(entity,x,y,step){
+  const dx=x-entity.x,dy=y-entity.y,length=Math.hypot(dx,dy);
+  if(!length)return;
+  const fraction=Math.min(1,step/length);
+  entity.x+=dx*fraction;entity.y+=dy*fraction;
+}
+function stepBossMotion(dt){
+  const motion=bossMotion;
+  if(!motion||sim.time>=motion.end){bossMotion=null;return;}
+  const {rule,heading}=motion,d=Math.hypot(dummy.x-bossPos.x,dummy.y-bossPos.y);
+  let x=bossPos.x,y=bossPos.y;
+  if(rule.mode==="patrol"){
+    const angle=heading+(sim.time-motion.start)*rule.speed/rule.distance;
+    x=Math.cos(angle)*rule.distance;y=Math.sin(angle)*rule.distance;
+  }else if(rule.mode==="distance"){
+    const angle=Math.atan2(bossPos.y-dummy.y,bossPos.x-dummy.x);
+    if(Math.abs(d-rule.distance)<12)return;
+    x=dummy.x+Math.cos(angle)*rule.distance;y=dummy.y+Math.sin(angle)*rule.distance;
+  }else{
+    x+=Math.cos(heading)*300;y+=Math.sin(heading)*300;
+  }
+  const border=stage().radius+12;
+  toward(bossPos,clamp(x,Math.min(0,-CX/zoom+border),Math.max(0,CX/zoom-border)),
+    clamp(y,Math.min(0,-CY/zoom+border),Math.max(0,CY/zoom-border)),rule.speed*dt);
+}
+function summonDrones(rule){
+  const active=drones.filter(d=>d.rule===rule).length;
+  const count=Math.min(rule.count,rule.limit-active,64-drones.length);
+  if(count<=0)return false;
+  const source=stage().parts.find(p=>p.id===rule.source);
+  const pose=source?barrelPose(source,barrelAngles.get(source.id)):{muzzleX:0,muzzleY:0};
+  const origin=rotatePoint(pose.muzzleX,pose.muzzleY,bossHeading);
+  for(let i=0;i<count;i++)drones.push({rule,x:bossPos.x+origin.x,y:bossPos.y+origin.y,
+    angle:0,slot:sim.time*2+i*TAU/count,spread:(i-(count-1)/2)*26,until:sim.time+rule.life,nextHit:sim.time,born:sim.time});
+  practiceNotice();return true;
+}
+function runMechanics(dt){
+  if(!testing)return;
+  let dx=0,dy=0;
+  for(const key of moveKeys){dx+=movementKeys[key][0];dy+=movementKeys[key][1];}
+  const length=Math.hypot(dx,dy);
+  if(length)placeDummy(dummy.x+dx/length*210*dt,dummy.y+dy/length*210*dt);
+  stepBossMotion(dt);
+  const turn=stage().bodySpin*RAD*dt;
+  bossHeading=(bossHeading+turn)%TAU;
+  const selected=new Set();
+  for(const [i,rule] of stage().behaviors.entries()){
+    const timer=fireClock[i];
+    if(!rule.enabled||!timer||rule.type!=="fire"||!["track","spin"].includes(rule.aim))continue;
+    for(const p of stage().parts){
+      if(!rule.barrels.includes(p.id)||!fitsEmitter(p)||selected.has(p.id))continue;
+      const aim=emitterAim(p,rule,timer),lastAngle=barrelAngles.get(p.id);
+      const relative=lastAngle===undefined?p.angle*RAD:lastAngle-turn;
+      const max=Math.max(30,Math.abs(rule.turnSpeed))*RAD*dt;
+      const delta=Math.atan2(Math.sin(aim-relative),Math.cos(aim-relative));
+      const next=rule.aim==="track"?relative+clamp(delta,-max,max):aim;
+      barrelAngles.set(p.id,Math.atan2(Math.sin(next),Math.cos(next)));
+      selected.add(p.id);
+    }
+  }
+  const remainingDrones=drones.filter(d=>sim.time<d.until);
+  if(remainingDrones.length!==drones.length){drones=remainingDrones;practiceNotice();}
+  for(const [i,rule] of stage().behaviors.entries()){
+    const timer=fireClock[i];
+    if(!rule.enabled||!timer||!dummy.hp||sim.time+1e-8<timer.next||
+      rule.trigger==="near"&&Math.hypot(dummy.x-bossPos.x,dummy.y-bossPos.y)>rule.range)continue;
+    if(rule.type==="fire"){
+      const pieces=stage().parts.filter(p=>fitsEmitter(p)&&rule.barrels.includes(p.id));
+      if(!pieces.length||fireRounds.length>=400)continue;
+      const group=rule.mode==="together"?pieces:[pieces[timer.slot%pieces.length]];
+      for(const p of group.slice(0,400-fireRounds.length)){
+        const aim=selected.has(p.id)?barrelAngles.get(p.id):emitterAim(p,rule,timer),mount=barrelPose(p,aim);
+        barrelAngles.set(p.id,aim);
+        const origin=rotatePoint(mount.muzzleX,mount.muzzleY,bossHeading),heading=aim+bossHeading;
+        fireRounds.push({x:bossPos.x+origin.x,y:bossPos.y+origin.y,vx:Math.cos(heading)*rule.speed,vy:Math.sin(heading)*rule.speed,
+          at:sim.time,damage:rule.damage,hitRadius:clamp(p.h*.21,4,10)});
+      }
+    }else if(rule.type==="drones"){
+      if(!summonDrones(rule))continue;
+    }else if(rule.type==="move"){
+      const heading=rule.mode==="patrol"?Math.atan2(bossPos.y,bossPos.x):Math.atan2(dummy.y-bossPos.y,dummy.x-bossPos.x);
+      bossMotion={rule,heading,start:sim.time,end:sim.time+rule.duration};
+    }else if(!requestLaunch(rule.aim==="target"))continue;
+    timer.slot++;
+    timer.next=rule.trigger==="enter"?Infinity:sim.time+rule.interval;
+  }
+  fireRounds=fireRounds.filter(round=>{
+    if(sim.time-round.at>4||Math.abs(round.x)>CX/zoom+80||Math.abs(round.y)>CY/zoom+80)return false;
+    if(round.at===sim.time)return true;
+    const dx=round.vx*dt,dy=round.vy*dt;
+    if(hitsDummy(round.x,round.y,dx,dy,round.hitRadius)){damageDummy(round.damage);return false;}
+    round.x+=dx;round.y+=dy;return true;
+  });
+  for(const d of drones){
+    if(sim.time===d.born)continue;
+    const {rule}=d,angle=d.slot+(sim.time-d.born)*rule.speed/(rule.orbitRadius*1.5);
+    const dx=dummy.x-d.x,dy=dummy.y-d.y,distance=Math.hypot(dx,dy);
+    const spread=clamp(d.spread,-distance*.28,distance*.28)/Math.max(1,distance);
+    const x=rule.mode==="orbit"?bossPos.x+Math.cos(angle)*rule.orbitRadius:dummy.x-dy*spread;
+    const y=rule.mode==="orbit"?bossPos.y+Math.sin(angle)*rule.orbitRadius:dummy.y+dx*spread;
+    const oldX=d.x,oldY=d.y;
+    if(Math.hypot(x-d.x,y-d.y)>1)d.angle=Math.atan2(y-d.y,x-d.x);
+    toward(d,x,y,rule.speed*dt);
+    if(sim.time>=d.nextHit&&hitsDummy(oldX,oldY,d.x-oldX,d.y-oldY,10)){
+      damageDummy(rule.damage);d.nextHit=sim.time+.75;
+    }
+  }
+}
+function paintPractice(context){
+  for(const round of fireRounds){
+    poly(context,round.x,round.y,round.hitRadius,round.hitRadius,0,0);paint(context,"#e2ab55","#825438",2);
+  }
+  for(const d of drones)paintDrone(context,d);
+  poly(context,dummy.x,dummy.y,targetRadius,targetRadius,0,0);
+  paint(context,dummy.hp?"#54add1":"#90a6a4","#2f596b",3);
+  context.fillStyle="#37483b";context.fillRect(dummy.x-17,dummy.y+23,34,5);
+  context.fillStyle="#6ca629";context.fillRect(dummy.x-16,dummy.y+24,32*dummy.hp/100,3);
+}
+function requestedLoad(s){
+  return Object.entries(s.orbits).reduce((sum,[k,o])=>sum+Math.min(o.qty,o.limit)*TYPES[k].weight,0);
+}
+function stockFor(s){
+  if(!s.orbitEnabled)return [];
+  const stock=[];let room=s.capacity;
+  // Reserve the allowed heavy pieces first, then fill empty space with the lighter forms.
+  for(const key of ["alpha","pentagon","triangle","square"]){
+    const o=s.orbits[key],weight=TYPES[key].weight;
+    const take=Math.min(o.qty,o.limit,Math.floor(room/weight));
+    for(let i=0;i<take;i++)stock.push({key,active:true});
+    room-=take*weight;
+  }
+  return stock.map((entry,i)=>({...entry,id:i,angle:TAU*i/stock.length+Math.PI/7}));
+}
+function refill(resetBehaviors=true){
+  const s=stage();
+  sim={time:sim.time,stock:stockFor(s),track:trackForOrbit(s),selected:null,warning:null,shots:[],coolUntil:0};
+  sim.selected=sim.stock[0]?.id??null;
+  if(resetBehaviors)resetMechanicClock();
+  syncAttackPicker();updateStats();
+}
+function activePiece(){return sim.stock.find(p=>p.active&&p.id===sim.selected)??null;}
+function selectedStage(i){
+  phase=i;selection=-1;mechanicIndex=0;originEditing=false;
+  refill();resetPractice();syncArenaNote();render();
+}
+function setMechanicPane(name){
+  mechanicPane=name;
+  for(const button of $("mechanicsNav").querySelectorAll("button")){
+    const selected=button.dataset.mechanicPane===name;
+    button.setAttribute("aria-pressed",selected);
+    $(button.dataset.mechanicPane+"Pane").hidden=!selected;
+  }
+  if(name==="behaviors")renderMechanics();
+}
+function setTab(name){
+  if(name==="attack"||name==="orbit"){setMechanicPane(name);name="mechanics";}
+  if(name==="mechanics"){originEditing=false;syncArenaNote();setMechanicPane(mechanicPane);}
+  tab=name;
+  for(const button of $("inspectTabs").querySelectorAll("button")){
+    const state=button.dataset.tab===tab;
+    button.setAttribute("aria-selected",state);
+    $(button.getAttribute("aria-controls")).hidden=!state;
+  }
+}
+function setSelection(i){
+  selection=i;originEditing=false;syncArenaNote();
+  renderParts();renderVisual();setTab("visual");
+}
+function notify(message){
+  const notice=$("notice");
+  notice.textContent=message;notice.hidden=false;
+  clearTimeout(announcement);announcement=setTimeout(()=>notice.hidden=true,2700);
+}
+function refreshUndo(){
+  $("undoEdit").disabled=!undoStack.length;
+  $("redoEdit").disabled=!redoStack.length;
+}
+function storeSoon(remember=true){
+  if(remember){
+    const current=JSON.stringify(project);
+    if(current!==lastProject){
+      undoStack.push(lastProject);
+      if(undoStack.length>48)undoStack.shift();
+      redoStack.length=0;lastProject=current;
+    }
+    refreshUndo();
+  }
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(writeProject,220);
+}
+function writeProject(){try{localStorage.setItem(STORAGE,JSON.stringify(project));}catch{}}
+function restoreEdit(from,to){
+  if(!from.length)return;
+  to.push(lastProject);lastProject=from.pop();project=JSON.parse(lastProject);
+  phase=Math.min(phase,project.stages.length-1);
+  if(selection>=stage().parts.length)selection=-1;
+  refill();render();storeSoon(false);
+}
+function refreshGuides(){
+  for(const [id,key] of GUIDE_BUTTONS){
+    $(id).setAttribute("aria-pressed",guides[key]);
+  }
+  $("gridSize").value=guides.step;
+}
+function saveGuides(){
+  refreshGuides();
+  try{localStorage.setItem(VIEW_STORAGE,JSON.stringify(guides));}catch{}
+}
+const snapped=value=>guides.snap?Math.round(value/guides.step)*guides.step:value;
+function make(tag,text,cls){
+  const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;
+  return node;
+}
+function field(title,type,value,onEdit,opts={}){
+  const wrapper=make("label",undefined,"field"+(opts.wide?" wide":"")+(type==="checkbox"?" toggle":""));
+  const input=make(type==="select"?"select":"input");
+  if(opts.id)input.id=opts.id;
+  if(type==="select"){
+    Object.entries(opts.options).forEach(([key,name])=>{
+      const item=make("option",name);item.value=key;input.append(item);
+    });
+  }else input.type=type;
+  if(type==="number")for(const key of ["min","max","step"])if(opts[key]!==undefined)input[key]=opts[key];
+  if(type==="text")input.maxLength=45;
+  if(type==="checkbox"){input.checked=value;wrapper.append(input,make("span",title));}
+  else{input.value=value;wrapper.append(make("span",title),input);}
+  const commit=remember=>{onEdit(type==="checkbox"?input.checked:input.value);storeSoon(remember);};
+  if(type==="color"||type==="text"){
+    input.addEventListener("input",()=>commit(false));
+    input.addEventListener("change",()=>storeSoon());
+  }else input.addEventListener("change",()=>commit(true));
+  return wrapper;
+}
+function editNum(target,key,title,min,max,step=1,after=null,id=null){
+  return field(title,"number",target[key],value=>{
+    target[key]=n(value,target[key],min,max);
+    if(step===1)target[key]=Math.round(target[key]);
+    if(id)$(id).value=target[key];
+    if(after)after();
+  },{min,max,step,id});
+}
+function renderPhases(){
+  $("phaseList").replaceChildren(...project.stages.map((s,i)=>{
+    const button=make("button",undefined,"phase");button.type="button";button.setAttribute("aria-pressed",i===phase);
+    button.append(make("span",String(i+1),"badge"),make("span",s.title,"cut"),make("small",s.hp+"%"));
+    button.onclick=()=>selectedStage(i);return button;
+  }));
+  $("stageTitle").textContent=project.name+" · "+stage().title;
+  $("copyStage").disabled=phase>=project.stages.length-1;
+  $("addStage").disabled=project.stages.length>=PHASE_LIMIT;
+  $("removeStage").disabled=project.stages.length<=1;
+}
+function renderParts(){
+  const s=stage(),parts=$("partList");
+  const row=(title,fill,i)=>{
+    const li=make("li"),b=make("button");
+    const swatch=make("span",undefined,"swatch");
+    swatch.style.backgroundColor=fill;b.append(swatch,make("span",title));
+    b.setAttribute("aria-pressed",selection===i);b.onclick=()=>setSelection(i);
+    li.append(b);return li;
+  };
+  parts.replaceChildren(row("Casco",s.fill,-1),...s.parts.map((piece,i)=>row(piece.name,piece.fill,i)));
+  $("partCount").textContent=s.parts.length+"/32";
+  $("addPart").disabled=s.parts.length>=32;
+}
+function renderVisual(){
+  const s=stage(),p=part();
+  $("stageFields").hidden=Boolean(p);
+  $("partTitle").textContent=p?p.name:"Casco";
+  const named=field("Nome do estágio","text",s.title,v=>{s.title=v.slice(0,45)||"Estágio "+(phase+1);renderPhases();},{wide:true});
+  $("stageProperties").replaceChildren(named);
+  if(phase>0){
+    const next=project.stages[phase+1],low=next?next.hp+1:1,max=project.stages[phase-1].hp-1;
+    $("stageProperties").append(editNum(s,"hp","Entra com até % de HP",low,max,1,renderPhases,"phaseHealth"));
+  }
+  const fields=$("visualFields");
+  if(p){
+    fields.replaceChildren(
+      field("Nome da peça","text",p.name,v=>{p.name=v.slice(0,45)||KINDS[p.kind];renderParts();$("partTitle").textContent=p.name;},{wide:true}),
+      field("Tipo","select",p.kind,v=>{p.kind=v;renderVisual();},{options:KINDS,wide:true}),
+      editNum(p,"x","Posição X",-250,250,1,null,"pieceX"),editNum(p,"y","Posição Y",-220,220,1,null,"pieceY"),
+      editNum(p,"w","Largura",10,220,.01,null,"pieceWidth"),editNum(p,"h","Altura",10,195,.01,null,"pieceHeight"),
+      editNum(p,"angle","Rotação °",-360,360),editNum(p,"opacity","Opacidade %",15,100),
+      field("Preenchimento","color",p.fill,v=>{p.fill=v;renderParts();}),field("Contorno","color",p.line,v=>p.line=v),
+      editNum(p,"stroke","Espessura",0,16)
+    );
+    if(p.kind==="poly")fields.append(field("Forma","select",p.shape,v=>p.shape=v,{options:BODIES}));
+    renderOrigin(fields,p);
+  }else fields.replaceChildren(
+    field("Forma","select",s.body,v=>s.body=v,{options:BODIES,wide:true}),editNum(s,"radius","Raio do casco",20,125,.01,null,"hullRadius"),
+    editNum(s,"angle","Rotação °",-360,360),field("Preenchimento","color",s.fill,v=>{s.fill=v;renderParts();}),
+    field("Contorno","color",s.line,v=>s.line=v),editNum(s,"stroke","Espessura",0,16)
+  );
+  $("partButtons").hidden=!p;
+  $("moveBack").disabled=selection<=0;
+  $("moveFront").disabled=selection<0||selection===s.parts.length-1;
+  $("duplicatePart").disabled=s.parts.length>=32;
+}
+function syncArenaNote(){
+  $("arenaNote").textContent=testing?"WASD, setas ou arraste para mover o tanque":
+    originEditing?"Clique ou arraste o ponto de origem":"Selecione e arraste uma peça";
+}
+function renderOrigin(fields,p){
+  const controls=make("div",undefined,"origin-tools"),title=make("strong","Origem de emissão");
+  const buttons=make("div",undefined,"button-row"),place=make("button",originEditing?"Concluir":"Posicionar na arena");
+  place.type="button";place.setAttribute("aria-pressed",originEditing);
+  place.onclick=()=>{
+    if(testing)$("testToggle").onclick();
+    originEditing=!originEditing;
+    if(originEditing){
+      p.origin={...pieceOrigin(p)};
+      storeSoon();
+    }
+    syncArenaNote();
+    renderVisual();
+  };
+  buttons.append(place);
+  if(p.origin){
+    const reset=make("button","Restaurar padrão","ghost");
+    reset.type="button";
+    reset.onclick=()=>{
+      p.origin=null;originEditing=false;
+      if(!fitsEmitter(p))for(const rule of stage().behaviors)if(rule.type==="fire")rule.barrels=rule.barrels.filter(id=>id!==p.id);
+      syncArenaNote();renderVisual();resetMechanicClock();storeSoon();
+    };
+    buttons.append(reset);
+  }
+  controls.append(title,buttons);
+  if(p.origin){
+    const coords=make("div",undefined,"fields");
+    coords.append(editNum(p.origin,"x","Origem X",-250,250,.01,resetMechanicClock,"originX"),
+      editNum(p.origin,"y","Origem Y",-250,250,.01,resetMechanicClock,"originY"));
+    controls.append(coords);
+  }
+  fields.append(controls);
+}
+function setOriginPoint(point){
+  const p=part(),angle=p.angle*RAD,c=Math.cos(angle),s=Math.sin(angle),dx=point.x-p.x,dy=point.y-p.y;
+  p.origin.x=precise(clamp(snapped(dx*c+dy*s),-250,250));
+  p.origin.y=precise(clamp(snapped(-dx*s+dy*c),-250,250));
+  if($("originX"))$("originX").value=p.origin.x;
+  if($("originY"))$("originY").value=p.origin.y;
+  storeSoon(false);
+}
+function orbitHead(key){
+  const t=TYPES[key],wrap=make("div",undefined,"orb-title"),swatch=make("span",undefined,"swatch"),text=make("span");
+  swatch.style.backgroundColor=stage().orbits[key].fill;text.append(make("strong",t.label),make("small","Carga "+t.weight));
+  wrap.append(swatch,text);return wrap;
+}
+function syncOrbitalToggles(){
+  const checked=stage().orbitEnabled;
+  for(const id of ["orbitEnable","attackOrbitEnable"]){
+    const root=$(id);
+    $(id+"Input").checked=checked;
+    root.children[1].hidden=checked;
+  }
+  $("orbitSettings").hidden=!checked;
+  $("orbitAttackSettings").hidden=!checked;
+}
+function renderOrbitalToggles(){
+  const s=stage();
+  const toggle=on=>{
+    s.orbitEnabled=on;refill(false);syncOrbitalToggles();renderMechanics();
+  };
+  for(const id of ["orbitEnable","attackOrbitEnable"]){
+    $(id).replaceChildren(field("Ativar órbita e lançamento","checkbox",s.orbitEnabled,toggle,{id:id+"Input"}),
+      make("p","Ative para usar peças orbitais nesta fase.","hint"));
+  }
+  syncOrbitalToggles();
+}
+function renderOrbit(){
+  renderOrbitalToggles();
+  const s=stage(),replenish=()=>{refill();updateCapacity();};
+  $("orbitFields").replaceChildren(
+    editNum(s,"capacity","Carga máxima",0,24,1,replenish,"orbitCapacity"),
+    field("Formato do trajeto","select",s.orbitShape,value=>{
+      s.orbitShape=value;
+      if(value==="custom"&&!s.orbitPoints)s.orbitPoints=orbitTriangle();
+      sim.track=trackForOrbit(s);
+    },{options:orbitShapes,wide:true,id:"orbitShape"}),
+    editNum(s,"radiusOrbit","Alcance máximo",80,230,1),
+    editNum(s,"speedOrbit","Velocidade da volta (°/s)",0,200,1),
+    field("Sentido horário","checkbox",s.clockwise,v=>s.clockwise=v),
+    field("Mostrar guia da órbita","checkbox",s.showRing,v=>s.showRing=v,{wide:true})
+  );
+  const editRow=make("div",undefined,"orbit-edit-row");
+  const editPath=make("button","Editar trajeto","primary");
+  editPath.type="button";editPath.onclick=openOrbitEditor;
+  editRow.append(editPath,make("small","Os vértices ficam dentro do alcance máximo."));
+  $("orbitFields").append(editRow);
+  $("orbitRows").replaceChildren(...Object.keys(TYPES).map(key=>{
+    const o=s.orbits[key],row=make("div",undefined,"orb-row");
+    row.append(orbitHead(key),editNum(o,"qty","Quantidade",0,16,1,replenish),editNum(o,"limit","Limite do tipo",0,16,1,replenish));
+    return row;
+  }));
+  updateCapacity();
+}
+function updateCapacity(){
+  const s=stage(),cost=requestedLoad(s),over=cost>s.capacity;
+  $("loadMeter").classList.toggle("over",over);
+  $("loadMeter").firstElementChild.style.width=(s.capacity?Math.min(100,cost/s.capacity*100):cost?100:0)+"%";
+  const limited=Object.values(s.orbits).some(item=>item.qty>item.limit);
+  $("capacityHint").textContent="Carga solicitada "+cost+" / "+s.capacity+(limited?" · Um tipo atingiu seu teto.":"")+
+    (over?" · A prévia reserva primeiro as peças pesadas.":"");
+}
+function renderAttack(){
+  const s=stage();
+  $("attackFields").replaceChildren(editNum(s,"aim","Direção °",-360,360,1),editNum(s,"warning","Aviso s",.15,3,.05),
+    editNum(s,"cooldown","Intervalo s",0,20,.1));
+  const picker=field("Peça a lançar","select",String(sim.selected??""),value=>{sim.selected=Number(value);updateStats();},
+    {options:{"":"Nenhuma"},wide:true,id:"attackPiece"});
+  $("attackFields").append(picker);
+  $("attackRows").replaceChildren(...Object.keys(TYPES).map(key=>{
+    const o=s.orbits[key],outer=make("div");
+    for(const fields of [
+      [orbitHead(key),editNum(o,"damage","Dano",0,300,1,updateStats),editNum(o,"speed","Velocidade",60,950)],
+      [field("Cor","color",o.fill,v=>o.fill=v),editNum(o,"scale","Tamanho %",50,145),editNum(o,"extra","Aviso extra s",0,2,.05)]
+    ]){const row=make("div",undefined,"orb-row");row.append(...fields);outer.append(row);}
+    return outer;
+  }));
+  syncAttackPicker();
+}
+function syncAttackPicker(){
+  const picker=$("attackPiece");if(!picker)return;
+  const active=sim.stock.filter(p=>p.active);
+  if(!active.some(p=>p.id===sim.selected))sim.selected=active[0]?.id??null;
+  picker.replaceChildren(...(active.length?active.map(p=>{
+    const o=make("option",TYPES[p.key].label+" · "+(p.id+1));o.value=p.id;return o;
+  }):[make("option","Nenhuma peça ativa")]));
+  picker.disabled=!active.length;
+  if(sim.selected!==null)picker.value=sim.selected;
+}
+function updateStats(){
+  const active=sim.stock.filter(p=>p.active),s=stage();
+  const requested=active.reduce((sum,p)=>sum+TYPES[p.key].weight,0);
+  $("statStock").textContent=active.length;
+  $("statLoad").textContent=s.orbitEnabled?requested+" / "+s.capacity:"Desligada";
+  const picked=activePiece()??active[0];
+  $("statDamage").textContent=picked?s.orbits[picked.key].damage+" HP":"—";
+  $("launch").disabled=!s.orbitEnabled||!active.length||Boolean(sim.warning)||sim.time<sim.coolUntil;
+  $("refill").disabled=!s.orbitEnabled;
+  $("animationStatus").textContent=sim.warning?"Preparando lançamento":playing?"Em movimento":"Pausado";
+  $("togglePlay").textContent=playing?"Pausar":"Continuar";
+  practiceNotice();
+}
+const combatInputs=[["combatHp","hp"],["combatBody","bodyDamage"],["combatRadius","hitRadius"]];
+for(const [id,key] of combatInputs)$(id).onchange=()=>{
+  project.combat=normalizeCombat({...project.combat,[key]:$(id).value});
+  $(id).value=project.combat[key];storeSoon();
+};
+function render(){
+  $("bossName").value=project.name;
+  for(const [id,key] of combatInputs)$(id).value=project.combat[key];
+  $("zoomReset").textContent=Math.round(zoom*100)+"%";
+  renderPhases();renderParts();renderVisual();renderOrbit();renderAttack();renderMechanics();
+  setTab(tab);refreshGuides();refreshUndo();updateStats();
+}
+function poly(context,x,y,rx,ry,sides,angle){
+  context.beginPath();
+  if(!sides){context.ellipse(x,y,rx,ry,angle,0,TAU);return;}
+  for(let i=0;i<sides;i++){
+    const a=angle+TAU*i/sides,dx=x+Math.cos(a)*rx,dy=y+Math.sin(a)*ry;
+    if(i)context.lineTo(dx,dy);else context.moveTo(dx,dy);
+  }
+  context.closePath();
+}
+function paint(context,fill,line,stroke){
+  context.fillStyle=fill;context.fill();
+  if(stroke>0){context.lineWidth=stroke;context.strokeStyle=line;context.lineJoin="round";context.stroke();}
+}
+function piecePosition(p){
+  const s=stage(),angle=p.angle+sim.time*s.speedOrbit*RAD*(s.clockwise?1:-1);
+  if(!sim.track)return {x:Math.cos(angle)*s.radiusOrbit,y:Math.sin(angle)*s.radiusOrbit,angle};
+  const point=pointOnOrbit(sim.track,angle/TAU);
+  return {x:point.x*s.radiusOrbit,y:point.y*s.radiusOrbit,angle};
+}
+function drawOrbitPiece(context,key,x,y,a,lit=false){
+  const meta=TYPES[key],o=stage().orbits[key],radius=meta.radius*o.scale/100;
+  poly(context,x,y,radius,radius,meta.sides,a+Math.PI/4);
+  paint(context,lit?"#ffe69e":o.fill,lit?"#875127":"#4c5764",lit?6:4);
+}
+function paintPart(context,p){
+  context.save();context.translate(p.x,p.y);context.rotate(p.angle*RAD);context.globalAlpha=p.opacity/100;
+  if(p.kind==="barrel"){
+    const w=p.w/2,h=p.h/2;
+    context.beginPath();context.moveTo(-w,-h*.77);context.lineTo(w,-h);context.lineTo(w,h);context.lineTo(-w,h*.77);context.closePath();
+    paint(context,p.fill,p.line,p.stroke);
+    context.beginPath();context.moveTo(w-10,-h);context.lineTo(w-10,h);context.strokeStyle=p.line;context.lineWidth=Math.max(2,p.stroke*.65);context.stroke();
+  }else if(p.kind==="plate"){
+    context.beginPath();context.rect(-p.w/2,-p.h/2,p.w,p.h);paint(context,p.fill,p.line,p.stroke);
+  }else{
+    poly(context,0,0,p.w/2,p.h/2,p.kind==="core"?0:SIDES[p.shape],0);paint(context,p.fill,p.line,p.stroke);
+  }
+  context.restore();
+}
+function shotPosition(shot){
+  const time=sim.time-shot.at,d=shot.speed*time;
+  return {x:shot.x+Math.cos(shot.angle)*d,y:shot.y+Math.sin(shot.angle)*d};
+}
+function paintGuide(context){
+  const warning=sim.warning,p=warning&&sim.stock.find(piece=>piece.id===warning.id);
+  if(!p)return;
+  const pos=piecePosition(p),angle=warning.track?Math.atan2(dummy.y-bossPos.y-pos.y,dummy.x-bossPos.x-pos.x):warning.angle,dx=Math.cos(angle),dy=Math.sin(angle),length=158,arrow=13;
+  context.save();context.lineWidth=4;context.strokeStyle="#9a522b";context.setLineDash([10,7]);
+  context.beginPath();context.moveTo(pos.x,pos.y);context.lineTo(pos.x+dx*length,pos.y+dy*length);context.stroke();
+  context.setLineDash([]);
+  const tipX=pos.x+dx*length,tipY=pos.y+dy*length;
+  context.beginPath();context.moveTo(tipX-arrow*dx+arrow*.55*dy,tipY-arrow*dy-arrow*.55*dx);
+  context.lineTo(tipX,tipY);context.lineTo(tipX-arrow*dx-arrow*.55*dy,tipY-arrow*dy+arrow*.55*dx);context.stroke();context.restore();
+}
+const CORNERS=[[-1,-1],[1,-1],[1,1],[-1,1]];
+const precise=value=>Math.round(value*100)/100;
+function selectionFrame(){
+  const p=part(),radius=stage().radius;
+  return p?{x:p.x,y:p.y,w:p.w,h:p.h,a:p.angle*RAD}:{x:0,y:0,w:2*radius,h:2*radius,a:0};
+}
+function corner(frame,sx,sy){
+  const x=sx*frame.w/2,y=sy*frame.h/2,c=Math.cos(frame.a),sn=Math.sin(frame.a);
+  return {x:frame.x+x*c-y*sn,y:frame.y+x*sn+y*c};
+}
+function screenUnit(){
+  return W/(Math.max(1,canvas.getBoundingClientRect().width)*zoom);
+}
+function selectedHandle(point,pointerType){
+  if(!guides.handles)return null;
+  const frame=selectionFrame(),unit=screenUnit(),radius=(pointerType==="touch"?19:12)*unit;
+  if(Math.hypot(point.x-frame.x,point.y-frame.y)<Math.min(7*unit,Math.min(frame.w,frame.h)*.27))return null;
+  let chosen=null,nearest=radius;
+  for(const pair of CORNERS){
+    const dot=corner(frame,...pair),distance=Math.hypot(point.x-dot.x,point.y-dot.y);
+    if(distance<=nearest){nearest=distance;chosen=pair;}
+  }
+  return chosen;
+}
+function paintSelection(context){
+  const frame=selectionFrame(),unit=screenUnit();
+  context.save();context.lineWidth=1.5*unit;context.strokeStyle="#385839";context.setLineDash([5*unit,4*unit]);
+  context.beginPath();
+  for(const [i,[sx,sy]] of CORNERS.entries()){
+    const p=corner(frame,sx,sy);
+    if(i)context.lineTo(p.x,p.y);else context.moveTo(p.x,p.y);
+  }
+  context.closePath();context.stroke();context.setLineDash([]);
+  if(guides.handles){
+    for(const [sx,sy] of CORNERS){
+      const p=corner(frame,sx,sy);
+      context.beginPath();context.arc(p.x,p.y,5.5*unit,0,TAU);
+      paint(context,"#e7f6dc","#395f3b",1.6*unit);
+    }
+  }
+  const emitter=part();
+  if(emitter&&(originEditing||emitter.origin)){
+    const pose=barrelPose(emitter),x=pose.muzzleX,y=pose.muzzleY,r=8*unit;
+    context.beginPath();context.arc(x,y,r,0,TAU);paint(context,"#fff1c5","#93651f",1.8*unit);
+    context.beginPath();context.moveTo(x-r*.65,y);context.lineTo(x+r*.65,y);
+    context.moveTo(x,y-r*.65);context.lineTo(x,y+r*.65);context.stroke();
+  }
+  context.restore();
+}
+function paintGrid(context){
+  const step=guides.step,maxX=CX/zoom,maxY=CY/zoom;
+  context.lineWidth=1/zoom;
+  for(let tier=0;tier<2;tier++){
+    context.strokeStyle=tier?"#b3c7b4":"#c6d5c3";context.beginPath();
+    for(let i=-Math.floor(maxX/step);i<=Math.floor(maxX/step);i++){
+      if(Number(i%5===0)!==tier)continue;
+      context.moveTo(i*step,-maxY);context.lineTo(i*step,maxY);
+    }
+    for(let i=-Math.floor(maxY/step);i<=Math.floor(maxY/step);i++){
+      if(Number(i%5===0)!==tier)continue;
+      context.moveTo(-maxX,i*step);context.lineTo(maxX,i*step);
+    }
+    context.stroke();
+  }
+}
+function draw(context,editing=true){
+  const s=stage();
+  context.save();
+  if(editing){
+    context.fillStyle="#dce7d7";context.fillRect(0,0,W,H);
+  }
+  context.translate(CX,CY);
+  if(editing){
+    context.scale(zoom,zoom);
+    if(guides.grid)paintGrid(context);
+  }
+  context.save();
+  if(editing&&testing)context.translate(bossPos.x,bossPos.y);
+  if(editing&&s.orbitEnabled&&s.showRing){
+    context.strokeStyle="#7d9b80";context.lineWidth=1.6;context.setLineDash([6,8]);
+    if(sim.track)traceOrbit(context,sim.track.points,s.radiusOrbit,true);
+    else{
+      context.beginPath();context.arc(0,0,s.radiusOrbit,0,TAU);context.stroke();
+    }
+    context.setLineDash([]);
+  }
+  if(editing)paintGuide(context);
+  for(const orbital of sim.stock){
+    if(!orbital.active)continue;
+    const pos=piecePosition(orbital),warning=sim.warning?.id===orbital.id;
+    drawOrbitPiece(context,orbital.key,pos.x,pos.y,pos.angle,Boolean(warning&&Math.floor(sim.time*12)%2));
+    if(editing&&orbital.id===sim.selected){
+      context.beginPath();context.arc(pos.x,pos.y,TYPES[orbital.key].radius*s.orbits[orbital.key].scale/100+8,0,TAU);
+      context.strokeStyle="#3c6334";context.lineWidth=2;context.setLineDash([4,5]);context.stroke();context.setLineDash([]);
+    }
+  }
+  if(editing&&testing)context.rotate(bossHeading);
+  poly(context,0,0,s.radius,s.radius,SIDES[s.body],s.angle*RAD);
+  paint(context,s.fill,s.line,s.stroke);
+  for(const p of s.parts){
+    const aim=editing&&testing?barrelAngles.get(p.id):undefined;
+    paintPart(context,aim===undefined?p:{...p,...barrelPose(p,aim)});
+  }
+  context.restore();
+  if(editing){
+    for(const shot of sim.shots){
+      const pos=shotPosition(shot);
+      drawOrbitPiece(context,shot.key,pos.x,pos.y,shot.angle+(sim.time-shot.at)*2.5);
+    }
+    if(testing)paintPractice(context);else paintSelection(context);
+  }
+  context.restore();
+}
+function requestLaunch(track=false){
+  const piece=activePiece();
+  if(!stage().orbitEnabled||!piece||sim.warning||sim.time<sim.coolUntil)return false;
+  const s=stage(),o=s.orbits[piece.key];
+  sim.warning={id:piece.id,angle:s.aim*RAD,track,at:sim.time+s.warning+o.extra};
+  playing=true;updateStats();return true;
+}
+function advance(dt){
+  sim.time+=dt;
+  runMechanics(dt);
+  const warning=sim.warning;
+  if(warning&&sim.time>=warning.at){
+    const piece=sim.stock.find(entry=>entry.active&&entry.id===warning.id);
+    if(piece){
+      const from=piecePosition(piece),o=stage().orbits[piece.key];
+      const x=from.x+(testing?bossPos.x:0),y=from.y+(testing?bossPos.y:0);
+      const angle=testing&&warning.track?Math.atan2(dummy.y-y,dummy.x-x):warning.angle;
+      sim.shots.push({key:piece.key,x,y,at:sim.time,angle,speed:o.speed,damage:o.damage,hitRadius:TYPES[piece.key].radius*o.scale/100});
+      piece.active=false;sim.coolUntil=sim.time+stage().cooldown;
+    }
+    sim.warning=null;syncAttackPicker();updateStats();
+  }
+  if(sim.shots.length)sim.shots=sim.shots.filter(shot=>{
+    const p=shotPosition(shot);
+    if(testing&&sim.time>shot.at){
+      const step=Math.min(dt,sim.time-shot.at);
+      const dx=Math.cos(shot.angle)*shot.speed*step,dy=Math.sin(shot.angle)*shot.speed*step;
+      if(hitsDummy(p.x-dx,p.y-dy,dx,dy,shot.hitRadius)){damageDummy(shot.damage);return false;}
+    }
+    return Math.abs(p.x)<W/2+75&&Math.abs(p.y)<H/2+75&&sim.time-shot.at<5;
+  });
+  if($("launch").disabled&&!sim.warning&&activePiece()&&sim.time>=sim.coolUntil)updateStats();
+}
+function pointerPoint(event){
+  const rect=canvas.getBoundingClientRect();
+  return {x:((event.clientX-rect.left)*W/rect.width-CX)/zoom,y:((event.clientY-rect.top)*H/rect.height-CY)/zoom};
+}
+function selectByPoint(point){
+  const s=stage();
+  for(let i=s.parts.length-1;i>=0;i--){
+    const p=s.parts[i],dx=point.x-p.x,dy=point.y-p.y,a=p.angle*RAD,c=Math.cos(a),sn=Math.sin(a);
+    if(Math.abs(dx*c+dy*sn)<=p.w/2+7&&Math.abs(dy*c-dx*sn)<=p.h/2+7)return {part:i};
+  }
+  for(const piece of sim.stock){
+    if(!piece.active)continue;
+    const pos=piecePosition(piece),radius=TYPES[piece.key].radius*s.orbits[piece.key].scale/100;
+    if(Math.hypot(point.x-pos.x,point.y-pos.y)<=radius+8)return {orbit:piece.id};
+  }
+  if(Math.hypot(point.x,point.y)<=s.radius+8)return {part:-1};
+  return null;
+}
+function syncGeometryFields(){
+  const p=part(),s=stage();
+  const values=p?{pieceX:p.x,pieceY:p.y,pieceWidth:p.w,pieceHeight:p.h}:{hullRadius:s.radius};
+  for(const [id,value] of Object.entries(values))if($(id))$(id).value=value;
+}
+function resizeSelection(gesture,point,keepAspect){
+  const {frame,sx,sy}=gesture,p=part();
+  if(!p){
+    stage().radius=precise(clamp(snapped((point.x*sx+point.y*sy)/2),20,125));
+    return;
+  }
+  const anchor=corner(frame,-sx,-sy),dx=point.x-anchor.x,dy=point.y-anchor.y;
+  const c=Math.cos(frame.a),sn=Math.sin(frame.a);
+  const rawWidth=sx*(dx*c+dy*sn),rawHeight=sy*(-dx*sn+dy*c);
+  let w,h;
+  if(keepAspect){
+    const factor=(frame.w*rawWidth+frame.h*rawHeight)/(frame.w**2+frame.h**2);
+    const bounded=clamp(snapped(factor*frame.w)/frame.w,Math.max(10/frame.w,10/frame.h),Math.min(220/frame.w,195/frame.h));
+    w=frame.w*bounded;h=frame.h*bounded;
+  }else{
+    w=clamp(snapped(rawWidth),10,220);h=clamp(snapped(rawHeight),10,195);
+  }
+  const x=sx*w/2,y=sy*h/2;
+  p.w=precise(w);p.h=precise(h);
+  p.x=precise(clamp(anchor.x+x*c-y*sn,-250,250));
+  p.y=precise(clamp(anchor.y+x*sn+y*c,-220,220));
+}
+canvas.onpointerdown=event=>{
+  if(testing){
+    if(event.button!==0)return;
+    const point=pointerPoint(event);
+    placeDummy(point.x,point.y);drag={id:event.pointerId,mode:"dummy"};
+    canvas.setPointerCapture(event.pointerId);
+    return;
+  }
+  if(event.button!==0)return;
+  const point=pointerPoint(event);
+  if(originEditing&&part()?.origin){
+    setOriginPoint(point);drag={id:event.pointerId,mode:"origin"};canvas.setPointerCapture(event.pointerId);
+    return;
+  }
+  const handle=selectedHandle(point,event.pointerType);
+  if(handle){
+    const [sx,sy]=handle;
+    drag={id:event.pointerId,mode:"resize",frame:selectionFrame(),sx,sy};
+    setTab("visual");
+    canvas.setPointerCapture(event.pointerId);canvas.classList.add("resizing");
+    return;
+  }
+  const hit=selectByPoint(point);if(!hit)return;
+  if(hit.orbit!==undefined){sim.selected=hit.orbit;setTab("attack");syncAttackPicker();updateStats();return;}
+  setSelection(hit.part);
+  const p=part();if(!p)return;
+  drag={id:event.pointerId,mode:"move",dx:point.x-p.x,dy:point.y-p.y};
+  canvas.setPointerCapture(event.pointerId);canvas.classList.add("dragging");
+};
+canvas.onpointermove=event=>{
+  const point=pointerPoint(event);
+  if(testing){
+    if(drag?.id===event.pointerId&&drag.mode==="dummy")placeDummy(point.x,point.y);
+    return;
+  }
+  if(!drag||drag.id!==event.pointerId){
+    canvas.style.cursor=selectedHandle(point,event.pointerType)?"crosshair":"";
+    return;
+  }
+  if(drag.mode==="origin"){setOriginPoint(point);return;}
+  if(drag.mode==="resize")resizeSelection(drag,point,event.shiftKey||guides.ratio);
+  else {
+    const p=part();if(!p)return;
+    p.x=Math.round(clamp(snapped(point.x-drag.dx),-250,250));
+    p.y=Math.round(clamp(snapped(point.y-drag.dy),-220,220));
+  }
+  syncGeometryFields();storeSoon(false);
+};
+function endDrag(event){
+  if(drag?.id!==event.pointerId)return;
+  const wasEditing=drag.mode!=="dummy";
+  drag=null;canvas.classList.remove("dragging");canvas.classList.remove("resizing");
+  if(wasEditing)storeSoon();
+}
+canvas.onpointerup=canvas.onpointercancel=canvas.onlostpointercapture=endDrag;
+function changeLayer(delta){
+  const parts=stage().parts,i=selection,to=i+delta;
+  if(i<0||to<0||to>=parts.length)return;
+  [parts[i],parts[to]]=[parts[to],parts[i]];
+  setSelection(to);storeSoon();
+}
+function removePart(){
+  if(!part())return;
+  const [removed]=stage().parts.splice(selection,1);
+  for(const rule of stage().behaviors){
+    if(rule.type==="fire")rule.barrels=rule.barrels.filter(id=>id!==removed.id);
+    if(rule.type==="drones"&&rule.source===removed.id)rule.source="body";
+  }
+  resetMechanicClock();setSelection(-1);storeSoon();
+}
+function download(blob,name){
+  const link=make("a");link.href=URL.createObjectURL(blob);link.download=name;
+  document.body.append(link);link.click();link.remove();
+  setTimeout(()=>URL.revokeObjectURL(link.href),1500);
+}
+function fileName(){
+  return project.name.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"")||"chefe";
+}
+$("bossName").oninput=event=>{project.name=event.target.value.slice(0,45)||"Chefe";renderPhases();storeSoon(false);};
+$("bossName").onchange=()=>storeSoon();
+for(const [id,key] of GUIDE_BUTTONS){
+  $(id).onclick=()=>{guides[key]=!guides[key];saveGuides();};
+}
+$("gridSize").onchange=event=>{
+  const step=Number(event.target.value);
+  if(GRID_STEPS.includes(step)){guides.step=step;saveGuides();}
+};
+$("undoEdit").onclick=()=>restoreEdit(undoStack,redoStack);
+$("redoEdit").onclick=()=>restoreEdit(redoStack,undoStack);
+window.addEventListener("keydown",event=>{
+  if(event.defaultPrevented||document.querySelector("dialog[open]")||event.target?.closest?.("input,select,textarea,[contenteditable]"))return;
+  const modifier=event.ctrlKey||event.metaKey,key=event.key.toLowerCase();
+  if(modifier&&(key==="z"||key==="y")){
+    event.preventDefault();
+    if(event.shiftKey||key==="y")restoreEdit(redoStack,undoStack);else restoreEdit(undoStack,redoStack);
+    return;
+  }
+  if(testing&&movementKeys[key]&&!modifier){
+    event.preventDefault();moveKeys.add(key);return;
+  }
+  const p=part(),arrows={arrowleft:[-1,0],arrowright:[1,0],arrowup:[0,-1],arrowdown:[0,1]};
+  if(!p||modifier||!arrows[key])return;
+  event.preventDefault();
+  const [dx,dy]=arrows[key],delta=(guides.snap?guides.step:1)*(event.shiftKey?3:1);
+  if(dx)p.x=precise(clamp(snapped(p.x+dx*delta),-250,250));
+  if(dy)p.y=precise(clamp(snapped(p.y+dy*delta),-220,220));
+  syncGeometryFields();storeSoon();
+});
+window.addEventListener("keyup",event=>moveKeys.delete(event.key.toLowerCase()));
+window.addEventListener("blur",()=>moveKeys.clear());
+document.addEventListener("visibilitychange",()=>{if(document.hidden)moveKeys.clear();});
+$("inspectTabs").onclick=event=>{const button=event.target.closest("button[data-tab]");if(button)setTab(button.dataset.tab);};
+$("inspectTabs").onkeydown=event=>{
+  if(!["ArrowLeft","ArrowRight","Home","End"].includes(event.key))return;
+  const tabs=[...$("inspectTabs").querySelectorAll("button")],index=tabs.findIndex(button=>button.dataset.tab===tab);
+  const size=tabs.length;
+  const next=event.key==="Home"?0:event.key==="End"?size-1:(index+(event.key==="ArrowLeft"?size-1:1))%size;
+  event.preventDefault();setTab(tabs[next].dataset.tab);tabs[next].focus();
+};
+$("openPlan").onclick=()=>$("planDialog").showModal();
+$("newProject").onclick=()=>$("projectDialog").showModal();
+function startProject(template){
+  $("projectDialog").close();
+  project=template==="blank"?blankProject():defaults();
+  selectedStage(0);storeSoon();notify("Novo projeto aberto.");
+}
+$("blankProject").onclick=()=>startProject("blank");
+$("scrapperProject").onclick=()=>startProject("scrapper");
+$("addStage").onclick=()=>{
+  if(project.stages.length>=PHASE_LIMIT)return;
+  const previous=project.stages.at(-1),next=copy(stage());
+  next.title="Fase "+(project.stages.length+1);
+  next.hp=Math.max(1,Math.round(previous.hp*.6));
+  project.stages.push(next);orderThresholds(project.stages);
+  selectedStage(project.stages.length-1);storeSoon();
+};
+$("removeStage").onclick=()=>{
+  if(project.stages.length<=1)return;
+  project.stages.splice(phase,1);orderThresholds(project.stages);
+  selectedStage(Math.min(phase,project.stages.length-1));storeSoon();
+};
+$("copyStage").onclick=()=>{
+  if(phase>=project.stages.length-1)return;
+  const target=project.stages[phase+1],from=stage();
+  const existing=target.parts;
+  const newParts=from.parts.map((part,i)=>({...part,id:existing[i]?.kind===part.kind?existing[i].id:nextPartId()}));
+  target.parts=newParts;
+  const valid=new Set(newParts.filter(fitsEmitter).map(p=>p.id));
+  for(const rule of target.behaviors){
+    if(rule.type==="fire")rule.barrels=rule.barrels.filter(id=>valid.has(id));
+    if(rule.type==="drones"&&!newParts.some(p=>p.id===rule.source))rule.source="body";
+  }
+  for(const key of ["body","radius","angle","fill","line","stroke"])target[key]=copy(from[key]);
+  storeSoon();selectedStage(phase+1);notify("Visual copiado para o estágio "+(phase+1)+".");
+};
+$("resetStage").onclick=()=>{
+  if(!window.confirm("Restaurar todas as opções deste estágio?"))return;
+  const preset=project.template==="scrapper"&&phase<3?stagePreset(phase):blankStage(phase);
+  preset.hp=stage().hp;preset.title=stage().title;
+  project.stages[phase]=preset;
+  selectedStage(phase);storeSoon();notify("Estágio restaurado.");
+};
+$("addPart").onclick=()=>{
+  const parts=stage().parts;if(parts.length>=32)return;
+  const kind=$("partKind").value;
+  parts.push(makePart(kind,kind==="core"?0:kind==="plate"?-65:90,0));
+  setSelection(parts.length-1);storeSoon();
+};
+$("duplicatePart").onclick=()=>{
+  const p=part(),parts=stage().parts;
+  if(!p||parts.length>=32)return;
+  parts.splice(selection+1,0,{...p,id:nextPartId(),name:(p.name+" · cópia").slice(0,45),x:clamp(p.x+12,-250,250),y:clamp(p.y+12,-220,220)});
+  setSelection(selection+1);storeSoon();
+};
+$("removePart").onclick=removePart;
+$("moveBack").onclick=()=>changeLayer(-1);
+$("moveFront").onclick=()=>changeLayer(1);
+$("mechanicsNav").onclick=event=>{
+  const button=event.target.closest("button[data-mechanic-pane]");
+  if(button)setMechanicPane(button.dataset.mechanicPane);
+};
+$("addMechanic").onclick=()=>{
+  const s=stage(),type=$("mechanicType").value;
+  if(s.behaviors.length>=12||!Object.hasOwn(mechanicsTypes,type))return;
+  s.behaviors.push(defaultMechanic(type,s.parts));mechanicIndex=s.behaviors.length-1;
+  if(type==="launch"&&!s.orbitEnabled)notify("Ative a órbita em Lançamento para usar este ataque.");
+  renderMechanics();resetMechanicClock();storeSoon();
+};
+$("testToggle").onclick=()=>{
+  testing=!testing;drag=null;originEditing=false;renderVisual();
+  canvas.closest(".arena").classList.toggle("testing",testing);
+  $("testToggle").setAttribute("aria-pressed",testing);
+  $("testToggle").textContent=testing?"Sair do teste":"Testar fase";
+  $("testReset").hidden=!testing;
+  syncArenaNote();
+  if(testing)playing=true;
+  refill();resetPractice();
+};
+$("testReset").onclick=()=>{refill();resetPractice();playing=true;updateStats();};
+$("togglePlay").onclick=()=>{playing=!playing;updateStats();};
+$("launch").onclick=()=>requestLaunch();
+$("refill").onclick=()=>{refill();syncAttackPicker();notify("Escudo reposto conforme a carga do estágio.");};
+function changeZoom(value){zoom=clamp(value,.65,1.7);if(testing)placeDummy(dummy.x,dummy.y);$("zoomReset").textContent=Math.round(zoom*100)+"%";}
+$("zoomIn").onclick=()=>changeZoom(zoom+.1);
+$("zoomOut").onclick=()=>changeZoom(zoom-.1);
+$("zoomReset").onclick=()=>changeZoom(1);
+$("exportProject").onclick=()=>{
+  writeProject();download(new Blob([JSON.stringify(project,null,2)],{type:"application/json"}),fileName()+"-projeto.json");
+  notify("JSON exportado com "+project.stages.length+" fase(s).");
+};
+$("exportPng").onclick=()=>{
+  const output=make("canvas");output.width=W*2;output.height=H*2;
+  const out=output.getContext("2d");out.scale(2,2);draw(out,false);
+  output.toBlob(blob=>{if(blob){download(blob,fileName()+"-estagio-"+(phase+1)+".png");notify("PNG exportado com fundo transparente.");}},"image/png");
+};
+$("importProject").onclick=()=>$("projectFile").click();
+$("projectFile").onchange=async event=>{
+  const input=event.target,file=input.files[0];
+  if(!file)return;
+  try{
+    if(file.size>5_000_000)throw Error("O arquivo é grande demais para um projeto do montador.");
+    project=normalize(JSON.parse(await file.text()));selectedStage(0);storeSoon();notify("Projeto importado.");
+  }catch(error){notify(error instanceof SyntaxError?"JSON inválido. Escolha um projeto exportado pelo montador.":error.message);}
+  finally{input.value="";}
+};
+window.addEventListener("pagehide",writeProject);
+let last=0;
+function frame(now){
+  const dt=last?Math.min(.05,(now-last)/1000):0;
+  last=now;if(playing)advance(dt);draw(ctx);
+  requestAnimationFrame(frame);
+}
+const modelCanvas=$("droneModelCanvas"),modelContext=modelCanvas.getContext("2d"),modelZoom=4.45;
+const modelCX=modelCanvas.width/2,modelCY=modelCanvas.height/2;
+let droneEditor=null,modelSnap=true,droneHandles=false,droneRatio=false;
+const currentDroneLayer=()=>droneEditor.layers[droneEditor.selection];
+const droneStatus=message=>{$("droneModelHint").textContent=message;};
+const modelCoordinate=value=>precise(clamp(modelSnap?Math.round(value):value,-droneCoordLimit,droneCoordLimit));
+function openDroneModel(rule){
+  droneEditor={rule,layers:copy(rule.model??[makeDroneLayer("triangle",rule.fill)]),
+    selection:0,path:null,hover:null,drag:null};
+  moveKeys.clear();
+  $("droneModelRule").textContent=rule.name+" · "+stage().title;
+  $("droneModelDialog").showModal();
+  refreshDroneEditor();
+}
+function droneModelPoint(event){
+  const box=modelCanvas.getBoundingClientRect();
+  return {x:((event.clientX-box.left)*modelCanvas.width/box.width-modelCX)/modelZoom,
+    y:((event.clientY-box.top)*modelCanvas.height/box.height-modelCY)/modelZoom};
+}
+function droneLocal(layer,point){
+  const angle=layer.angle*RAD,c=Math.cos(angle),s=Math.sin(angle),scale=layer.shape==="path"?layer.scale/100:1;
+  const x=point.x-layer.x,y=point.y-layer.y;
+  return {x:(x*c+y*s)/scale,y:(y*c-x*s)/(layer.shape==="path"?layer.scaleY/100:1)};
+}
+function droneWorld(layer,point){
+  const angle=layer.angle*RAD,c=Math.cos(angle),s=Math.sin(angle),scale=layer.shape==="path"?layer.scale/100:1;
+  const x=point.x*scale,y=point.y*(layer.shape==="path"?layer.scaleY/100:1);
+  return {x:layer.x+x*c-y*s,y:layer.y+x*s+y*c};
+}
+function droneResizeBounds(layer){
+  if(layer.shape!=="path")return {left:-layer.w/2,right:layer.w/2,top:-layer.h/2,bottom:layer.h/2};
+  const xs=layer.points.map(p=>p.x),ys=layer.points.map(p=>p.y);
+  return {left:Math.min(...xs),right:Math.max(...xs),top:Math.min(...ys),bottom:Math.max(...ys)};
+}
+function droneCorner(bounds,sx,sy){
+  return {x:sx<0?bounds.left:bounds.right,y:sy<0?bounds.top:bounds.bottom};
+}
+function droneResizeHandle(layer,point,pointerType){
+  const bounds=droneResizeBounds(layer),corners=CORNERS.map(([sx,sy])=>({
+    sx,sy,...droneWorld(layer,droneCorner(bounds,sx,sy))
+  }));
+  const box=modelCanvas.getBoundingClientRect();
+  const handleRadius=(pointerType==="touch"?14:9)*modelCanvas.width/Math.max(1,box.width)/modelZoom;
+  let nearest=null,distance=handleRadius;
+  for(const corner of corners){
+    const gap=Math.hypot(point.x-corner.x,point.y-corner.y);
+    if(gap<=distance){nearest=corner;distance=gap;}
+  }
+  return nearest;
+}
+function beginDroneResize(layer,sx,sy){
+  const bounds=droneResizeBounds(layer),opposite=droneCorner(bounds,-sx,-sy),picked=droneCorner(bounds,sx,sy);
+  const anchor=droneWorld(layer,opposite),path=layer.shape==="path";
+  const baseW=bounds.right-bounds.left,baseH=bounds.bottom-bounds.top;
+  const w=baseW*(path?layer.scale/100:1),h=baseH*(path?layer.scaleY/100:1);
+  return {sx,sy,anchor,opposite,picked,w,h,path,
+    minW:path?baseW*.25:2,maxW:path?baseW*2:60,minH:path?baseH*.25:2,maxH:path?baseH*2:60,
+    c:Math.cos(layer.angle*RAD),s:Math.sin(layer.angle*RAD)};
+}
+function resizeDroneLayer(layer,gesture,point,ratioLocked){
+  const {sx,sy,anchor,opposite,w,h,path,c,s,minW,maxW,minH,maxH}=gesture;
+  const dx=point.x-anchor.x,dy=point.y-anchor.y;
+  const wantedW=(dx*c+dy*s)*sx,wantedH=(-dx*s+dy*c)*sy;
+  let width=clamp(wantedW,minW,maxW),height=clamp(wantedH,minH,maxH);
+  if(ratioLocked){
+    const ratio=clamp((wantedW*w+wantedH*h)/(w*w+h*h),Math.max(minW/w,minH/h),Math.min(maxW/w,maxH/h));
+    width=w*ratio;height=h*ratio;
+  }
+  if(path){
+    layer.scale=precise(width/maxW*200);layer.scaleY=precise(height/maxH*200);
+  }else{
+    layer.w=precise(width);layer.h=precise(height);
+  }
+  const x=path?opposite.x*layer.scale/100:-sx*layer.w/2;
+  const y=path?opposite.y*layer.scaleY/100:-sy*layer.h/2;
+  layer.x=precise(clamp(anchor.x-x*c+y*s,-droneCoordLimit,droneCoordLimit));
+  layer.y=precise(clamp(anchor.y-x*s-y*c,-droneCoordLimit,droneCoordLimit));
+}
+function stepDroneSize(factor){
+  const layer=currentDroneLayer();
+  if(!layer||droneEditor.path)return;
+  const path=layer.shape==="path",w=path?layer.scale:layer.w,h=path?layer.scaleY:layer.h;
+  const min=path?25:2,max=path?200:60;
+  const ratio=clamp(factor,Math.max(min/w,min/h),Math.min(max/w,max/h));
+  if(path){layer.scale=precise(w*ratio);layer.scaleY=precise(h*ratio);}
+  else{layer.w=precise(w*ratio);layer.h=precise(h*ratio);}
+  refreshDroneEditor();
+}
+function droneLayerContains(layer,point){
+  const {x,y}=droneLocal(layer,point);
+  if(layer.shape==="circle")return (x/(layer.w/2))**2+(y/(layer.h/2))**2<=1;
+  const points=droneLayerOutline(layer);
+  let inside=false;
+  for(const [i,a] of points.entries()){
+    const b=points[(i+1)%points.length];
+    if((a.y>y)!==(b.y>y)&&x<(b.x-a.x)*(y-a.y)/(b.y-a.y)+a.x)inside=!inside;
+  }
+  return inside;
+}
+function droneEditorStroke(points,color,closed=false){
+  if(!points.length)return;
+  const context=modelContext;
+  context.beginPath();
+  for(const [i,p] of points.entries()){
+    if(i)context.lineTo(p.x,p.y);else context.moveTo(p.x,p.y);
+  }
+  if(closed)context.closePath();
+  context.strokeStyle=color;context.stroke();
+}
+function droneEditorPoint(p,r,fill){
+  poly(modelContext,p.x,p.y,r,r,0,0);paint(modelContext,fill,"#33584f",.27);
+}
+function drawDroneEditor(){
+  if(!droneEditor)return;
+  const c=modelContext;
+  c.fillStyle="#dce7d7";c.fillRect(0,0,modelCanvas.width,modelCanvas.height);
+  c.save();c.translate(modelCX,modelCY);c.scale(modelZoom,modelZoom);
+  for(let i=-45;i<=45;i+=3){
+    c.lineWidth=i===0?.28:.14;
+    const color=i===0?"#879f88":"#c0cdbb";
+    droneEditorStroke([{x:i,y:-42},{x:i,y:42}],color);
+    droneEditorStroke([{x:-55,y:i},{x:55,y:i}],color);
+  }
+  c.save();c.setLineDash([.8,.8]);c.lineWidth=.25;c.strokeStyle="#68816e";
+  poly(c,0,0,10,10,0,0);c.stroke();c.restore();
+  droneEditorStroke([{x:0,y:0},{x:16,y:0},{x:14,y:-1.4}],"#809385");
+  for(const layer of droneEditor.layers)paintDroneLayer(c,layer);
+  const active=currentDroneLayer();
+  if(active&&!droneEditor.path){
+    c.setLineDash([1,.6]);c.lineWidth=.45;
+    if(active.shape==="circle"){
+      poly(c,active.x,active.y,active.w/2+.45,active.h/2+.45,0,active.angle*RAD);c.strokeStyle="#167c77";c.stroke();
+    }else{
+      const vertices=droneLayerOutline(active).map(p=>droneWorld(active,p));
+      droneEditorStroke(vertices,"#16837a",true);c.setLineDash([]);
+      if(active.shape==="path")for(const p of vertices)droneEditorPoint(p,.95,"#e3fff3");
+    }
+    c.setLineDash([]);
+    if(droneHandles){
+      const bounds=droneResizeBounds(active);
+      const corners=CORNERS.map(([sx,sy])=>droneWorld(active,droneCorner(bounds,sx,sy)));
+      c.setLineDash([1,.7]);c.lineWidth=.33;
+      droneEditorStroke(corners,"#426749",true);c.setLineDash([]);
+      for(const p of corners)droneEditorPoint(p,1.35,"#ffeb9f");
+    }
+  }
+  if(droneEditor.path){
+    const path=droneEditor.path,pointer=droneEditor.hover;
+    c.lineWidth=.5;
+    droneEditorStroke(pointer?[...path,pointer]:path,"#18786d");
+    for(const [i,p] of path.entries())droneEditorPoint(p,i===0?1.35:1,i===0?"#ffe394":"#e3fff3");
+  }
+  c.restore();
+}
+function refreshDronePath(message){
+  const path=droneEditor.path,active=currentDroneLayer();
+  $("drawDroneShape").setAttribute("aria-pressed",Boolean(path));
+  $("snapDroneShape").setAttribute("aria-pressed",modelSnap);
+  $("droneHandles").setAttribute("aria-pressed",droneHandles);
+  $("droneRatio").setAttribute("aria-pressed",droneRatio);
+  $("dronePathActions").hidden=!path;
+  $("finishDronePath").disabled=!path||path.length<3;
+  $("undoDronePoint").disabled=!path?.length;
+  $("saveDroneModel").disabled=Boolean(path);
+  if(path)$("droneModelLayers").setAttribute("aria-disabled","true");
+  else $("droneModelLayers").setAttribute("aria-disabled","false");
+  droneStatus(message??(path?path.length+" pontos · clique no primeiro ponto ou em Fechar e preencher":
+    active&&droneHandles?"Arraste os cantos amarelos para redimensionar. Shift mantém a proporção e Alt libera os vértices.":
+    active?.shape==="path"?"Arraste os pontos para mudar o contorno ou arraste a forma inteira.":
+    active?"Arraste as peças para combinar. A seta indica a frente do drone.":
+    "Adicione uma peça ou desenhe um contorno. Sem camadas, vale o triângulo padrão."));
+  drawDroneEditor();
+}
+function refreshDroneEditor(message){
+  const {layers,selection,path}=droneEditor,active=currentDroneLayer();
+  for(const id of ["droneHandles","droneRatio","shrinkDroneLayer","growDroneLayer"])$(id).disabled=Boolean(path)||!active;
+  $("addDroneShape").disabled=Boolean(path)||layers.length>=droneLayerLimit;
+  $("drawDroneShape").disabled=layers.length>=droneLayerLimit&&!path;
+  $("droneLayerBack").disabled=Boolean(path)||!active||selection===0;
+  $("droneLayerFront").disabled=Boolean(path)||!active||selection===layers.length-1;
+  $("duplicateDroneLayer").disabled=Boolean(path)||!active||layers.length>=droneLayerLimit;
+  $("deleteDroneLayer").disabled=Boolean(path)||!active;
+  $("resetDroneModel").disabled=Boolean(path);
+  const list=$("droneModelLayers");
+  list.replaceChildren(...layers.map((layer,index)=>{
+    const button=make("button",layer.name);
+    button.type="button";button.disabled=Boolean(path);
+    button.setAttribute("aria-pressed",index===selection);
+    button.onclick=()=>{droneEditor.selection=index;refreshDroneEditor();};
+    return button;
+  }));
+  const fields=$("droneModelFields");
+  fields.replaceChildren();
+  if(active&&!path){
+    function modelField(title,type,value,edit,opts={}){
+      // The model is a draft until Aplicar modelo.
+      const wrapper=make("label",undefined,"field"+(opts.wide?" wide":""));
+      const input=make("input");input.type=type;input.value=value;
+      for(const [key,v] of Object.entries(opts))if(key!=="wide")input[key]=v;
+      const update=()=>{edit(input.value);drawDroneEditor();};
+      input.addEventListener(type==="color"?"input":"change",update);
+      wrapper.append(make("span",title),input);return wrapper;
+    }
+    const numeric=(title,key,min,max)=>modelField(title,"number",active[key],value=>{
+      active[key]=n(value,active[key],min,max);
+    },{min,max,step:.1});
+    fields.append(modelField("Nome","text",active.name,value=>{
+      active.name=label(value,droneShapeNames[active.shape]);list.children[selection].textContent=active.name;
+    },{wide:true,maxLength:45}),
+    numeric("X","x",-36,36),numeric("Y","y",-36,36),numeric("Rotação (°)","angle",-360,360),
+    numeric("Contorno","stroke",0,6));
+    if(active.shape==="path")fields.append(numeric("Escala X (%)","scale",25,200),numeric("Escala Y (%)","scaleY",25,200));
+    else fields.append(numeric("Largura","w",2,60),numeric("Altura","h",2,60));
+    fields.append(modelField("Preenchimento","color",active.fill,value=>active.fill=value),
+      modelField("Cor do contorno","color",active.line,value=>active.line=value));
+  }
+  refreshDronePath(message);
+}
+function finishDronePath(){
+  const path=droneEditor?.path;
+  if(!path||path.length<3)return;
+  if(!dronePathArea(path)){
+    refreshDronePath("O contorno precisa envolver uma área. Mova o próximo ponto para fora da linha.");return;
+  }
+  const limit=droneCoordLimit,x=path.reduce((sum,p)=>sum+p.x,0)/path.length,y=path.reduce((sum,p)=>sum+p.y,0)/path.length;
+  const cx=precise(clamp(x,-limit,limit)),cy=precise(clamp(y,-limit,limit));
+  const layer=makeDroneLayer("path",droneEditor.rule.fill);
+  const points=path.map(p=>({x:precise(p.x-cx),y:precise(p.y-cy)}));
+  // Preserve positions at the edges of the drawing area when the shape is centered.
+  const span=Math.max(...points.map(p=>Math.max(Math.abs(p.x),Math.abs(p.y))));
+  const scale=Math.max(1,span/limit);
+  droneEditor.layers.push({...layer,x:cx,y:cy,scale:scale*100,scaleY:scale*100,
+    points:points.map(p=>({x:p.x/scale,y:p.y/scale}))});
+  droneEditor.selection=droneEditor.layers.length-1;
+  droneEditor.path=null;droneEditor.hover=null;refreshDroneEditor();
+}
+function moveDroneLayer(delta){
+  const {layers,selection}=droneEditor,next=selection+delta;
+  if(droneEditor.path||!layers[selection]||next<0||next>=layers.length)return;
+  [layers[selection],layers[next]]=[layers[next],layers[selection]];
+  droneEditor.selection=next;refreshDroneEditor();
+}
+modelCanvas.onpointerdown=event=>{
+  if(!droneEditor||event.button!==0)return;
+  const point=droneModelPoint(event),{path,layers}=droneEditor;
+  if(path){
+    if(path.length>=3&&Math.hypot(point.x-path[0].x,point.y-path[0].y)<2.35){finishDronePath();return;}
+    const snappedPoint={x:modelCoordinate(point.x),y:modelCoordinate(point.y)},last=path.at(-1);
+    if(path.length<dronePointLimit&&(!last||last.x!==snappedPoint.x||last.y!==snappedPoint.y))path.push(snappedPoint);
+    droneEditor.hover=null;refreshDronePath(path.length===dronePointLimit?"Limite de pontos atingido. Feche o contorno.":undefined);return;
+  }
+  const layer=currentDroneLayer();
+  const handle=layer&&droneHandles&&!event.altKey?droneResizeHandle(layer,point,event.pointerType):null;
+  if(handle){
+    modelCanvas.setPointerCapture(event.pointerId);
+    droneEditor.drag={id:event.pointerId,resize:beginDroneResize(layer,handle.sx,handle.sy)};
+    return;
+  }
+  let vertex=-1;
+  if(layer?.shape==="path")vertex=layer.points.findIndex(p=>{
+    const vertex=droneWorld(layer,p);return Math.hypot(vertex.x-point.x,vertex.y-point.y)<2.2;
+  });
+  if(vertex<0)droneEditor.selection=layers.findLastIndex(entry=>droneLayerContains(entry,point));
+  const selected=currentDroneLayer();
+  if(selected){
+    modelCanvas.setPointerCapture(event.pointerId);
+    droneEditor.drag={id:event.pointerId,vertex,x:point.x-selected.x,y:point.y-selected.y};
+  }
+  refreshDroneEditor();
+};
+modelCanvas.onpointermove=event=>{
+  if(!droneEditor)return;
+  const point=droneModelPoint(event);
+  if(droneEditor.path){droneEditor.hover=point;drawDroneEditor();return;}
+  const active=currentDroneLayer(),drag=droneEditor.drag;
+  if(!active||drag?.id!==event.pointerId)return;
+  if(drag.resize){
+    resizeDroneLayer(active,drag.resize,{x:modelCoordinate(point.x),y:modelCoordinate(point.y)},droneRatio||event.shiftKey);
+  }else if(drag.vertex>=0){
+    const p=droneLocal(active,{x:modelCoordinate(point.x),y:modelCoordinate(point.y)});
+    const next={x:precise(clamp(p.x,-droneCoordLimit,droneCoordLimit)),y:precise(clamp(p.y,-droneCoordLimit,droneCoordLimit))};
+    const original=active.points[drag.vertex];
+    active.points[drag.vertex]=next;
+    if(!dronePathArea(active.points))active.points[drag.vertex]=original;
+  }else{
+    active.x=modelCoordinate(point.x-drag.x);active.y=modelCoordinate(point.y-drag.y);
+  }
+  drawDroneEditor();
+};
+modelCanvas.onpointerup=modelCanvas.onpointercancel=modelCanvas.onlostpointercapture=event=>{
+  if(droneEditor?.drag?.id!==event.pointerId)return;
+  droneEditor.drag=null;refreshDroneEditor();
+};
+modelCanvas.onpointerleave=()=>{
+  if(!droneEditor?.path)return;
+  droneEditor.hover=null;drawDroneEditor();
+};
+$("addDroneShape").onclick=()=>{
+  if(droneEditor.path||droneEditor.layers.length>=droneLayerLimit)return;
+  const shape=$("droneShape").value,layer=makeDroneLayer(shape,droneEditor.rule.fill);
+  if(droneEditor.layers.length){layer.x=5;layer.y=3;layer.w=14;layer.h=14;}
+  droneEditor.layers.push(layer);droneEditor.selection=droneEditor.layers.length-1;refreshDroneEditor();
+};
+$("drawDroneShape").onclick=()=>{
+  if(droneEditor.path){droneEditor.path=null;droneEditor.hover=null;}
+  else if(droneEditor.layers.length<droneLayerLimit)droneEditor.path=[];
+  refreshDroneEditor();
+};
+$("snapDroneShape").onclick=()=>{modelSnap=!modelSnap;refreshDronePath();};
+$("droneHandles").onclick=()=>{
+  droneHandles=!droneHandles;
+  refreshDronePath();
+};
+$("droneRatio").onclick=()=>{droneRatio=!droneRatio;refreshDronePath();};
+$("shrinkDroneLayer").onclick=()=>stepDroneSize(.9);
+$("growDroneLayer").onclick=()=>stepDroneSize(1.1);
+$("finishDronePath").onclick=finishDronePath;
+$("undoDronePoint").onclick=()=>{droneEditor.path.pop();refreshDronePath();};
+$("cancelDronePath").onclick=()=>{droneEditor.path=null;droneEditor.hover=null;refreshDroneEditor();};
+$("droneLayerBack").onclick=()=>moveDroneLayer(-1);
+$("droneLayerFront").onclick=()=>moveDroneLayer(1);
+$("duplicateDroneLayer").onclick=()=>{
+  const layer=currentDroneLayer();
+  if(!layer||droneEditor.path||droneEditor.layers.length>=droneLayerLimit)return;
+  droneEditor.layers.splice(++droneEditor.selection,0,{...copy(layer),x:clamp(layer.x+2,-36,36),y:clamp(layer.y+2,-36,36)});
+  refreshDroneEditor();
+};
+$("deleteDroneLayer").onclick=()=>{
+  if(!currentDroneLayer()||droneEditor.path)return;
+  droneEditor.layers.splice(droneEditor.selection,1);
+  droneEditor.selection=Math.min(droneEditor.selection,droneEditor.layers.length-1);
+  refreshDroneEditor();
+};
+$("resetDroneModel").onclick=()=>{
+  droneEditor.layers=[makeDroneLayer("triangle",droneEditor.rule.fill)];
+  droneEditor.selection=0;refreshDroneEditor();
+};
+$("cancelDroneModel").onclick=()=>$("droneModelDialog").close();
+$("saveDroneModel").onclick=()=>{
+  if(!droneEditor||droneEditor.path)return;
+  const {rule,layers}=droneEditor;
+  const model=normalizeDroneModel(layers,rule.fill);
+  rule.model=JSON.stringify(model)===JSON.stringify([makeDroneLayer("triangle",rule.fill)])?null:model;
+  $("droneModelDialog").close();renderMechanics();storeSoon();
+};
+$("droneModelDialog").addEventListener("cancel",event=>{
+  if(!droneEditor?.path)return;
+  event.preventDefault();$("cancelDronePath").onclick();
+});
+$("droneModelDialog").addEventListener("close",()=>{droneEditor=null;});
+modelCanvas.onkeydown=event=>{
+  if(event.key==="Enter"&&droneEditor?.path){event.preventDefault();finishDronePath();}
+  if(event.key==="Backspace"&&droneEditor?.path){event.preventDefault();$("undoDronePoint").onclick();}
+};
+
+const orbitCanvas=$("orbitPathCanvas"),orbitContext=orbitCanvas.getContext("2d");
+const orbitCX=orbitCanvas.width/2,orbitCY=orbitCanvas.height/2,orbitDrawingRadius=166;
+let orbitEditor=null;
+function openOrbitEditor(){
+  const s=stage();
+  orbitEditor={stage:s,points:copy(s.orbitShape==="custom"&&s.orbitPoints?s.orbitPoints:orbitTriangle()),
+    closed:true,selected:-1,hover:null,drag:null};
+  moveKeys.clear();
+  $("orbitPathLimit").textContent="Alcance máximo · "+s.radiusOrbit+" unidades a partir do chefe";
+  $("orbitPathDialog").showModal();
+  refreshOrbitEditor();
+}
+function drawOrbitEditor(){
+  if(!orbitEditor)return;
+  const c=orbitContext,R=orbitDrawingRadius;
+  c.fillStyle="#dce7d7";c.fillRect(0,0,orbitCanvas.width,orbitCanvas.height);
+  c.save();c.translate(orbitCX,orbitCY);
+  c.lineWidth=1;c.strokeStyle="#bdcdbd";
+  for(let i=-R;i<=R;i+=R/8){
+    c.beginPath();c.moveTo(i,-R);c.lineTo(i,R);c.moveTo(-R,i);c.lineTo(R,i);c.stroke();
+  }
+  c.fillStyle="#c0d9ae55";c.strokeStyle="#6f896d";c.lineWidth=2;c.setLineDash([5,5]);
+  poly(c,0,0,R,R,0,0);c.fill();c.stroke();c.setLineDash([]);
+  const s=orbitEditor.stage,body=R*s.radius/s.radiusOrbit;
+  poly(c,0,0,body,body,SIDES[s.body],s.angle*RAD);
+  paint(c,s.fill+"32",s.line+"75",1.5);
+  const {points,closed,hover,selected}=orbitEditor;
+  c.lineWidth=3;c.strokeStyle="#176d68";c.lineJoin="round";
+  if(points.length)traceOrbit(c,points,R,closed);
+  if(!closed&&hover&&points.length){
+    c.setLineDash([4,4]);c.strokeStyle="#2f9990";
+    traceOrbit(c,[points.at(-1),hover],R,false);c.setLineDash([]);
+  }
+  for(const [i,p] of points.entries()){
+    poly(c,p.x*R,p.y*R,i===selected?6.5:5.5,i===selected?6.5:5.5,0,0);
+    paint(c,i===0?"#ffde82":i===selected?"#b6f8e5":"#eef7df","#265d57",2);
+  }
+  c.restore();
+}
+function refreshOrbitEditor(message){
+  const {points,closed,selected}=orbitEditor,valid=Boolean(normalizeOrbitPoints(points));
+  $("saveOrbitPath").disabled=!closed||!valid;
+  $("finishOrbitPath").hidden=closed;
+  $("finishOrbitPath").disabled=!valid;
+  $("removeOrbitVertex").disabled=closed?selected<0||points.length<=3:!points.length;
+  $("removeOrbitVertex").textContent=closed?"Remover ponto selecionado":"Remover último ponto";
+  $("orbitPathHint").textContent=message??(closed?
+    "Arraste os vértices para ajustar o contorno ou clique numa linha para inserir um ponto.":
+    "Clique para adicionar pontos ("+points.length+"/"+ORBIT_VERTEX_LIMIT+"). Volte ao ponto amarelo para fechar.");
+  drawOrbitEditor();
+}
+function orbitPointer(event){
+  const box=orbitCanvas.getBoundingClientRect();
+  return {x:((event.clientX-box.left)*orbitCanvas.width/box.width-orbitCX)/orbitDrawingRadius,
+    y:((event.clientY-box.top)*orbitCanvas.height/box.height-orbitCY)/orbitDrawingRadius};
+}
+function closeOrbitContour(){
+  const points=normalizeOrbitPoints(orbitEditor.points);
+  if(!points){refreshOrbitEditor("Use pelo menos três pontos separados que formem um contorno.");return;}
+  orbitEditor.points=points;orbitEditor.closed=true;orbitEditor.selected=-1;orbitEditor.hover=null;
+  refreshOrbitEditor();
+}
+orbitCanvas.onpointerdown=event=>{
+  if(!orbitEditor||event.button!==0)return;
+  const point=orbitPointer(event),{points,closed}=orbitEditor;
+  if(!closed){
+    if(points.length>=3&&Math.hypot(point.x-points[0].x,point.y-points[0].y)<=.065){
+      closeOrbitContour();return;
+    }
+    const p=limitOrbitPoint(point.x,point.y),last=points.at(-1);
+    if(points.length<ORBIT_VERTEX_LIMIT&&(!last||Math.hypot(p.x-last.x,p.y-last.y)>=ORBIT_MIN_SEGMENT))points.push(p);
+    orbitEditor.hover=null;refreshOrbitEditor(points.length===ORBIT_VERTEX_LIMIT?"Limite de pontos atingido. Feche o trajeto.":undefined);
+    return;
+  }
+  const hitRadius=event.pointerType==="touch"?.11:.075;
+  let index=points.findIndex(p=>Math.hypot(point.x-p.x,point.y-p.y)<hitRadius);
+  if(index<0&&points.length<ORBIT_VERTEX_LIMIT){
+    let best=null,distance=hitRadius*.8;
+    for(const [i,a] of points.entries()){
+      const b=points[(i+1)%points.length],dx=b.x-a.x,dy=b.y-a.y;
+      const length=Math.hypot(dx,dy);
+      const t=clamp(((point.x-a.x)*dx+(point.y-a.y)*dy)/(length*length),0,1);
+      if(Math.min(t,1-t)*length<ORBIT_MIN_SEGMENT)continue;
+      const next={x:a.x+dx*t,y:a.y+dy*t},gap=Math.hypot(next.x-point.x,next.y-point.y);
+      if(gap<distance){best={index:i+1,next};distance=gap;}
+    }
+    if(best){index=best.index;points.splice(index,0,best.next);}
+  }
+  orbitEditor.selected=index;
+  if(index>=0){
+    orbitEditor.drag={id:event.pointerId,index};
+    orbitCanvas.setPointerCapture(event.pointerId);
+  }
+  refreshOrbitEditor();
+};
+orbitCanvas.onpointermove=event=>{
+  if(!orbitEditor)return;
+  const point=orbitPointer(event),p=limitOrbitPoint(point.x,point.y);
+  if(!orbitEditor.closed){orbitEditor.hover=p;drawOrbitEditor();return;}
+  const drag=orbitEditor.drag;
+  if(drag?.id!==event.pointerId)return;
+  const points=orbitEditor.points.slice();
+  points[drag.index]=p;
+  const valid=normalizeOrbitPoints(points);
+  if(valid?.length===points.length){orbitEditor.points=valid;drawOrbitEditor();}
+};
+orbitCanvas.onpointerup=orbitCanvas.onpointercancel=orbitCanvas.onlostpointercapture=event=>{
+  if(orbitEditor?.drag?.id!==event.pointerId)return;
+  orbitEditor.drag=null;refreshOrbitEditor();
+};
+orbitCanvas.onpointerleave=()=>{
+  if(!orbitEditor||orbitEditor.closed)return;
+  orbitEditor.hover=null;drawOrbitEditor();
+};
+$("drawOrbitPath").onclick=()=>{
+  Object.assign(orbitEditor,{points:[],closed:false,selected:-1,hover:null,drag:null});
+  refreshOrbitEditor();
+};
+$("chooseOrbitTriangle").onclick=()=>{
+  Object.assign(orbitEditor,{points:orbitTriangle(),closed:true,selected:-1,hover:null,drag:null});
+  refreshOrbitEditor();
+};
+$("removeOrbitVertex").onclick=()=>{
+  const {closed,selected,points}=orbitEditor;
+  if(!closed){points.pop();refreshOrbitEditor();return;}
+  if(selected<0||points.length<=3)return;
+  const next=points.filter((_,i)=>i!==selected),valid=normalizeOrbitPoints(next);
+  if(!valid||valid.length!==next.length){refreshOrbitEditor("O trajeto precisa manter um contorno válido.");return;}
+  orbitEditor.points=valid;orbitEditor.selected=-1;refreshOrbitEditor();
+};
+$("finishOrbitPath").onclick=closeOrbitContour;
+$("cancelOrbitPath").onclick=()=>$("orbitPathDialog").close();
+$("saveOrbitPath").onclick=()=>{
+  if(!orbitEditor?.closed)return;
+  const points=normalizeOrbitPoints(orbitEditor.points);
+  if(!points)return;
+  orbitEditor.stage.orbitShape="custom";
+  orbitEditor.stage.orbitPoints=points;
+  sim.track=trackForOrbit(stage());
+  $("orbitPathDialog").close();renderOrbit();storeSoon();
+};
+$("orbitPathDialog").addEventListener("close",()=>{orbitEditor=null;});
+orbitCanvas.onkeydown=event=>{
+  if(!orbitEditor||orbitEditor.closed)return;
+  if(event.key==="Enter"){event.preventDefault();closeOrbitContour();}
+  if(event.key==="Backspace"){event.preventDefault();$("removeOrbitVertex").onclick();}
+};
+
+refill();render();requestAnimationFrame(frame);
+</script>
+</body>
+</html>

@@ -2,7 +2,7 @@
 
 Diep Arena é um simulador de batalhas de tanques inspirado em Diep.io. Você pode acompanhar partidas entre bots, evoluir seu próprio tanque ou criar uma sala para jogar com um amigo. O jogo roda no navegador, no PC e no celular.
 
-**[Jogar Diep Arena](https://ryanzin3331.github.io/diep-arena/)**
+**[Jogar Diep Arena](https://ryanzin3331.github.io/diep-arena/)** · **[Abrir Montador de Chefes](https://ryanzin3331.github.io/diep-arena/montador-de-chefes.html)** · [Guia do Montador](docs/MONTADOR.md)
 
 [![Partida FFA do Diep Arena com a câmera livre, minimapa e placar dos bots](docs/images/arena-ffa.jpg)](https://ryanzin3331.github.io/diep-arena/)
 
@@ -18,6 +18,8 @@ Diep Arena é um simulador de batalhas de tanques inspirado em Diep.io. Você po
 Em **Configurar**, escolha o cenário da próxima partida. Além do FFA aberto, há **2 Teams, 4 Teams, Dominação, Mothership, Tag, Survival, Comboio e Maze**. O Maze tem uma versão fixa e outra gerada por seed. Os bots escolhem rotas de evolução e podem ajustar seus atributos e táticas durante a simulação.
 
 O [Cartógrafo](docs/CARTOGRAFO.md) pode ser invocado no Laboratório e entra no sorteio do FFA aberto com **Bosses de evento** ligados. O [Sucateiro](docs/SUCATEIRO.md) também pode ser invocado no Laboratório e participa da rotação de eventos do FFA, do 2 Teams e do 4 Teams.
+
+No **Laboratório → Configurar → Importar chefe JSON**, abra o projeto exportado pelo Montador de Chefes, escolha as classes e o nível dos dois tanques e clique em **Invocar**. O desafio usa o visual, as fases e os comportamentos ativos no arquivo, incluindo o giro do chefe. Os projetos antigos usam 1.400 HP, 22 de dano de contato base e o tamanho da fase como raio de colisão. Para ajustar esses valores, use **Atributos de combate** no Montador. O arquivo importado fica disponível no seletor enquanto a página estiver aberta.
 
 Na [Dupla Aprendiz](docs/DUPLA-APRENDIZ.md), dois bots começam no nível 1, aprendem com o farm e enfrentam o Guardião dos Pentágonos no Laboratório.
 

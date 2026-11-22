@@ -4,7 +4,7 @@ const {spawn}=require('node:child_process');
 const root=path.resolve(__dirname,'..');
 const executable=process.env.CHROME_BIN||(process.platform==='win32'?'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe':'chromium');
 const tempRoot=path.resolve(os.tmpdir()),profile=fs.mkdtempSync(path.join(tempRoot,'diep-arena-test-'));
-const files=new Set(['/tests/arena-browser.html','/tests/arena-browser.js','/memory-codec.js','/memory-store.js','/memory-idb.js','/memory-bridge.js','/memory-backup.js']);
+const files=new Set(['/boss-project.js','/tests/arena-browser.html','/tests/arena-browser.js','/memory-codec.js','/memory-store.js','/memory-idb.js','/memory-bridge.js','/memory-backup.js']);
 const hook=`window.__arenaTest={get world(){return world},get mode(){return mode},get pendingTransition(){return transitionPending},
   restart,setMode,join,recordOutcome,enterRoomWorld,pause(){paused=true},get bridge(){return indexedMemoryBridge},set bridge(value){indexedMemoryBridge=value},
   failingBridge(){return createIndexedMemoryBridge({indexedDB:{open(){throw Error('unavailable')}},codec:createMemoryCodec({classes:C,newMemory,ttl:MEMORY_TTL}),createStore:createTransactionalMemoryStore})},
@@ -24,7 +24,7 @@ const server=http.createServer((req,res)=>{
       html=html.replace('createIndexedMemoryBridge({indexedDB,codec:',`createIndexedMemoryBridge({indexedDB,name:'diep-benchmark-${Date.now()}-${Math.random()}',codec:`);
       html=html.replace('src="memory-idb.js"','src="memory-idb.js?bench=1"').replace('src="memory-bridge.js"','src="memory-bridge.js?bench=1"');
       html=html.replace('  world=new Arena(config.seed,','  const __buildStart=performance.now();world=new Arena(config.seed,');
-      html=html.replace('config.map,config.boss,config.ship,config.events,config.player,null,memoryStore);','config.map,config.boss,config.ship,config.events,config.player,null,memoryStore);window.__metrics.build.push(performance.now()-__buildStart);');
+      html=html.replace('config.map,config.boss,config.ship,config.events,config.player,null,isApprentice?null:memoryStore);','config.map,config.boss,config.ship,config.events,config.player,null,isApprentice?null:memoryStore);window.__metrics.build.push(performance.now()-__buildStart);');
       html=html.replace('<script id="core">','<script>window.__metrics={scan:[],migrationWrite:[],migration:[],read:[],serialize:[],write:[],build:[]};</script><script id="core">');
     }
     html=html.replace('<script id="core">','<script>window.__idbCalls=0;window.__legacyReads=0;window.__initialBuild=null;window.__beforeBotBuild=t=>{if(t.slot===0&&window.__initialBuild===null)window.__initialBuild=t.learning?.samples};{const original=window.indexedDB;Object.defineProperty(window,"indexedDB",{configurable:true,get(){window.__idbCalls++;return original;}});const get=Storage.prototype.getItem;Storage.prototype.getItem=function(k){if(String(k).startsWith("diep-arena:bot-memory:v1:"))window.__legacyReads++;return get.call(this,k);};}</script><script id="core">');

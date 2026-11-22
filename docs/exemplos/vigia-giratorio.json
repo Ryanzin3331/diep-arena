@@ -1,0 +1,340 @@
+{
+  "version": 9,
+  "template": "blank",
+  "name": "Vigia Giratório",
+  "combat": {
+    "hp": 2400,
+    "bodyDamage": 23,
+    "hitRadius": 0
+  },
+  "stages": [
+    {
+      "title": "Vigia",
+      "hp": 100,
+      "body": "hex",
+      "radius": 59,
+      "angle": 30,
+      "fill": "#547f96",
+      "line": "#273e52",
+      "stroke": 5,
+      "bodySpin": 60,
+      "orbitEnabled": false,
+      "showRing": false,
+      "capacity": 0,
+      "parts": [
+        {
+          "id": "canhao-1",
+          "name": "Canhão 1",
+          "kind": "barrel",
+          "x": 0.0,
+          "y": -60.0,
+          "w": 67,
+          "h": 30,
+          "angle": -90,
+          "origin": {
+            "x": 33.5,
+            "y": 0
+          },
+          "fill": "#a6b4ba",
+          "line": "#344958",
+          "stroke": 4,
+          "opacity": 100
+        },
+        {
+          "id": "canhao-2",
+          "name": "Canhão 2",
+          "kind": "barrel",
+          "x": 51.96,
+          "y": 30.0,
+          "w": 67,
+          "h": 30,
+          "angle": 30,
+          "origin": {
+            "x": 33.5,
+            "y": 0
+          },
+          "fill": "#a6b4ba",
+          "line": "#344958",
+          "stroke": 4,
+          "opacity": 100
+        },
+        {
+          "id": "canhao-3",
+          "name": "Canhão 3",
+          "kind": "barrel",
+          "x": -51.96,
+          "y": 30.0,
+          "w": 67,
+          "h": 30,
+          "angle": 150,
+          "origin": {
+            "x": 33.5,
+            "y": 0
+          },
+          "fill": "#a6b4ba",
+          "line": "#344958",
+          "stroke": 4,
+          "opacity": 100
+        },
+        {
+          "id": "nucleo",
+          "name": "Núcleo",
+          "kind": "core",
+          "w": 52,
+          "h": 52,
+          "x": 0,
+          "y": 0,
+          "fill": "#e3bf69",
+          "line": "#6e572e",
+          "stroke": 4
+        }
+      ],
+      "behaviors": [
+        {
+          "type": "fire",
+          "name": "Rajada da vigia",
+          "enabled": true,
+          "trigger": "interval",
+          "interval": 1.15,
+          "range": 330,
+          "barrels": [
+            "canhao-1",
+            "canhao-2",
+            "canhao-3"
+          ],
+          "mode": "together",
+          "aim": "fixed",
+          "turnSpeed": 110,
+          "damage": 13,
+          "speed": 480
+        }
+      ]
+    },
+    {
+      "title": "Escudo triangular",
+      "hp": 55,
+      "body": "hex",
+      "radius": 66,
+      "angle": 30,
+      "fill": "#92616a",
+      "line": "#273e52",
+      "stroke": 5,
+      "bodySpin": -120,
+      "orbitEnabled": true,
+      "showRing": true,
+      "capacity": 8,
+      "parts": [
+        {
+          "id": "canhao-1",
+          "name": "Canhão 1",
+          "kind": "barrel",
+          "x": 0.0,
+          "y": -60.0,
+          "w": 67,
+          "h": 30,
+          "angle": -90,
+          "origin": {
+            "x": 33.5,
+            "y": 0
+          },
+          "fill": "#a6b4ba",
+          "line": "#344958",
+          "stroke": 4,
+          "opacity": 100
+        },
+        {
+          "id": "canhao-2",
+          "name": "Canhão 2",
+          "kind": "barrel",
+          "x": 51.96,
+          "y": 30.0,
+          "w": 67,
+          "h": 30,
+          "angle": 30,
+          "origin": {
+            "x": 33.5,
+            "y": 0
+          },
+          "fill": "#a6b4ba",
+          "line": "#344958",
+          "stroke": 4,
+          "opacity": 100
+        },
+        {
+          "id": "canhao-3",
+          "name": "Canhão 3",
+          "kind": "barrel",
+          "x": -51.96,
+          "y": 30.0,
+          "w": 67,
+          "h": 30,
+          "angle": 150,
+          "origin": {
+            "x": 33.5,
+            "y": 0
+          },
+          "fill": "#a6b4ba",
+          "line": "#344958",
+          "stroke": 4,
+          "opacity": 100
+        },
+        {
+          "id": "nucleo",
+          "name": "Núcleo",
+          "kind": "core",
+          "w": 52,
+          "h": 52,
+          "x": 0,
+          "y": 0,
+          "fill": "#ed816c",
+          "line": "#6e572e",
+          "stroke": 4
+        }
+      ],
+      "behaviors": [
+        {
+          "type": "fire",
+          "name": "Rajada da vigia",
+          "enabled": true,
+          "trigger": "interval",
+          "interval": 1.05,
+          "range": 330,
+          "barrels": [
+            "canhao-1",
+            "canhao-2"
+          ],
+          "mode": "together",
+          "aim": "fixed",
+          "turnSpeed": 110,
+          "damage": 17,
+          "speed": 480
+        },
+        {
+          "type": "fire",
+          "name": "Torreta de mira",
+          "enabled": true,
+          "trigger": "interval",
+          "interval": 1.2,
+          "barrels": [
+            "canhao-3"
+          ],
+          "mode": "together",
+          "aim": "track",
+          "turnSpeed": 105,
+          "damage": 12,
+          "speed": 410
+        },
+        {
+          "type": "drones",
+          "name": "Drones batedores",
+          "enabled": true,
+          "trigger": "interval",
+          "interval": 3,
+          "mode": "chase",
+          "count": 2,
+          "limit": 4,
+          "speed": 175,
+          "damage": 8,
+          "life": 9,
+          "orbitRadius": 105,
+          "source": "nucleo",
+          "fill": "#ecbd68",
+          "model": [
+            {
+              "name": "Carcaça",
+              "shape": "path",
+              "x": 0,
+              "y": 0,
+              "scale": 100,
+              "scaleY": 100,
+              "angle": 0,
+              "fill": "#ecbd68",
+              "line": "#5c492f",
+              "stroke": 2.6,
+              "points": [
+                {
+                  "x": -11,
+                  "y": -10
+                },
+                {
+                  "x": 14,
+                  "y": 0
+                },
+                {
+                  "x": -11,
+                  "y": 10
+                },
+                {
+                  "x": -5,
+                  "y": 0
+                }
+              ]
+            },
+            {
+              "name": "Núcleo",
+              "shape": "circle",
+              "x": -1,
+              "y": 0,
+              "w": 8,
+              "h": 8,
+              "fill": "#fff2bf",
+              "line": "#855b38",
+              "stroke": 1
+            }
+          ]
+        },
+        {
+          "type": "launch",
+          "name": "Arremessar escudo",
+          "enabled": true,
+          "trigger": "interval",
+          "interval": 2.7,
+          "aim": "target"
+        }
+      ],
+      "radiusOrbit": 176,
+      "speedOrbit": 50,
+      "clockwise": true,
+      "orbitShape": "custom",
+      "aim": 0,
+      "warning": 0.65,
+      "cooldown": 1.4,
+      "orbitPoints": [
+        {
+          "x": 0,
+          "y": -1
+        },
+        {
+          "x": 0.86,
+          "y": 0.5
+        },
+        {
+          "x": -0.86,
+          "y": 0.5
+        }
+      ],
+      "orbits": {
+        "square": {
+          "qty": 2,
+          "limit": 2
+        },
+        "triangle": {
+          "qty": 3,
+          "limit": 3,
+          "damage": 20,
+          "speed": 420
+        },
+        "pentagon": {
+          "qty": 1,
+          "limit": 1,
+          "damage": 26,
+          "speed": 325
+        },
+        "alpha": {
+          "qty": 0,
+          "limit": 0
+        }
+      }
+    }
+  ]
+}
