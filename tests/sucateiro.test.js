@@ -361,3 +361,50 @@ test('o primeiro tiro adversário detona a peça cheia, mas expirar no ar não d
     assert.equal(b.scrapBlasts.length,intercept?1:0);
   }
 });
+
+test('a cura começa após três segundos em órbita, respeita o teto e preserva o dano anterior à captura',()=>{
+  const w=clearScrapLab(3),b=w.boss;
+  w.addShape('alpha',b.x+205,b.y,false);
+  const piece=w.shapes.at(-1);
+  piece.hp=2800;
+  piece.damaged=w.time;
+  stepUntil(w,()=>piece.scrap);
+  const full=piece.scrap.maxHp;
+  assert.equal(full,240);
+  piece.hp=120;
+  const start=piece.scrap.chargesAt;
+  stepUntil(w,()=>w.time-start>=2.94);
+  assert.equal(piece.hp,120);
+  stepUntil(w,()=>w.time-start>=4);
+  assert.ok(Math.abs(piece.hp-(120+(w.time-start-3)*36))<1e-7);
+  stepUntil(w,()=>piece.hp===240);
+  w.releaseScrap(piece);
+  assert.equal(piece.hp,2800);
+});
+
+test('a curva da fase 3 reage ao alvo somente no começo e respeita o limite angular',()=>{
+  function run(stage,targetMoves){
+    const w=clearScrapLab(stage),b=w.boss,[player]=w.tanks;
+    const piece=waitForStock(w,'square',.55),settings=SUCATEIRO_VISUAL.stages[stage-1].orbits.square;
+    const {x,y}=piece;
+    idle(player,x+520,y);
+    const plan=w.planScrap(b,piece,settings,player);
+    assert.ok(w.throwScrap(b,piece,settings,plan));
+    const shot=w.shots.at(-1);
+    if(targetMoves)idle(player,x+520,y+250);
+    for(let i=0;i<24;i++)w.step(null);
+    const early=Math.atan2(shot.vy,shot.vx);
+    assert.equal(shot.scrapGuide,null);
+    idle(player,x+520,y-250);
+    for(let i=0;i<22;i++)w.step(null);
+    const late=Math.atan2(shot.vy,shot.vx);
+    const turn=angleDelta(early,plan.heading+plan.turnRate*24*DT);
+    const remainder=plan.turnRate*(.62-24*DT);
+    assert.ok(Math.abs(angleDelta(late,early)-remainder)<1e-8);
+    return turn;
+  }
+  assert.ok(Math.abs(run(2,true))<1e-8);
+  assert.ok(Math.abs(run(3,false))<1e-8);
+  const correction=run(3,true);
+  assert.ok(correction>.15&&correction<=Math.PI/15+1e-8);
+});

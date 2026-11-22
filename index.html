@@ -2386,6 +2386,8 @@ const SCRAP_TYPES={
   alpha:{kind:"scrapAlpha",weight:5,radius:46,sides:5,dur:10,orbitHp:240}
 };
 const SCRAP_CURVE_TIME=.62,SCRAP_CHARGE_TIME=4,SCRAP_BLAST_RADIUS=112,SCRAP_BLAST_TIME=.34;
+const SCRAP_HEAL_DELAY=3,SCRAP_HEAL_RATE=.15;
+const SCRAP_GUIDE_TIME=.36,SCRAP_GUIDE_LIMIT=Math.PI/15,SCRAP_GUIDE_RATE=Math.PI/5;
 const SCRAP_ENERGY="#53dce9",SCRAP_ENERGY_BRIGHT="#8bfaff";
 function scrapArcTravel(vx,vy,rate,remaining,seconds){
   const arc=Math.min(remaining,seconds),straight=seconds-arc;
@@ -4548,7 +4550,7 @@ class Arena {
   releaseScrap(piece){
     const scrap=piece.scrap;
     if(piece.alive){
-      piece.hp=Math.max(1,scrap.originalHp-(scrap.startHp-piece.hp));
+      piece.hp=Math.max(1,Math.min(piece.f.hp,scrap.originalHp-(scrap.startHp-piece.hp)));
       piece.r=scrap.originalRadius;
       piece.vx=piece.vy=piece.kx=piece.ky=0;
     }
@@ -4638,17 +4640,19 @@ class Arena {
       const [forward,lateral]=scrapArcTravel(speed,0,turnRate,SCRAP_CURVE_TIME,Math.hypot(dx,dy)/speed);
       heading-=Math.atan2(lateral,forward);
     }
-    return {x,y,heading,speed,turnRate,charge,targetId:foe.id};
+    return {x,y,heading,speed,turnRate,charge,targetId:foe.id,targetX:foe.x,targetY:foe.y};
   }
   throwScrap(b,piece,settings,plan){
     if(this.shots.length>=3000)return false;
     const {x,y,heading,speed,turnRate,charge,targetId}=plan;
     const meta=SCRAP_TYPES[piece.name];
     if(turnRate)b.scrapTurn*=-1;
+    const target=b.stage===3&&turnRate?this.tanks.find(tank=>tank.id===targetId):null;
+    const guide=target?{target,x:plan.targetX,y:plan.targetY,offset:0}:null;
     this.shots.push({type:"shot",kind:meta.kind,owner:b,sourceClass:b.cls,id:++this.serial,
       alive:true,x,y,px:x,py:y,r:piece.r,angle:heading,
       vx:Math.cos(heading)*speed,vy:Math.sin(heading)*speed,
-      scrapColor:settings.fill,scrapTarget:targetId,scrapTurnRate:turnRate,scrapCharge:charge,bornTick:this.tick,
+      scrapColor:settings.fill,scrapTarget:targetId,scrapTurnRate:turnRate,scrapCharge:charge,scrapGuide:guide,bornTick:this.tick,
       age:0,life:Math.min(4,920/speed),damage:settings.damage*(1+charge*.60),dur:meta.dur});
     piece.alive=false;
     b.scrapStock=b.scrapStock.filter(other=>other!==piece);
@@ -4716,6 +4720,7 @@ class Arena {
         const {piece}=warning;
         if(piece.alive){
           const pull={x:piece.x,y:piece.y,at:now,vx:0,vy:0,angle:piece.angle,pullTime:.35};
+          piece.scrap.chargesAt+=now-warning.started+pull.pullTime;
           Object.assign(piece.scrap,pull);
         }
       }
@@ -4770,7 +4775,10 @@ class Arena {
       const blend=progress*progress*(3-2*progress);
       piece.px=piece.x;piece.py=piece.y;
       if(piece!==b.scrapWarning?.piece){
-        orbit.charge=clamp((now-orbit.chargesAt)/SCRAP_CHARGE_TIME,0,1);
+        const orbitTime=now-orbit.chargesAt;
+        orbit.charge=clamp(orbitTime/SCRAP_CHARGE_TIME,0,1);
+        const healingTime=clamp(orbitTime-SCRAP_HEAL_DELAY,0,DT);
+        if(healingTime>0&&piece.hp<orbit.maxHp)piece.hp=Math.min(orbit.maxHp,piece.hp+orbit.maxHp*SCRAP_HEAL_RATE*healingTime);
         const fromX=orbit.x+orbit.vx*elapsed,fromY=orbit.y+orbit.vy*elapsed;
         piece.x=fromX+(b.x+Math.cos(angle)*b.scrapRadius-fromX)*blend;
         piece.y=fromY+(b.y+Math.sin(angle)*b.scrapRadius-fromY)*blend;
@@ -4799,7 +4807,7 @@ class Arena {
         if(piece){
           const settings=stage.orbits[piece.name];
           b.scrapWarning={piece,plan:this.planScrap(b,piece,settings,target),
-            until:now+stage.warning+settings.extra,settings};
+            started:now,until:now+stage.warning+settings.extra,settings};
         }
       }else{
         const attacking=this.tanks.filter(tank=>this.scrapperTarget(b,tank)&&
@@ -5709,6 +5717,25 @@ class Arena {
     p.vx+=pushX*correction;
     p.vy+=pushY*correction;
   }
+  steerScrap(p,age){
+    const guide=p.scrapGuide;
+    if(!guide)return 0;
+    const dt=Math.min(DT,SCRAP_GUIDE_TIME-age);
+    const {target,x,y,offset}=guide;
+    if(dt<=0||!this.bossCanTarget(p.owner,target)||
+      this.maze?.hit(p.x,p.y,target.x,target.y)!=null||
+      this.baseImpact(p.owner,p.x,p.y,target.x,target.y,0)!=null){
+      p.scrapGuide=null;
+      return 0;
+    }
+    // Correct for the target's displacement from the original aim, within the turn budget.
+    const initial=Math.atan2(y-p.y,x-p.x);
+    const current=Math.atan2(target.y-p.y,target.x-p.x);
+    const desired=clamp(angleDelta(current,initial),-SCRAP_GUIDE_LIMIT,SCRAP_GUIDE_LIMIT);
+    const turn=clamp(desired-offset,-SCRAP_GUIDE_RATE*dt,SCRAP_GUIDE_RATE*dt);
+    guide.offset+=turn;
+    return turn/DT;
+  }
   advanceShot(p){
     // Keep the first visible state at the origin before advancing the sweep.
     if((p.cartographerShot||p.scrapColor||p.scrapBarrel!=null)&&p.bornTick===this.tick)return;
@@ -5740,8 +5767,9 @@ class Arena {
     const remaining=p.scrapTurnRate?SCRAP_CURVE_TIME-(p.age-DT):0;
     let dx=p.vx*DT,dy=p.vy*DT;
     if(remaining>0){
-      [dx,dy]=scrapArcTravel(p.vx,p.vy,p.scrapTurnRate,remaining,DT);
-      const angle=p.scrapTurnRate*Math.min(remaining,DT),cos=Math.cos(angle),sin=Math.sin(angle);
+      const rate=p.scrapTurnRate+this.steerScrap(p,p.age-DT);
+      [dx,dy]=rate?scrapArcTravel(p.vx,p.vy,rate,remaining,DT):[dx,dy];
+      const angle=rate*Math.min(remaining,DT),cos=Math.cos(angle),sin=Math.sin(angle);
       [p.vx,p.vy]=[p.vx*cos-p.vy*sin,p.vx*sin+p.vy*cos];
     }
     const x=p.x+dx,y=p.y+dy;
@@ -7593,7 +7621,7 @@ function botThink(w,t){
       const dx=p.x-t.x,dy=p.y-t.y;
       const px=p.vx+(p.kx||0)-vx*max,py=p.vy+(p.ky||0)-vy*max;
       const riskWindow=dodgeWindows?.get(p)??.61;
-      const r=t.r+p.r+10+t.trait*1.4+(p.scrapCharge===1?20:0);
+      const r=t.r+p.r+10+t.trait*1.4+(p.scrapCharge===1?20:0)+(p.scrapGuide?.target===t?10:0);
       const arc=scrapArcs?.get(p);
       let horizon,gap;
       if(arc)[gap,horizon]=scrapDodgeGap(arc,dx,dy,vx*max,vy*max,r);

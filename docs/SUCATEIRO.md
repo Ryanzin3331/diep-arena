@@ -10,7 +10,9 @@ Na fase 3, os polígonos saem 12% mais rápidos.
 
 ## Carga dos polígonos
 
-A barra ciano enche em 4 s depois de a peça chegar à órbita. O dano cresce com a carga até 60% acima do valor base. A partir de 50%, o polígono ganha raios ciano e faz uma curva nos primeiros 0,62 s de voo, em qualquer fase. O alfa faz uma curva mais aberta. Na fase 1, o tracejado antecipa a trajetória real da peça escolhida.
+A barra ciano enche em 4 s depois de a peça chegar à órbita. O dano cresce com a carga até 60% acima do valor base. A partir de 50%, o polígono ganha raios ciano e faz uma curva nos primeiros 0,62 s de voo, em qualquer fase. O alfa faz uma curva mais aberta. Na fase 1, o tracejado antecipa a trajetória real da peça escolhida. Depois de 3 s em órbita, a peça recupera 15% do seu HP máximo por segundo, até o limite em órbita.
+
+Na fase 3, um arremesso que já tem curva pode corrigir a direção ao acompanhar o movimento do alvo inicial. A correção termina após 0,36 s e é limitada a 12° além do arco normal. Depois disso, ele conclui o arco e segue reto.
 
 Com carga completa, a peça explode ao atingir um tanque, uma forma neutra, um tiro adversário ou uma parede. A explosão ciano tem raio de 112 unidades. O dano cai conforme a distância e respeita paredes, bases e proteção de renascimento.
 
