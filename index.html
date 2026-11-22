@@ -6151,6 +6151,56 @@ function shapePathCost(t,forms,vx,vy,hp){
   }
   return cost;
 }
+function scrapperRamRoute(w,t,boss){
+  const dx=t.x-boss.x,dy=t.y-boss.y,dist=Math.hypot(dx,dy);
+  const orbit=boss.scrapRadius,stock=boss.scrapStock.filter(piece=>piece.alive);
+  const widest=stock.reduce((radius,piece)=>Math.max(radius,piece.r),0);
+  if(!widest||dist<orbit-t.r-widest||dist>orbit+200){
+    t.scrapApproach=null;
+    return null;
+  }
+  const bearing=Math.atan2(dy,dx),speed=movement(t);
+  const crossing=clamp((dist-orbit+t.r+widest)/speed+.13,.20,.95);
+  const phase=SUCATEIRO_VISUAL.stages[boss.stage-1];
+  const angularSpeed=phase.speedOrbit*Math.PI/180*(phase.clockwise?1:-1);
+  const gaps=stock.map(piece=>{
+    const x=piece.x-boss.x,y=piece.y-boss.y;
+    const moving=piece!==boss.scrapWarning?.piece;
+    const angle=Math.atan2(y,x)+(moving?angularSpeed*crossing:0);
+    return {angle,clearance:t.r+piece.r+8};
+  });
+  const clearance=angle=>gaps.reduce((best,piece)=>
+    Math.min(best,2*orbit*Math.abs(Math.sin(angleDelta(angle,piece.angle)/2))-piece.clearance),Infinity);
+  const directlyBlocked=stock.some(piece=>impact(piece.x-t.x,piece.y-t.y,
+    (piece.vx+Math.cos(bearing)*speed)*crossing,(piece.vy+Math.sin(bearing)*speed)*crossing,t.r+piece.r+5)!=null);
+  const previous=t.scrapApproach?.bossId===boss.id?t.scrapApproach:null;
+  if(clearance(bearing)>=0&&!directlyBlocked&&
+    (!previous||w.time>=previous.until||Math.abs(angleDelta(previous.slot+boss.scrapSpin,bearing))<.23)){
+    t.scrapApproach=null;
+    return null;
+  }
+
+  // Keep the opening in the orbit's rotating frame while it stays usable.
+  let route=previous;
+  const projected=route?route.slot+boss.scrapSpin:0;
+  if(!route||w.time>=route.until||clearance(projected)<-12){
+    let score=-Infinity;
+    for(const offset of [-1.4,-1.05,-.74,-.46,-.23,.23,.46,.74,1.05,1.4]){
+      const side=Math.sign(offset),angle=bearing+offset;
+      const value=Math.min(30,clearance(angle))-Math.abs(offset)*16-
+        (side!==(previous?.side??(t.trait%2?1:-1))?10:0);
+      if(value>score){
+        score=value;
+        route={bossId:boss.id,slot:angle-boss.scrapSpin,side,until:w.time+.72};
+      }
+    }
+    t.scrapApproach=route;
+  }
+  const turn=angleDelta(route.slot+boss.scrapSpin,bearing);
+  const step=clamp(Math.abs(turn),.17,.34)*route.side;
+  const distance=Math.max(orbit+t.r+widest+12,dist-76);
+  return [boss.x+Math.cos(bearing+step)*distance,boss.y+Math.sin(bearing+step)*distance];
+}
 function crasherDanger(t,e,distance){
   const gap=distance-t.r-e.r;
   if(gap<=22)return 300-gap;
@@ -6707,6 +6757,10 @@ function botThink(w,t){
   const dodge=fallen?fallenDodge(w,t,boss):null;
   const huntBoss=boss&&!canFight&&t.level>=15&&(!fallen||w.bossCanTarget(boss,t))&&
     hp>(w.bossTrial?.30:.48)&&(weapon||hp>.78);
+  const spike=t.cls==="Spike", scrapper=spike&&boss?.spec===SUCATEIRO?boss:null;
+  if(!huntBoss||!scrapper)t.scrapApproach=null;
+  if(!spike||hp>.78||!w.boss?.alive||t.scrapRecovery?.bossId!==w.boss.id)t.scrapRecovery=null;
+  const recoverScrap=!canFight&&hp<=.78&&(scrapper||t.scrapRecovery);
   const avoidSwarm=incoming&&(droneGap<170&&(hp<.64||bossDrones>=5)||hp<.40&&droneGap<310);
   const intercept=crasher&&(!canFight||eDist>175||danger>235);
   const objective=t.domTarget, contested=objective?.near[1-t.team]>0;
@@ -7080,6 +7134,17 @@ function botThink(w,t){
         decision=["ship-screen",ownShip,t.name+" interceptou "+enemy.name+" para cobrir a retirada."];
     }
     else if(support)detail=escort?"Cobrindo a retirada de "+escort.name:"Defendendo a aproximação da base";
+  }else if(recoverScrap){
+    const recovery=t.scrapRecovery;
+    const tooClose=scrapper&&sq(t.x-scrapper.x)+sq(t.y-scrapper.y)<465**2;
+    if(scrapper&&(!recovery||tooClose)){
+      const away=Math.atan2(t.y-scrapper.y,t.x-scrapper.x);
+      t.scrapRecovery={bossId:scrapper.id,x:clamp(scrapper.x+Math.cos(away)*625,85,w.size-85),
+        y:clamp(scrapper.y+Math.sin(away)*625,85,w.size-85)};
+    }
+    ({x:targetX,y:targetY}=t.scrapRecovery);
+    moving=clamp((Math.hypot(t.x-targetX,t.y-targetY)-18)/90,0,1);
+    mode=4;detail="Afastando-se do escudo do Sucateiro para recuperar vida";
   }else if(huntBoss){
     targetEntity=boss;t.bossTarget=boss;
     const dx=boss.x-t.x,dy=boss.y-t.y,d=Math.hypot(dx,dy);
@@ -7103,6 +7168,13 @@ function botThink(w,t){
     }
     mode=2;detail=defender?(ram?"Aproveitando uma abertura no Defender":c.ram?"Esperando uma abertura nas armadilhas":
       c.style==="sniper"?"Disparando de longe contra o Defender":"Contornando as armadilhas do Defender"):"Atacando "+boss.name;
+    if(ram&&scrapper){
+      const opening=scrapperRamRoute(w,t,scrapper);
+      if(opening){
+        [targetX,targetY]=opening;
+        detail="Contornando a órbita em busca de uma abertura";
+      }
+    }
     if(maze instanceof CartographerBarrier&&weapon?.kind==="bullet"){
       const target=maze.pillarAim(t,boss,Math.min(vision,bulletSpeed(t,weapon)*weapon.life),t.r*weapon.length+35,w.time);
       if(target){cartographerPillar=target.pillar;aimX=cartographerPillar.center;aimY=cartographerPillar.y;fire=target.clear;}

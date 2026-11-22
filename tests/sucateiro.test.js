@@ -7,8 +7,8 @@ const vm=require('node:vm');
 
 const html=readFileSync('index.html','utf8');
 const core=html.split('<script id="core">')[1].split('</script>')[0];
-const {Arena,DT,C,SUCATEIRO,SUCATEIRO_VISUAL,SCRAP_TYPES,snapshotArena,shotColor}=vm.runInNewContext(
-  core+';({Arena,DT,C,SUCATEIRO,SUCATEIRO_VISUAL,SCRAP_TYPES,snapshotArena,shotColor})',{TextEncoder});
+const {Arena,DT,C,SUCATEIRO,SUCATEIRO_VISUAL,SCRAP_TYPES,snapshotArena,shotColor,scrapperRamRoute,angleDelta}=vm.runInNewContext(
+  core+';({Arena,DT,C,SUCATEIRO,SUCATEIRO_VISUAL,SCRAP_TYPES,snapshotArena,shotColor,scrapperRamRoute,angleDelta})',{TextEncoder});
 
 const lab=()=>new Arena(7103,2,['Destroyer','Tank',45,'sucateiro']);
 function idle(t,x,y){
@@ -136,4 +136,56 @@ test('no alfa, o dano e o aviso do arremesso usam a configuração da fase final
   assert.equal(shot.kind,'scrapAlpha');
   assert.equal(shot.damage,28);
   assert.ok(Math.abs(Math.hypot(shot.vx,shot.vy)-205)<1e-9);
+});
+
+test('Spike mantém uma abertura na órbita e volta ao avanço direto quando a rota libera',()=>{
+  const w=new Arena(7103,2,['Spike','Auto Trapper',45,'sucateiro']);
+  const b=w.boss,[spike]=w.tanks;
+  const orbit=b.scrapRadius;
+  idle(spike,b.x+orbit+spike.r+50,b.y);
+  w.addShape('triangle',b.x+orbit,b.y,false);
+  const blocker=w.shapes.at(-1);
+  b.scrapStock=[blocker];
+  b.scrapWarning={piece:blocker};
+
+  const detour=scrapperRamRoute(w,spike,b);
+  assert.ok(detour);
+  const opening=spike.scrapApproach;
+  w.time+=5*DT;
+  assert.ok(scrapperRamRoute(w,spike,b));
+  assert.equal(spike.scrapApproach,opening);
+
+  blocker.x=b.x-orbit;
+  w.time=opening.until;
+  assert.equal(scrapperRamRoute(w,spike,b),null);
+  assert.equal(spike.scrapApproach,null);
+});
+
+test('Spike atravessa o escudo e recua com pouca vida nas duas lutas que causavam inversões',()=>{
+  for(const seed of [7107,7111]){
+    const w=new Arena(seed,2,['Spike','Auto Trapper',45,'sucateiro']);
+    const b=w.boss,[spike]=w.tanks;
+    const bossDamage=w.bossDamage;
+    let contacts=0, reversals=0, previous=null, retreated=false;
+    w.bossDamage=function(target,by){
+      if(target===b&&by===spike)contacts++;
+      return bossDamage.call(this,target,by);
+    };
+    for(let tick=0;tick<3600&&!w.duelEnded;tick++){
+      w.step(null);
+      if(!spike.alive||(w.tick+spike.id)%5!==0)continue;
+      const distance=Math.hypot(spike.x-b.x,spike.y-b.y);
+      const advancing=Math.hypot(spike.intent.x,spike.intent.y)>.58;
+      if(distance<510&&advancing){
+        const heading=Math.atan2(spike.intent.y,spike.intent.x);
+        if(previous!==null&&Math.abs(angleDelta(heading,previous))>2.65)reversals++;
+        previous=heading;
+      }else previous=null;
+      if(spike.scrapRecovery&&distance>535)retreated=true;
+    }
+    assert.ok(contacts>0,'o Spike atingiu o casco na seed '+seed);
+    assert.ok(reversals<=5,'sem inversões repetidas na seed '+seed);
+    assert.ok(retreated,'o Spike se afastou do chefe para se recuperar na seed '+seed);
+    assert.ok(spike.alive&&!b.alive,'vitória com o Spike vivo na seed '+seed);
+  }
 });
