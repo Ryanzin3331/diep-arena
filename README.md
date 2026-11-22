@@ -17,7 +17,7 @@ Diep Arena é um simulador de batalhas de tanques inspirado em Diep.io. Você po
 
 Em **Configurar**, escolha o cenário da próxima partida. Além do FFA aberto, há **2 Teams, 4 Teams, Dominação, Mothership, Tag, Survival, Comboio e Maze**. O Maze tem uma versão fixa e outra gerada por seed. Os bots escolhem rotas de evolução e podem ajustar seus atributos e táticas durante a simulação.
 
-O [Cartógrafo](docs/CARTOGRAFO.md) pode ser invocado no Laboratório e entra no sorteio do FFA aberto com **Bosses de evento** ligados.
+O [Cartógrafo](docs/CARTOGRAFO.md) pode ser invocado no Laboratório e entra no sorteio do FFA aberto com **Bosses de evento** ligados. O [Sucateiro](docs/SUCATEIRO.md) também pode ser invocado no Laboratório e participa da rotação de eventos do FFA, do 2 Teams e do 4 Teams.
 
 Na [Dupla Aprendiz](docs/DUPLA-APRENDIZ.md), dois bots começam no nível 1, aprendem com o farm e enfrentam o Guardião dos Pentágonos no Laboratório.
 

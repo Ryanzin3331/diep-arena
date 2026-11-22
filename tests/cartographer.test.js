@@ -54,7 +54,7 @@ test('Cartógrafo entra no sorteio de chefes de evento do FFA e limpa a barreira
   let seed=1;
   while(seed<100&&api.shuffleBosses(api.rngFrom(seed^0x5f90b345),undefined,true,'open')[0]!=='cartographer')seed++;
   const w=create(seed,'open',true);
-  assert.equal(w.bossQueue.length,8);
+  assert.equal(w.bossQueue.length,9);
   assert.equal(w.bossQueue[0],'cartographer');
   assert.ok(!api.shuffleBosses(api.rngFrom(7103),'cartographer',true,'open').slice(0,1).includes('cartographer'));
   w.tick=Math.round(w.nextBossAt*60)-1;
