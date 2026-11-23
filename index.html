@@ -6866,6 +6866,22 @@ function necroPlan(w,t,enemy,boss,risks,tactic,pressure){
   }
   return null;
 }
+function droneDefenseAim(w,t,weapon,risks){
+  const speed=bulletSpeed(t,weapon);
+  const radius=t.r*weapon.width*(weapon.kind==="trap"?.69:weapon.count>1?.35:.5);
+  let best=Infinity,aim=null;
+  for(const p of risks){
+    if(p.owner.type!=="tank"||!isSpawnedDrone(p.kind)&&p.kind!==NECRO_DRONE)continue;
+    const urgency=w.crasherUrgency(t,p);
+    if(urgency>.32)continue;
+    const cost=urgency+Math.hypot(p.x-t.x,p.y-t.y)/2000;
+    if(cost>=best)continue;
+    const [x,y]=lead(t,p,speed,.32);
+    if(w.autoLineBlocked(t,t,x,y,radius))continue;
+    best=cost;aim=[x,y];
+  }
+  return aim;
+}
 function botThink(w,t){
   if(localDiscoveryArena(w))pruneThreatShots(t.learning,w.time);
   const c=C[t.cls], vision=range(t);
@@ -7794,6 +7810,14 @@ function botThink(w,t){
       detail="Atacando com uma ala e interceptando "+t.mothershipGuard.name+" com a outra";
     }
   }
+  // Keep the rival for movement and memory while the cannon handles immediate contact.
+  const droneDefense=t.protect<=0&&weapon&&c.style!=="drone"&&!c.turretArc
+    ?droneDefenseAim(w,t,weapon,risks):null;
+  if(droneDefense){
+    [aimX,aimY]=droneDefense;
+    fire=true;alt=false;tankCombat=false;targetEntity=null;decision=null;
+    detail="Atirando nos drones próximos";
+  }
   if(reevaluate){
     const competing=tankCombat&&enemy.type==="tank"&&!enemy.human&&enemy!==formerRival&&!t.duelBreak?.others?.includes(enemy)&&
       enemy.protect<=0&&opening!=="watch"&&eDist<540&&
@@ -7818,12 +7842,12 @@ function botThink(w,t){
   if(decision){
     const [kind,target,message]=decision;
     if(kind!=="opening"||fire||c.ram)w.history.remember(w.time,kind,t,target,message);
-  }else if(booster&&t.boostRun?.phase==="charge"&&mode===2&&fire){
+  }else if(!droneDefense&&booster&&t.boostRun?.phase==="charge"&&mode===2&&fire){
     w.history.remember(w.time,"booster-charge",t,enemy,t.name+" saiu do flanco e investiu contra "+enemy.name+".");
   }
   const wobble=(.017+t.trait*.006)*Math.sin(w.time*4.5+t.id);
   let aim=Math.atan2(aimY-t.y,aimX-t.x)+wobble;
-  if(c.opposed&&fire){
+  if(c.opposed&&fire&&!droneDefense){
     if(enemy?.type==="tank"&&targetEntity===enemy){
       const speed=bulletSpeed(t,weapon), reach=Math.min(vision*.9,speed*1.35*weapon.life*.84);
       let bend=0,best=Infinity,second=null;
@@ -7845,7 +7869,7 @@ function botThink(w,t){
     if(Math.cos(angleDelta(aim,facing))<0)aim+=Math.PI;
   }
   let rearTrapOnly=false;
-  if(escapingPursuer&&!zoneUrgent&&!dodge&&opening!=="watch"){
+  if(!droneDefense&&escapingPursuer&&!zoneUrgent&&!dodge&&opening!=="watch"){
     const turn=gunnerTrapperCover(w,t,enemy,rearLane,bestX,bestY);
     if(turn!==null){
       aim=turn;aimX=t.x+Math.cos(aim)*250;aimY=t.y+Math.sin(aim)*250;
@@ -7853,7 +7877,7 @@ function botThink(w,t){
       detail="Plantando uma armadilha na rota de "+enemy.name;
     }
   }
-  const radialSpin=c.radial&&fire&&pressure>=2&&enemy?.type==="tank"&&eDist<345
+  const radialSpin=!droneDefense&&c.radial&&fire&&pressure>=2&&enemy?.type==="tank"&&eDist<345
     ?(t.trait%2?1:-1)*(t.cls==="Octo Tank"?.83:.62):0;
   if(radialSpin&&mode===2)detail="Girando para cobrir vários ângulos";
   if(t.learning&&localDiscoveryArena(w)){
