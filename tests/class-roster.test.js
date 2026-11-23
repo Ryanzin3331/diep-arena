@@ -7,8 +7,8 @@ const vm=require('node:vm');
 
 const html=readFileSync('index.html','utf8');
 const core=html.split('<script id="core">')[1].split('</script>')[0];
-const {Arena,C,DT,changeClass,picks,rotateFfaClassVariants,route,spendBot}=vm.runInNewContext(
-  core+';({Arena,C,DT,changeClass,picks,rotateFfaClassVariants,route,spendBot})',{TextEncoder});
+const {Arena,C,DT,XP,changeClass,picks,rotateFfaClassVariants,route,spendBot}=vm.runInNewContext(
+  core+';({Arena,C,DT,XP,changeClass,picks,rotateFfaClassVariants,route,spendBot})',{TextEncoder});
 const routes={
   'Triple Twin':['Twin Flank'],
   'Spread Shot':['Triple Shot'],
@@ -139,4 +139,32 @@ test('o sorteio por seed pode oferecer cada classe sem remover a última rota an
     }
   }
   assert.deepEqual([...found].sort(),Object.keys(routes).sort());
+});
+
+test('a progressão no FFA preserva as novas rotas sorteadas até o nível 45',()=>{
+  const found=new Set();
+  for(const seed of [1,2,3,5,6]){
+    const w=new Arena(seed,24,null,'off',false);
+    for(const t of w.tanks){
+      const goal=t.goal;
+      if(!Object.hasOwn(routes,goal))continue;
+      found.add(goal);
+      for(let level=2;level<=45;level++)w.award(t,XP[level-1]-t.score);
+      assert.equal(t.goal,goal,`seed ${seed}`);
+      assert.equal(t.cls,goal,`seed ${seed}`);
+    }
+  }
+  assert.ok(found.has('Triple Twin'));
+  assert.ok(found.has('Spread Shot'));
+});
+
+test('o Tri-Trapper lança armadilhas defensivas contra inimigos fora do alcance de contato',()=>{
+  const w=new Arena(7101,2,['Tri-Trapper','Triplet',45],'both',true);
+  const [trapper]=w.tanks;
+  for(let tick=0;tick<60*4;tick++){
+    w.step(null);
+    const traps=w.shots.filter(p=>p.owner===trapper&&p.kind==='trap');
+    if(traps.length>0)return;
+  }
+  assert.fail('O Tri-Trapper ficou quatro segundos exposto sem lançar armadilhas.');
 });

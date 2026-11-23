@@ -940,6 +940,7 @@ const FFA_CLASS_VARIANTS=[
   ["Auto Gunner",["Gunner","Auto 5"]],
   ["Auto Tank",TARGETS]
 ];
+const FFA_VARIANT_GOALS=new Set(FFA_CLASS_VARIANTS.map(([goal])=>goal));
 const FORMS = {
   square:{sides:4,hp:10,xp:10,r:15,body:8,color:"#ebc452"},
   triangle:{sides:3,hp:30,xp:25,r:19,body:8,color:"#ec856a"},
@@ -3944,6 +3945,7 @@ class Arena {
     score(t,n);
     if(t.apprentice)apprenticeBuild(this,t);
     else if(!t.human&&(level!==t.level||freePoints(t)>0||picks(t).length)){
+      const variantGoal=FFA_VARIANT_GOALS.has(t.goal);
       if(this.necroBotLimit&&t.level===45&&t.cls==="Overseer"&&t.goal==="Overlord"&&
         this.tanks.filter(other=>other.alive&&other.cls==="Necromancer"&&!other.human).length<this.necroBotLimit){
         let squares=0;
@@ -3964,7 +3966,7 @@ class Arena {
         t.goal="Octo Tank";
         this.octoAvailable=false;
       }
-      if(this.autoAvailable&&t.level>=30&&t.goal!=="Octo Tank"&&
+      if(!variantGoal&&this.autoAvailable&&t.level>=30&&t.goal!=="Octo Tank"&&
         (t.cls==="Flank Guard"||t.cls==="Twin")){
         t.goal="Auto 5";
         t.autoBranch=t.cls;
@@ -3974,13 +3976,13 @@ class Arena {
         t.goal="Auto Trapper";
         this.autoTrapperAvailable=false;
       }
-      if(this.twinFlankAvailable&&t.level>=30&&C[t.cls].next.includes("Twin Flank")&&
+      if(!variantGoal&&this.twinFlankAvailable&&t.level>=30&&C[t.cls].next.includes("Twin Flank")&&
         t.goal!=="Octo Tank"&&t.goal!=="Auto 5"){
         t.goal="Twin Flank";
         t.autoBranch=t.cls;
         this.twinFlankAvailable=false;
       }
-      if(this.battleshipAvailable&&t.level===45&&(t.cls==="Twin Flank"||
+      if(!variantGoal&&this.battleshipAvailable&&t.level===45&&(t.cls==="Twin Flank"||
         t.cls==="Overseer"&&t.goal==="Overlord"&&this.tanks.some(other=>
           other!==t&&other.alive&&!other.human&&other.goal==="Overlord"))){
         t.goal="Battleship";
@@ -7743,9 +7745,15 @@ function botThink(w,t){
   if(retreat&&c.style==="heavy"&&c.guns[0].recoil>90&&eDist>100){
     aimX=t.x-bestX*200;aimY=t.y-bestY*200;fire=true;
   }
+  const triTrapper=t.cls==="Tri-Trapper";
+  if(triTrapper&&!fire&&(tankCombat||retreat)&&enemy?.protect<=0&&opening!=="watch"&&
+    (eDist<430||risks.some(p=>p.owner===enemy))){
+    fire=true;
+    if(mode===2)detail="Armando uma barreira contra "+enemy.name;
+  }
   if(maze&&weapon&&c.style!=="drone"){
     let shotX=aimX,shotY=aimY;
-    if(c.centerTurret&&c.style==="trap"&&fire){
+    if((c.centerTurret&&c.style==="trap"||triTrapper)&&fire){
       // Traps only need clearance at the mouth and where they will settle.
       const dx=aimX-t.x,dy=aimY-t.y;
       const reach=t.r*weapon.length+bulletSpeed(t,weapon)*DT*.91/(1-.91);
