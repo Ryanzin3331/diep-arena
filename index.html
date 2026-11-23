@@ -8808,6 +8808,47 @@ function paintEventBoss(b,time){
     ctx.restore();
   }
 }
+// Draw the silhouettes independently of the gun dimensions used by the simulation.
+const tankBarrelArt={
+  "Pellet Shot":[[
+    {length:1.99,width:.80,tipWidth:1.12},
+    {length:1.69,width:.93,tipWidth:1.48},
+    {length:1.39,width:1.06,tipWidth:1.84}
+  ]],
+  Streamliner:[1.34,1.54,1.73,1.92,2.11].map(length=>[{length,width:.85}]),
+  "Auto Gunner":[
+    [{length:1.31,width:.52,offset:-.62}],
+    [{length:1.72,width:.56,offset:-.30}],
+    [{length:1.72,width:.56,offset:.30}],
+    [{length:1.31,width:.52,offset:.62}]
+  ],
+  "Spread Shot":Array.from({length:11},(_,i)=>[{width:i===0?.82:.59-Math.floor((i-1)/2)*.035}]),
+  Sprayer:[[{length:2.11,width:.81}],[{length:1.82,width:.93}]],
+  "Triple Twin":Array(6).fill([{length:1.91,width:.90}]),
+  "Tri-Trapper":Array(3).fill([{length:1.62,width:.81,tipWidth:1.48,shoulder:1.22}]),
+  "Auto Tank":[[{length:1.86,width:.83}]]
+};
+const tankBarrelOrder={Streamliner:[4,3,2,1,0],"Auto Gunner":[0,3,1,2]};
+const TANK_BARREL_FILL="#999999", TANK_BARREL_OUTLINE="#5d5d5d";
+
+function paintTankBarrelArt(ctx,g,r,recoil,layers){
+  ctx.lineJoin="round";
+  for(const layer of layers){
+    const {length=g.length,width=g.width,offset=g.offset,tipWidth=g.flare?1.48:width,shoulder}=layer;
+    const base=r*.24, start=shoulder===undefined?base:r*shoulder-recoil;
+    const tip=r*length-recoil, center=r*offset, half=r*width/2, tipHalf=r*tipWidth/2;
+    if(shoulder!==undefined){
+      ctx.beginPath();
+      ctx.rect(base,center-half,start-base,half*2);
+      paint(TANK_BARREL_FILL,TANK_BARREL_OUTLINE,r*.105,ctx);
+    }
+    ctx.beginPath();
+    ctx.moveTo(start,center-half);ctx.lineTo(tip,center-tipHalf);
+    ctx.lineTo(tip,center+tipHalf);ctx.lineTo(start,center+half);ctx.closePath();
+    paint(TANK_BARREL_FILL,TANK_BARREL_OUTLINE,r*.105,ctx);
+  }
+}
+
 function paintTankBody(ctx,t,x,y,selected,time,spinTime,color){
   const custom=customTankColor(t),r=t.r,col=color??custom??unitColor(t,time);
   ctx.save();ctx.translate(x,y);
@@ -8825,7 +8866,7 @@ function paintTankBody(ctx,t,x,y,selected,time,spinTime,color){
       paint("#999999","#737373",3.2,ctx);
     }
   }
-  const spec=C[t.cls];
+  const spec=C[t.cls], art=tankBarrelArt[t.cls], order=tankBarrelOrder[t.cls];
   if(spec.turretArc){
     const radius=r*AUTO_MOUNT_RADIUS;
     for(const [i,g] of spec.guns.entries()){
@@ -8840,9 +8881,14 @@ function paintTankBody(ctx,t,x,y,selected,time,spinTime,color){
       ctx.restore();
     }
   }else for(let bar=0;bar<spec.guns.length;bar++){
-    const i=spec.centerBarrelOnTop?(bar+1)%spec.guns.length:bar;
+    const i=order?.[bar]??(spec.centerBarrelOnTop?(bar+1)%spec.guns.length:bar);
     const g=spec.guns[i], recoil=t.cls!=="Mothership"&&t.cool[i]/neck(t,g)>.82?2.5:0;
     ctx.save();ctx.rotate(g.angle);
+    if(art){
+      paintTankBarrelArt(ctx,g,r,recoil,art[i]);
+      ctx.restore();
+      continue;
+    }
     const base=r*.24+recoil,width=r*g.width,yo=r*g.offset-width/2;
     ctx.beginPath();
     if(t.cls==="Mothership"){
@@ -8869,12 +8915,7 @@ function paintTankBody(ctx,t,x,y,selected,time,spinTime,color){
       ctx.beginPath();
       ctx.rect(base,-width*.50,tip-base-r*.26,width);
       paint("#999999","#737373",r*.095,ctx);
-    }else if(g.flare){
-      const tip=r*g.length-recoil;
-      ctx.moveTo(base,yo+width*.20);ctx.lineTo(tip,yo);
-      ctx.lineTo(tip,yo+width);ctx.lineTo(base,yo+width*.80);ctx.closePath();
-      paint("#999999","#737373",3.2,ctx);
-    }else if(g===gunnerTrapperLauncher||(spec.centerTurret||t.cls==="Tri-Trapper")&&g.kind==="trap"){
+    }else if(g===gunnerTrapperLauncher||spec.centerTurret&&g.kind==="trap"){
       const neckEnd=r*1.19, lip=r*g.length;
       ctx.lineJoin="round";
       ctx.rect(base,-r*.41,neckEnd-base,r*.82);
@@ -8917,15 +8958,16 @@ function paintTankBody(ctx,t,x,y,selected,time,spinTime,color){
   }else if(t.cls==="Mothership")poly(0,0,r,16,Math.PI/16,ctx);
   else circle(0,0,spec.ram?r*.67:r,ctx);
   const outline=custom?FOUR_TEAMS[t.team]?.color??"#252525":t.cls==="Necromancer"&&t.team==null?"#1683a1":"#38574e";
-  paint(time-t.hit<.065?"#f6eaca":col,outline,3.3,ctx);
+  paint(time-t.hit<.065?"#f6eaca":col,outline,art?r*.105:3.3,ctx);
   if(spec.centerTurret){
     const g=spec.centerTurret, radius=r*CENTER_TURRET_RADIUS;
-    const aim=t.turretAngles?.[0]??t.autoTurrets?.[0]?.aim??t.aim+Math.PI;
+    const aim=t.turretAngles?.[0]??t.autoTurrets?.[0]?.aim??t.aim+(t.cls==="Auto Gunner"?0:Math.PI);
+    const barrelOutline=art?TANK_BARREL_OUTLINE:"#737373";
     ctx.rotate(aim-t.aim);
     ctx.lineJoin="round";
     ctx.beginPath();ctx.rect(0,-radius*g.width/2,radius*g.length,radius*g.width);
-    paint("#999999","#737373",r*.105,ctx);
-    circle(0,0,radius,ctx);paint("#999999","#737373",r*.105,ctx);
+    paint(TANK_BARREL_FILL,barrelOutline,r*.105,ctx);
+    circle(0,0,radius,ctx);paint(TANK_BARREL_FILL,barrelOutline,r*.105,ctx);
   }
   ctx.restore();
 }
@@ -10463,7 +10505,8 @@ function evolutionTile(name,index,className){
   tile.style.setProperty("--tile-color",evolutionColors[index%evolutionColors.length]);
   const preview=node("canvas");preview.width=128;preview.height=78;preview.setAttribute("aria-hidden","true");
   const art=preview.getContext("2d");
-  if(art)paintTankBody(art,{cls:name,r:20,aim:-.45,hit:-Infinity,protect:0,
+  const previewRadius=name==="Triple Twin"?18:20;
+  if(art)paintTankBody(art,{cls:name,r:previewRadius,aim:-.45,hit:-Infinity,protect:0,
     stats:Array(8).fill(0),cool:C[name].guns.map(()=>0)},64,39,false,0,0,"#00b4df");
   tile.append(preview,node("span",name));
   return tile;
