@@ -802,9 +802,22 @@ const autoGuns=(count,options)=>Array.from({length:count},(_,i)=>gun(0,{
 const AUTO_MOUNT_OFFSET=.94, AUTO_MOUNT_RADIUS=.47, CENTER_TURRET_RADIUS=.50;
 const autoTrapperTurret=gun(0,{length:2.30,width:1.07,speed:1.20,damage:.39,pen:1.17,
   reload:1.10,life:.82,recoil:0,spread:.023});
-const twinFlankGuns=[0,Math.PI].flatMap(angle=>[-.51,.51].map((offset,i)=>gun(angle,{
+const twinPairs=angles=>angles.flatMap(angle=>[-.51,.51].map((offset,i)=>gun(angle,{
   offset,phase:i*.30,length:1.89,width:.80,damage:.60,pen:.81,life:.86,recoil:0,spread:.028
 })));
+const twinFlankGuns=twinPairs([0,Math.PI]);
+const gunnerGuns=[-.58,-.19,.19,.58].map((offset,i)=>({...rapid(0),offset,phase:i*.085}));
+const sprayerGuns=[
+  gun(0,{length:1.92,width:.45,reload:.40,damage:.38,pen:.63,speed:1.17,phase:.07,spread:.056,recoil:5}),
+  gun(0,{length:1.58,width:1.04,reload:.80,damage:.75,pen:.78,spread:.28,recoil:10,flare:true})
+];
+const streamlinerGuns=Array.from({length:5},(_,i)=>gun(0,{
+  length:1.46+i*.15,width:.39,speed:1.29,reload:1.03,damage:.39,pen:.72,life:1.05,spread:.010,recoil:2
+}));
+const spreadShotGuns=[gun(0,{length:1.91,width:.62,reload:1.56,damage:1.06,pen:.92,recoil:6}),
+  ...Array.from({length:5},(_,i)=>[-1,1].map(side=>gun(side*(i+1)*.18,{
+    length:1.79-i*.105,width:.35,reload:1.56,damage:.42,pen:.58,life:.90,spread:.018,recoil:0
+  }))).flat()];
 const BATTLESHIP_WING_CAP=12, BATTLESHIP_RANGE=480;
 const battleshipPorts=[-Math.PI/2,Math.PI/2].flatMap((angle,side)=>
   [-.40,.40].map((offset,index)=>{
@@ -863,24 +876,24 @@ function rocketeerLead(t,target){
 }
 const tier = (level,style,guns,next=[],options={}) => ({level,style,guns,next,fov:1,move:1,droneCap:0,...options});
 const C = {
-  Tank:tier(1,"balanced",[gun()],["Twin","Sniper","Machine Gun","Flank Guard","Smasher"]),
+  Tank:tier(1,"balanced",[gun()],["Twin","Sniper","Machine Gun","Flank Guard","Smasher","Auto Tank"]),
   Twin:tier(15,"pressure",[-.36,.36].map((offset,i)=>gun(0,{offset,phase:i*.30,pen:.76,damage:.78,width:.61,recoil:8})),["Triple Shot","Quad Tank","Twin Flank"]),
   Sniper:tier(15,"sniper",[snipe({})],["Assassin","Overseer","Trapper","Hunter"],{fov:1.19}),
-  "Machine Gun":tier(15,"pressure",[gun(0,{reload:.69,damage:.73,pen:.77,width:1.01,spread:.32,recoil:10})],["Destroyer","Gunner","Shotgun"]),
+  "Machine Gun":tier(15,"pressure",[gun(0,{reload:.69,damage:.73,pen:.77,width:1.01,spread:.32,recoil:10})],["Destroyer","Gunner","Shotgun","Sprayer"]),
   "Flank Guard":tier(15,"balanced",[gun(),gun(Math.PI,{width:.65,length:1.23,recoil:10,damage:.72})],["Tri-Angle","Auto 3","Quad Tank","Twin Flank"]),
-  "Twin Flank":tier(30,"balanced",twinFlankGuns,["Battleship"],{opposed:true,alternating:true}),
-  "Triple Shot":tier(30,"pressure",[0,-.32,.32].map((a,i)=>gun(a,{width:.57,phase:i*.075,pen:.68,damage:.71,recoil:6})),["Triplet","Penta Shot"]),
+  "Twin Flank":tier(30,"balanced",twinFlankGuns,["Battleship","Triple Twin"],{opposed:true,alternating:true}),
+  "Triple Shot":tier(30,"pressure",[0,-.32,.32].map((a,i)=>gun(a,{width:.57,phase:i*.075,pen:.68,damage:.71,recoil:6})),["Triplet","Penta Shot","Spread Shot"]),
   "Quad Tank":tier(30,"balanced",Array.from({length:4},(_,i)=>gun(i*TAU/4,{
     damage:.75,recoil:0
   })),["Octo Tank","Auto 5"],{radial:true}),
-  "Auto 3":tier(30,"balanced",autoGuns(3,{damage:.80,pen:1.37,reload:.94}),["Auto 5"],{turretArc:Math.PI/3}),
+  "Auto 3":tier(30,"balanced",autoGuns(3,{damage:.80,pen:1.37,reload:.94}),["Auto 5","Auto Gunner"],{turretArc:Math.PI/3}),
   Assassin:tier(30,"sniper",[snipe({speed:1.68,reload:1.70,length:2.04,life:1.38})],["Ranger"],{fov:1.34}),
-  Hunter:tier(30,"sniper",hunterGuns,[],{fov:1.23,alternating:true,burstGap:.12}),
+  Hunter:tier(30,"sniper",hunterGuns,["Streamliner"],{fov:1.23,alternating:true,burstGap:.12}),
   Overseer:tier(30,"drone",[-Math.PI/2,Math.PI/2].map(drone),["Overlord","Necromancer","Factory","Mothership","Battleship"],{fov:1.12,droneCap:8}),
-  Trapper:tier(30,"trap",[trap(0)],["Mega Trapper","Auto Trapper","Gunner Trapper"],{fov:1.08}),
+  Trapper:tier(30,"trap",[trap(0)],["Mega Trapper","Auto Trapper","Gunner Trapper","Tri-Trapper"],{fov:1.08}),
   Destroyer:tier(30,"heavy",[heavy({})],["Annihilator","Hybrid","Firework","Skimmer","Rocketeer"]),
-  Gunner:tier(30,"pressure",[-.58,-.19,.19,.58].map((offset,i)=>({...rapid(0),offset,phase:i*.085})),["Gunner Trapper"]),
-  Shotgun:tier(30,"heavy",[gun(0,{count:12,reload:2.08,pen:.55,damage:.55,width:1.12,speed:.92,life:.65,spread:.70,recoil:43})],["Dual-Barrel"]),
+  Gunner:tier(30,"pressure",gunnerGuns,["Gunner Trapper","Auto Gunner","Streamliner"]),
+  Shotgun:tier(30,"heavy",[gun(0,{count:12,reload:2.08,pen:.55,damage:.55,width:1.12,speed:.92,life:.65,spread:.70,recoil:43})],["Dual-Barrel","Pellet Shot"]),
   "Tri-Angle":tier(30,"drive",[gun(),drive(2.56),drive(-2.56)],["Booster","Fighter"]),
   Smasher:tier(30,"ram",[],["Spike"],{move:1.10,ram:true}),
   Triplet:tier(45,"pressure",[-.51,0,.51].map((offset,i)=>gun(0,{offset,phase:i*.19,reload:.94,pen:.82,damage:.79,width:.57,recoil:7})),[]),
@@ -907,8 +920,26 @@ const C = {
   Booster:tier(45,"drive",[gun(),drive(2.52),drive(-2.52),drive(2.95),drive(-2.95)],[]),
   Fighter:tier(45,"drive",[gun(0,{damage:1.22}),drive(2.55),drive(-2.55),rapid(Math.PI/2),rapid(-Math.PI/2)],[]),
   Spike:tier(45,"ram",[],[],{ram:true,move:1.12,body:2}),
+  "Triple Twin":tier(45,"balanced",twinPairs([0,TAU/3,2*TAU/3]),[],{opposed:true,alternating:true}),
+  "Spread Shot":tier(45,"pressure",spreadShotGuns,[],{centerBarrelOnTop:true}),
+  "Tri-Trapper":tier(45,"trap",Array.from({length:3},(_,i)=>({...trap(i*TAU/3),phase:i*.09,life:2.65})),[],{fov:1.08}),
+  Sprayer:tier(45,"pressure",sprayerGuns),
+  Streamliner:tier(45,"pressure",streamlinerGuns,[],{fov:1.23,cyclic:true}),
+  "Pellet Shot":tier(45,"heavy",[gun(0,{count:30,reload:2.40,pen:.44,damage:.23,width:1.07,speed:1.08,life:.69,spread:.84,recoil:63})],[],{fov:1.15}),
+  "Auto Gunner":tier(45,"pressure",gunnerGuns,[],{centerTurret:autoTrapperTurret}),
+  "Auto Tank":tier(45,"balanced",[gun()],[],{centerTurret:autoTrapperTurret}),
 };
 const TARGETS = ["Triplet","Penta Shot","Ranger","Overlord","Mega Trapper","Annihilator","Hybrid","Firework","Dual-Barrel","Gunner","Booster","Fighter","Spike"];
+const FFA_CLASS_VARIANTS=[
+  ["Triple Twin",["Triplet","Penta Shot","Battleship"]],
+  ["Spread Shot",["Triplet","Penta Shot"]],
+  ["Tri-Trapper",["Mega Trapper","Auto Trapper"]],
+  ["Sprayer",["Gunner","Dual-Barrel"]],
+  ["Streamliner",["Gunner","Ranger"]],
+  ["Pellet Shot",["Dual-Barrel"]],
+  ["Auto Gunner",["Gunner","Auto 5"]],
+  ["Auto Tank",TARGETS]
+];
 const FORMS = {
   square:{sides:4,hp:10,xp:10,r:15,body:8,color:"#ebc452"},
   triangle:{sides:3,hp:30,xp:25,r:19,body:8,color:"#ec856a"},
@@ -976,6 +1007,22 @@ for(const {branch} of FFA_GOALS)FFA_BRANCH_OPTIONS.set(branch,(FFA_BRANCH_OPTION
 const FFA_BRANCH_WEIGHT=new Map(Array.from(FFA_BRANCH_OPTIONS,([branch,n])=>[branch,Math.sqrt(n)]));
 const FFA_TOTAL_BRANCH_WEIGHT=[...FFA_BRANCH_WEIGHT.values()].reduce((sum,weight)=>sum+weight,0);
 
+function rotateFfaClassVariants(tanks,seed){
+  const random=rngFrom(Math.imul(seed,0x9e3779b1)^0x524f5441);
+  const choices=FFA_CLASS_VARIANTS.slice(),counts=new Map();
+  for(const t of tanks)counts.set(t.goal,(counts.get(t.goal)??0)+1);
+  let left=Math.min(3,Math.floor(tanks.length/8));
+  while(choices.length&&left){
+    const [[goal,previous]]=choices.splice(Math.floor(random()*choices.length),1);
+    const candidates=tanks.filter(t=>!t.human&&previous.includes(t.goal)&&counts.get(t.goal)>1);
+    if(!candidates.length)continue;
+    const t=candidates[Math.floor(random()*candidates.length)];
+    counts.set(t.goal,counts.get(t.goal)-1);
+    t.goal=goal;delete t.autoBranch;
+    left--;
+  }
+}
+
 function openFfaGoal(tanks,preferred,roll){
   const branches=new Map(),goals=new Map();
   for(const t of tanks){
@@ -1042,14 +1089,14 @@ function changeClass(t,name,force=false){
   const max=caps(t);
   for(let i=0;i<8;i++) t.stats[i]=Math.min(t.stats[i],max[i]);
   t.hp=Math.min(t.hp,hull(t));
-  t.cool=C[name].guns.map(g=>.18+g.phase);
+  t.cool=C[name].guns.map((g,i)=>C[name].cyclic&&i>0?0:.18+g.phase);
   if(name==="Mothership"){
     t.mothershipDrones=[0,0];
     t.mothershipPort=0;
     t.mothershipReload=.24;
   }
   if(name==="Battleship")t.battleshipDrones=[0,0];
-  if(C[name].alternating)t.volleyWave=0;
+  if(C[name].alternating||C[name].cyclic)t.volleyWave=0;
   if(C[name].turretArc){
     t.autoTurrets=C[name].guns.map((_,i)=>({
       aim:t.aim+i*TAU/C[name].guns.length,target:null
@@ -2876,6 +2923,7 @@ class Arena {
       const rangers=this.tanks.filter(t=>t.goal==="Ranger");
       const hunterRoll=rngFrom(Math.imul(seed,0x9e3779b1)^0x48554e54);
       if(rangers.length>=2&&hunterRoll()<.75)rangers[1+Math.floor(hunterRoll()*(rangers.length-1))].goal="Hunter";
+      rotateFfaClassVariants(this.tanks,seed);
     }
     if(this.hasBases)this.restockBaseDrones();
     if(this.fourTeams)this.assignFronts();
@@ -5631,7 +5679,16 @@ class Arena {
     if(t.cls==="Mothership")this.advanceMothership(t);
     else if(t.cls==="Battleship")this.advanceBattleship(t,c);
     else if(c.turretArc)this.advanceAutoTurrets(t,c);
-    else if(c.alternating){
+    else if(c.cyclic){
+      for(let i=0;i<c.guns.length;i++)t.cool[i]=Math.max(0,t.cool[i]-DT);
+      const i=t.volleyWave,g=c.guns[i];
+      if(u.fire&&t.cool[i]<=1e-9){
+        this.spawnShot(t,g);
+        t.cool[i]=neck(t,g);
+        t.volleyWave=(i+1)%c.guns.length;
+        t.cool[t.volleyWave]=Math.max(t.cool[t.volleyWave],t.cool[i]/c.guns.length);
+      }
+    }else if(c.alternating){
       // Groups reload independently. A burst completes after its short gap, even on trigger release.
       const wave=t.volleyWave, guns=c.guns;
       const burst=c.burstGap!==undefined;
@@ -7076,7 +7133,7 @@ function botThink(w,t){
       [aimX,aimY]=lead(t,enemy,bulletSpeed(t,weapon||gun()),1);
       fire=!c.ram;
       if(c.style==="drone") fire=t.drones>=Math.max(2,c.droneCap*.60)&&eDist<325;
-      if(c.centerTurret)fire=eDist<300;
+      if(c.centerTurret&&c.style==="trap")fire=eDist<300;
       else if(c.style==="trap"){
         const lane=trapLane(t,weapon,enemy);
         aimX=lane.x;aimY=lane.y;fire=lane.fire;
@@ -7191,7 +7248,7 @@ function botThink(w,t){
     mode=2; detail="Enfrentando "+enemy.name;
     const heavyExperience=localDiscoveryArena(w)&&(t.learning?.threats?.get(enemy.profileId)||0)>=2;
     const swarmExperience=localDiscoveryArena(w)&&(t.learning?.swarmThreats?.get(enemy.profileId)||0)>=2;
-    const preferred=threatDistance(heavyExperience,swarmExperience)+(t.cls==="Rocketeer"?320:t.cls==="Skimmer"?332:t.cls==="Mothership"?350:c.centerTurret?248:c.turretArc?275:{ram:0,drive:145,drone:290,heavy:215,firework:280,trap:290,sniper:420,pressure:265,balanced:230}[c.style])+(cautious?(c.ram?105:45):0);
+    const preferred=threatDistance(heavyExperience,swarmExperience)+(t.cls==="Rocketeer"?320:t.cls==="Skimmer"?332:t.cls==="Mothership"?350:(c.centerTurret&&c.style==="trap")?248:c.turretArc?275:{ram:0,drive:145,drone:290,heavy:215,firework:280,trap:290,sniper:420,pressure:265,balanced:230}[c.style])+(cautious?(c.ram?105:45):0);
     const flank=(t.trait%2===0?1:-1)*(tactic===1?-1:1);
     const a=Math.atan2(enemy.y-t.y,enemy.x-t.x);
     let radial=clamp((eDist-preferred)/108,-1,1);
@@ -7227,7 +7284,7 @@ function botThink(w,t){
       radial=Math.min(radial,-.90);
       detail="Abrindo espaço contra "+enemy.name;
     }
-    if(c.centerTurret){
+    if(c.centerTurret&&c.style==="trap"){
       const closing=((t.x-enemy.x)*enemy.vx+(t.y-enemy.y)*enemy.vy)/Math.max(1,eDist);
       const aimAhead=.30;
       aimX=enemy.x+enemy.vx*aimAhead;aimY=enemy.y+enemy.vy*aimAhead;
@@ -7688,7 +7745,7 @@ function botThink(w,t){
   }
   if(maze&&weapon&&c.style!=="drone"){
     let shotX=aimX,shotY=aimY;
-    if(c.centerTurret&&fire){
+    if(c.centerTurret&&c.style==="trap"&&fire){
       // Traps only need clearance at the mouth and where they will settle.
       const dx=aimX-t.x,dy=aimY-t.y;
       const reach=t.r*weapon.length+bulletSpeed(t,weapon)*DT*.91/(1-.91);
@@ -8774,7 +8831,8 @@ function paintTankBody(ctx,t,x,y,selected,time,spinTime,color){
       paintAutoMount(ctx,radius,2.8);
       ctx.restore();
     }
-  }else for(let i=0;i<spec.guns.length;i++){
+  }else for(let bar=0;bar<spec.guns.length;bar++){
+    const i=spec.centerBarrelOnTop?(bar+1)%spec.guns.length:bar;
     const g=spec.guns[i], recoil=t.cls!=="Mothership"&&t.cool[i]/neck(t,g)>.82?2.5:0;
     ctx.save();ctx.rotate(g.angle);
     const base=r*.24+recoil,width=r*g.width,yo=r*g.offset-width/2;
@@ -8803,7 +8861,12 @@ function paintTankBody(ctx,t,x,y,selected,time,spinTime,color){
       ctx.beginPath();
       ctx.rect(base,-width*.50,tip-base-r*.26,width);
       paint("#999999","#737373",r*.095,ctx);
-    }else if(g===gunnerTrapperLauncher||spec.centerTurret&&g.kind==="trap"){
+    }else if(g.flare){
+      const tip=r*g.length-recoil;
+      ctx.moveTo(base,yo+width*.20);ctx.lineTo(tip,yo);
+      ctx.lineTo(tip,yo+width);ctx.lineTo(base,yo+width*.80);ctx.closePath();
+      paint("#999999","#737373",3.2,ctx);
+    }else if(g===gunnerTrapperLauncher||(spec.centerTurret||t.cls==="Tri-Trapper")&&g.kind==="trap"){
       const neckEnd=r*1.19, lip=r*g.length;
       ctx.lineJoin="round";
       ctx.rect(base,-r*.41,neckEnd-base,r*.82);
